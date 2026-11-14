@@ -8,6 +8,7 @@ import path from 'node:path';
 import { env } from './config/env';
 import { errorHandler, notFoundHandler } from './middleware/error-handler';
 import { httpLogger } from './middleware/request-logger';
+import { originCheck } from './middleware/origin-check';
 import { v1Router } from './routes/v1';
 
 export function createApp() {
@@ -32,6 +33,7 @@ export function createApp() {
   );
   app.use(compression());
   app.use(cookieParser());
+  app.use(originCheck);
 
   app.use(
     '/api/v1/webhooks/payments',

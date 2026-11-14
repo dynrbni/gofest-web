@@ -57,6 +57,9 @@ if (raw.NODE_ENV === 'production') {
   if (raw.EMAIL_PROVIDER === 'smtp' && (!raw.SMTP_HOST || !raw.SMTP_PORT)) {
     throw new Error('SMTP_HOST dan SMTP_PORT wajib diisi jika EMAIL_PROVIDER=smtp');
   }
+  if (raw.EMAIL_PROVIDER === 'console') {
+    throw new Error('EMAIL_PROVIDER=console tidak boleh dipakai di production');
+  }
 }
 
 export const env = {

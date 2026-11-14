@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { prisma } from '../../lib/prisma';
 import { ok } from '../../lib/response';
 import { ServiceUnavailableError } from '../../lib/errors';
+import { authRouter } from '../../modules/auth/auth.routes';
 
 export const v1Router = Router();
 
@@ -12,6 +13,8 @@ v1Router.get('/', (_req, res) => {
     documentation: '/api/docs',
   });
 });
+
+v1Router.use('/auth', authRouter);
 
 v1Router.get('/health', async (_req, res) => {
   try {

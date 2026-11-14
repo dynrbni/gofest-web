@@ -1,11 +1,4 @@
-import type { UserRole } from '@gofest/shared';
-
-export interface AuthContext {
-  userId: string;
-  role: UserRole;
-  organizerId: string | null;
-  organizerStatus: string | null;
-}
+import type { AuthContext } from '../modules/auth/auth.types';
 
 declare global {
   namespace Express {
