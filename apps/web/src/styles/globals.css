@@ -1,5 +1,4 @@
 @import '@fontsource-variable/manrope';
-@import '@fontsource/instrument-serif';
 
 @tailwind base;
 @tailwind components;
@@ -7,26 +6,26 @@
 
 @layer base {
   :root {
-    --background: 43 33% 94%;
-    --foreground: 150 5% 10%;
-    --card: 45 33% 96%;
-    --card-foreground: 150 5% 10%;
-    --popover: 45 33% 96%;
-    --popover-foreground: 150 5% 10%;
-    --primary: 8 61% 45%;
-    --primary-foreground: 43 33% 96%;
-    --secondary: 100 10% 41%;
-    --secondary-foreground: 43 33% 96%;
-    --muted: 40 25% 90%;
-    --muted-foreground: 48 6% 34%;
-    --accent: 40 25% 90%;
-    --accent-foreground: 150 5% 10%;
-    --destructive: 0 65% 42%;
-    --destructive-foreground: 43 33% 96%;
-    --border: 40 15% 82%;
-    --input: 40 15% 82%;
-    --ring: 9 67% 55%;
-    --radius: 0.5rem;
+    --background: 210 20% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 216 100% 40%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 216 100% 40%;
+    --radius: 0.75rem;
   }
 
   * {
@@ -48,7 +47,7 @@
   h2,
   h3,
   h4 {
-    @apply text-balance;
+    @apply text-balance font-bold tracking-tight text-slate-900;
   }
 
   p {
@@ -56,13 +55,13 @@
   }
 
   ::selection {
-    background: #d9573f;
-    color: #f5f2ea;
+    background: #0052cc;
+    color: #ffffff;
   }
 
   :focus-visible {
     outline: 2px solid hsl(var(--ring));
-    outline-offset: 3px;
+    outline-offset: 2px;
   }
 
   a[href],
@@ -109,8 +108,8 @@
   }
 
   .display-tight {
-    letter-spacing: -0.045em;
-    line-height: 0.95;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
   }
 
   .no-scrollbar::-webkit-scrollbar {

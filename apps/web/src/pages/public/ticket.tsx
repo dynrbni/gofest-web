@@ -122,122 +122,124 @@ export function TicketPage() {
       <div className="no-print flex flex-wrap items-center justify-between gap-3">
         <Link
           to={`/order/${ticket.orderCode}${token ? `?token=${encodeURIComponent(token)}` : ''}`}
-          className="inline-flex items-center gap-2 text-sm font-semibold text-olive hover:text-ink"
+          className="inline-flex items-center gap-2 text-sm font-bold text-blue-600 hover:underline"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden />
           Kembali ke pesanan
         </Link>
-        <Button type="button" variant="outline" onClick={() => window.print()} className="border-ink/25">
-          <Printer className="h-4 w-4" aria-hidden />
-          Cetak tiket
+        <Button type="button" variant="outline" onClick={() => window.print()} className="rounded-xl border-slate-200 font-bold text-xs">
+          <Printer className="h-4 w-4 mr-1.5" aria-hidden />
+          Cetak E-Tiket
         </Button>
       </div>
 
-      <article className="print-ticket mt-5 border border-ink bg-card">
-        <header className="border-b border-ink p-6 sm:p-8">
+      <article className="print-ticket mt-5 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xl">
+        <header className="border-b border-slate-100 bg-slate-50/50 p-6 sm:p-8">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-olive">Gofest · Tiket digital</p>
-              <h1 className="mt-2 font-display text-4xl leading-none tracking-tightest sm:text-5xl">
+              <p className="text-xs font-bold uppercase tracking-wider text-blue-600">GOFEST · Tiket Digital Resmi</p>
+              <h1 className="mt-2 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
                 {ticket.event.title}
               </h1>
             </div>
             <TicketStatusBadge status={ticket.status} />
           </div>
-          <p className="mt-3 text-sm text-muted-foreground">
+          <p className="mt-2 text-xs font-semibold text-slate-500">
             {formatEventWhen(ticket.event.startsAt, ticket.event.endsAt, ticket.event.timezone)}
           </p>
         </header>
 
-        <div className="grid gap-6 p-6 sm:grid-cols-[1fr_200px] sm:p-8">
+        <div className="grid gap-6 p-6 sm:grid-cols-[1fr_220px] sm:p-8">
           <div>
-            <dl className="space-y-4 text-sm">
+            <dl className="space-y-4 text-xs">
               <div>
-                <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-olive">Pemegang tiket</dt>
-                <dd className="mt-1 text-lg font-bold">{ticket.holderName}</dd>
+                <dt className="font-bold uppercase tracking-wider text-slate-400">Pemegang Tiket</dt>
+                <dd className="mt-0.5 text-base font-extrabold text-slate-900">{ticket.holderName}</dd>
               </div>
               <div>
-                <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-olive">Jenis tiket</dt>
-                <dd className="mt-1 font-semibold">{ticket.ticketType.name}</dd>
+                <dt className="font-bold uppercase tracking-wider text-slate-400">Kategori Tiket</dt>
+                <dd className="mt-0.5 font-bold text-slate-800">{ticket.ticketType.name}</dd>
               </div>
               <div>
-                <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-olive">Kode tiket</dt>
-                <dd className="mt-1 font-bold tabular-nums tracking-[0.08em]">{ticket.ticketCode}</dd>
+                <dt className="font-bold uppercase tracking-wider text-slate-400">Kode Tiket (Barcode Ref)</dt>
+                <dd className="mt-0.5 font-mono text-base font-black text-blue-600 tabular-nums tracking-wider">{ticket.ticketCode}</dd>
               </div>
-              <div className="flex gap-3">
+              <div className="flex gap-2.5">
                 {ticket.event.type === 'ONLINE' ? (
-                  <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-olive" aria-hidden />
+                  <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" aria-hidden />
                 ) : (
-                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-olive" aria-hidden />
+                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" aria-hidden />
                 )}
                 <div>
                   <dt className="sr-only">Lokasi</dt>
-                  <dd>
+                  <dd className="font-semibold text-slate-800">
                     {ticket.event.type === 'ONLINE'
-                      ? 'Acara online'
+                      ? 'Acara Online (Virtual)'
                       : `${ticket.event.venueName ?? 'Venue'}${ticket.event.address ? ` · ${ticket.event.address}` : ''}`}
                   </dd>
                   {ticket.event.city ? (
-                    <dd className="text-xs text-muted-foreground">{ticket.event.city}</dd>
+                    <dd className="text-slate-500">{ticket.event.city}</dd>
                   ) : null}
                 </div>
               </div>
               {ticket.checkedInAt ? (
-                <div className="flex gap-3">
-                  <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-olive" aria-hidden />
+                <div className="flex gap-2.5">
+                  <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" aria-hidden />
                   <div>
                     <dt className="sr-only">Check-in</dt>
-                    <dd>Check-in {formatDateTime(ticket.checkedInAt, ticket.event.timezone)}</dd>
+                    <dd className="font-bold text-emerald-700">Check-in berhasil: {formatDateTime(ticket.checkedInAt, ticket.event.timezone)}</dd>
                   </div>
                 </div>
               ) : null}
             </dl>
 
             {ticket.event.onlineAccessUrl ? (
-              <div className="mt-5 border-l-2 border-olive pl-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-olive">Akses acara online</p>
+              <div className="mt-5 rounded-xl border border-blue-200 bg-blue-50/70 p-3.5">
+                <p className="text-xs font-bold uppercase tracking-wider text-blue-700">Tautan Streaming Online</p>
                 <a
                   href={ticket.event.onlineAccessUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="mt-1 block break-all text-sm font-semibold underline underline-offset-4"
+                  className="mt-1 block break-all text-xs font-bold text-blue-600 underline underline-offset-4"
                 >
                   {ticket.event.onlineAccessUrl}
                 </a>
                 {ticket.event.onlineAccessNote ? (
-                  <p className="mt-1 text-xs text-muted-foreground">{ticket.event.onlineAccessNote}</p>
+                  <p className="mt-1 text-[11px] text-slate-500">{ticket.event.onlineAccessNote}</p>
                 ) : null}
               </div>
             ) : null}
           </div>
 
-          <div className="sm:border-l sm:border-dashed sm:border-warm-border sm:pl-6">
+          <div className="flex flex-col items-center justify-center sm:border-l sm:border-dashed sm:border-slate-200 sm:pl-6">
             {invalid ? (
-              <div className="flex h-40 items-center justify-center border border-brick/30 bg-brick/5 p-4 text-center text-sm font-semibold text-brick">
+              <div className="flex h-44 w-full items-center justify-center rounded-xl border border-rose-200 bg-rose-50 p-4 text-center text-xs font-bold text-rose-700">
                 QR tidak berlaku karena tiket sudah {ticket.status === 'REFUNDED' ? 'di-refund' : 'dibatalkan'}.
               </div>
             ) : (
-              <img
-                src={ticket.qrUrl}
-                alt={`QR tiket ${ticket.ticketCode}`}
-                width={400}
-                height={400}
-                className="w-full max-w-[200px] border border-warm-border bg-white p-2"
-              />
+              <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-xs">
+                <img
+                  src={ticket.qrUrl}
+                  alt={`QR tiket ${ticket.ticketCode}`}
+                  width={400}
+                  height={400}
+                  className="w-full max-w-[170px]"
+                />
+              </div>
             )}
-            <p className="mt-3 text-center text-[11px] leading-relaxed text-muted-foreground">
-              Tunjukkan QR ini di pintu masuk. Setiap tiket hanya dapat dipindai sekali.
+            <p className="mt-3 text-center text-[10px] leading-relaxed text-slate-400">
+              Tunjukkan QR barcode ini di gate masuk kepada petugas scanner.
             </p>
           </div>
         </div>
 
-        <footer className="border-t border-ink px-6 py-4 sm:px-8">
-          <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+        <footer className="border-t border-slate-100 bg-slate-50/50 px-6 py-3.5 sm:px-8 text-xs text-slate-500">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <p>
-              Pesanan <span className="font-semibold tabular-nums">{ticket.orderCode}</span>
+              Nomor Pesanan: <span className="font-mono font-bold text-slate-800 tabular-nums">{ticket.orderCode}</span>
             </p>
             <p>
-              Diterbitkan {formatDateTime(ticket.issuedAt, ticket.event.timezone)}
+              Diterbitkan: {formatDateTime(ticket.issuedAt, ticket.event.timezone)}
             </p>
           </div>
         </footer>
@@ -251,7 +253,7 @@ export function TicketPage() {
           </p>
           <ConfirmDialog
             trigger={
-              <Button type="button" variant="outline" className="border-ink/25" disabled={regenerating}>
+              <Button type="button" variant="outline" className="rounded-xl border-slate-200 text-xs font-bold" disabled={regenerating}>
                 <RefreshCw className={regenerating ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} aria-hidden />
                 Buat ulang QR
               </Button>
@@ -265,7 +267,7 @@ export function TicketPage() {
       ) : null}
 
       {actionError ? (
-        <p className="no-print mt-3 text-sm font-semibold text-brick" role="alert">
+        <p className="no-print mt-3 text-sm font-semibold text-rose-600" role="alert">
           {errorMessage(actionError)}
         </p>
       ) : null}

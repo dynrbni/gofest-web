@@ -1,4 +1,10 @@
-import { Filter, RotateCcw, X } from 'lucide-react';
+import {
+  Filter,
+  RotateCcw,
+  Search,
+  SlidersHorizontal,
+  X,
+} from 'lucide-react';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { EventCard } from '@/components/common/event-presentation';
@@ -25,16 +31,16 @@ function readFilters(params: URLSearchParams): EventFilters {
     availability: (params.get('availability') as EventFilters['availability']) ?? 'all',
     sort: (params.get('sort') as EventFilters['sort']) ?? 'starts_soon',
     page: Number.isFinite(number) && number > 0 ? number : 1,
-    limit: 10,
+    limit: 12,
   };
 }
 
-function dateInputValue(iso: string | undefined, edge: 'start' | 'end') {
+function dateInputValue(iso: string | undefined, _edge: 'start' | 'end') {
   if (!iso) return '';
   try {
     return formatInTimeZone(new Date(iso), TIME_ZONE, 'yyyy-MM-dd');
   } catch {
-    return edge === 'start' ? '' : '';
+    return '';
   }
 }
 
@@ -68,13 +74,14 @@ function FilterPanel({
   }, [debouncedCity]);
 
   const selectClass =
-    'h-10 w-full rounded-md border border-ink/20 bg-card px-3 text-sm outline-none focus-visible:border-ink';
+    'h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-medium text-slate-800 transition-colors focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100';
 
   return (
     <div className="space-y-6">
+      {/* Kategori */}
       <div>
-        <label htmlFor="filter-category" className="mb-1.5 block text-sm font-semibold">
-          Kategori
+        <label htmlFor="filter-category" className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-700">
+          Kategori Event
         </label>
         <select
           id="filter-category"
@@ -82,7 +89,7 @@ function FilterPanel({
           value={filters.category ?? ''}
           onChange={(event) => update({ category: event.target.value || undefined })}
         >
-          <option value="">Semua kategori</option>
+          <option value="">Semua Kategori</option>
           {categories.map((category) => (
             <option key={category.id} value={category.slug}>
               {category.name}
@@ -91,25 +98,29 @@ function FilterPanel({
         </select>
       </div>
 
+      {/* Kota */}
       <div>
-        <label htmlFor="filter-city" className="mb-1.5 block text-sm font-semibold">
+        <label htmlFor="filter-city" className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-700">
           Kota
         </label>
         <input
           id="filter-city"
           value={city}
           onChange={(event) => setCity(event.target.value)}
-          placeholder="Contoh: Jakarta"
+          placeholder="Contoh: Jakarta, Bandung..."
           className={selectClass}
         />
       </div>
 
+      {/* Rentang Tanggal */}
       <fieldset>
-        <legend className="mb-1.5 text-sm font-semibold">Tanggal</legend>
+        <legend className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-700">
+          Rentang Tanggal
+        </legend>
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <label htmlFor="filter-date-from" className="mb-1 block text-xs text-muted-foreground">
-              Dari
+            <label htmlFor="filter-date-from" className="mb-1 block text-[11px] font-medium text-slate-500">
+              Mulai
             </label>
             <input
               id="filter-date-from"
@@ -120,7 +131,7 @@ function FilterPanel({
             />
           </div>
           <div>
-            <label htmlFor="filter-date-to" className="mb-1 block text-xs text-muted-foreground">
+            <label htmlFor="filter-date-to" className="mb-1 block text-[11px] font-medium text-slate-500">
               Sampai
             </label>
             <input
@@ -134,9 +145,10 @@ function FilterPanel({
         </div>
       </fieldset>
 
+      {/* Harga */}
       <div>
-        <label htmlFor="filter-price" className="mb-1.5 block text-sm font-semibold">
-          Harga
+        <label htmlFor="filter-price" className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-700">
+          Jenis Tiket
         </label>
         <select
           id="filter-price"
@@ -144,15 +156,16 @@ function FilterPanel({
           value={filters.price}
           onChange={(event) => update({ price: event.target.value })}
         >
-          <option value="all">Semua harga</option>
-          <option value="free">Gratis</option>
+          <option value="all">Semua Harga</option>
+          <option value="free">Gratis Saja</option>
           <option value="paid">Berbayar</option>
         </select>
       </div>
 
+      {/* Ketersediaan */}
       <div>
-        <label htmlFor="filter-availability" className="mb-1.5 block text-sm font-semibold">
-          Ketersediaan
+        <label htmlFor="filter-availability" className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-700">
+          Ketersediaan Tiket
         </label>
         <select
           id="filter-availability"
@@ -160,27 +173,33 @@ function FilterPanel({
           value={filters.availability}
           onChange={(event) => update({ availability: event.target.value })}
         >
-          <option value="all">Semua status</option>
-          <option value="available">Masih tersedia</option>
-          <option value="sold_out">Tiket habis</option>
+          <option value="all">Semua Status</option>
+          <option value="available">Masih Tersedia</option>
+          <option value="sold_out">Sudah Habis</option>
         </select>
       </div>
 
+      {/* Urutkan */}
       <fieldset>
-        <legend className="mb-1.5 text-sm font-semibold">Urutkan</legend>
-        <div className="space-y-1.5">
+        <legend className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-700">
+          Urutkan Menurut
+        </legend>
+        <div className="space-y-2">
           {[
-            { value: 'starts_soon', label: 'Tanggal terdekat' },
-            { value: 'published_newest', label: 'Baru dipublikasikan' },
+            { value: 'starts_soon', label: 'Tanggal Terdekat' },
+            { value: 'published_newest', label: 'Baru Dirilis' },
           ].map((option) => (
-            <label key={option.value} className="flex items-center gap-2 text-sm">
+            <label
+              key={option.value}
+              className="flex cursor-pointer items-center gap-2 rounded-lg p-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+            >
               <input
                 type="radio"
                 name="sort"
                 value={option.value}
                 checked={filters.sort === option.value}
                 onChange={() => update({ sort: option.value })}
-                className="h-4 w-4 accent-[#B8432C]"
+                className="h-4 w-4 accent-blue-600"
               />
               {option.label}
             </label>
@@ -192,17 +211,17 @@ function FilterPanel({
         type="button"
         variant="outline"
         onClick={reset}
-        className="w-full border-ink/25 bg-transparent"
+        className="w-full rounded-xl border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-100 hover:text-slate-900"
       >
-        <RotateCcw className="h-4 w-4" aria-hidden />
-        Atur ulang filter
+        <RotateCcw className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+        Reset Filter
       </Button>
     </div>
   );
 }
 
 export function EventsPage() {
-  useDocumentTitle('Jelajah acara');
+  useDocumentTitle('Jelajah Acara & Konser di Indonesia');
   const [searchParams, setSearchParams] = useSearchParams();
   const filters = useMemo(() => readFilters(searchParams), [searchParams]);
   const [query, setQuery] = useState(filters.q ?? '');
@@ -257,12 +276,12 @@ export function EventsPage() {
         }
       : null,
     filters.city ? { key: 'city', label: `Kota: ${filters.city}` } : null,
-    filters.dateFrom ? { key: 'dateFrom', label: 'Tanggal mulai' } : null,
-    filters.dateTo ? { key: 'dateTo', label: 'Tanggal akhir' } : null,
+    filters.dateFrom ? { key: 'dateFrom', label: 'Dari tanggal pilihan' } : null,
+    filters.dateTo ? { key: 'dateTo', label: 'Sampai tanggal pilihan' } : null,
     filters.price === 'free' ? { key: 'price', label: 'Gratis' } : null,
     filters.price === 'paid' ? { key: 'price', label: 'Berbayar' } : null,
-    filters.availability === 'available' ? { key: 'availability', label: 'Masih tersedia' } : null,
-    filters.availability === 'sold_out' ? { key: 'availability', label: 'Tiket habis' } : null,
+    filters.availability === 'available' ? { key: 'availability', label: 'Tersedia' } : null,
+    filters.availability === 'sold_out' ? { key: 'availability', label: 'Habis' } : null,
     filters.q ? { key: 'q', label: `Cari: ${filters.q}` } : null,
   ].filter((item): item is { key: string; label: string } => Boolean(item));
 
@@ -279,144 +298,174 @@ export function EventsPage() {
   );
 
   return (
-    <main className="container py-8 sm:py-12">
-      <div className="max-w-3xl">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-olive">Jelajah</p>
-        <h1 className="mt-2 font-display text-5xl leading-[0.95] tracking-tightest sm:text-6xl">
-          Cari acara yang pas.
-        </h1>
-        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          Filter disimpan di URL, jadi tautan hasil pencarian bisa kamu kirim ke orang lain dan tetap
-          bekerja setelah halaman dimuat ulang.
-        </p>
+    <main className="container py-8 sm:py-10">
+      {/* Header Banner */}
+      <div className="flex flex-col justify-between gap-4 border-b border-slate-200 pb-6 md:flex-row md:items-end">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-wider text-blue-600">Katalog Eksklusif</p>
+          <h1 className="mt-1 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
+            Jelajah Semua Acara
+          </h1>
+          <p className="mt-2 text-sm text-slate-500">
+            Temukan tiket resmi konser musik, festival budaya, olahraga, dan workshop terpopuler di Indonesia.
+          </p>
+        </div>
+
+        {/* Mobile Filter Button */}
+        <div className="flex items-center gap-2 lg:hidden">
+          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+            <SheetTrigger asChild>
+              <Button type="button" variant="outline" className="h-10 rounded-xl border-slate-200 font-semibold text-slate-700 shadow-2xs">
+                <SlidersHorizontal className="mr-2 h-4 w-4 text-blue-600" />
+                Filter & Urutkan
+              </Button>
+            </SheetTrigger>
+            <SheetContent className="w-full overflow-y-auto border-slate-200 bg-white sm:max-w-md">
+              <SheetHeader>
+                <SheetTitle className="text-left font-black text-slate-900">Filter Acara</SheetTitle>
+              </SheetHeader>
+              <div className="mt-6">{panel}</div>
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
 
-      <form onSubmit={onSearch} className="mt-6 flex gap-2" role="search">
-        <label htmlFor="events-search" className="sr-only">
-          Cari acara
-        </label>
-        <input
-          id="events-search"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Judul, organizer, kota, atau kategori"
-          className="h-11 flex-1 rounded-md border border-ink/25 bg-card px-3 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ink"
-        />
-        <Button type="submit" className="h-11 bg-ink px-5 text-paper hover:bg-ink/90">
-          Cari
-        </Button>
-        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          <SheetTrigger asChild>
-            <Button type="button" variant="outline" className="h-11 border-ink/25 bg-transparent lg:hidden">
-              <Filter className="h-4 w-4" aria-hidden />
-              Filter
-            </Button>
-          </SheetTrigger>
-          <SheetContent className="w-full overflow-y-auto border-warm-border bg-paper sm:max-w-md">
-            <SheetHeader>
-              <SheetTitle className="text-left">Filter acara</SheetTitle>
-            </SheetHeader>
-            <div className="mt-6">{panel}</div>
-          </SheetContent>
-        </Sheet>
-      </form>
-
-      <div className="mt-8 grid gap-10 lg:grid-cols-[220px_1fr]">
+      {/* Main Grid: Sidebar + Event Cards */}
+      <div className="mt-8 grid gap-8 lg:grid-cols-[260px_1fr]">
+        {/* Desktop Sidebar Filter (Loket Style) */}
         <aside className="hidden lg:block">
-          <div className="sticky top-24 border-t border-ink pt-4">
-            <p className="mb-4 text-xs font-bold uppercase tracking-[0.12em]">Filter</p>
+          <div className="sticky top-24 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
+            <div className="mb-4 flex items-center justify-between border-b border-slate-100 pb-3">
+              <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-900">
+                <Filter className="h-3.5 w-3.5 text-blue-600" />
+                Filter Acara
+              </p>
+              {activeFilters.length > 0 && (
+                <button
+                  type="button"
+                  onClick={reset}
+                  className="text-[11px] font-bold text-blue-600 hover:underline"
+                >
+                  Reset
+                </button>
+              )}
+            </div>
             {panel}
           </div>
         </aside>
 
+        {/* Results Area */}
         <section id="event-results" aria-labelledby="results-heading">
-          <div className="flex flex-wrap items-end justify-between gap-3 border-b border-ink pb-3">
-            <div>
-              <h2 id="results-heading" className="text-lg font-bold">
-                {eventsQuery.isLoading ? 'Memuat acara' : `${meta?.total ?? 0} acara ditemukan`}
-              </h2>
-              {filters.sort === 'published_newest' ? (
-                <p className="text-xs text-muted-foreground">Diurutkan dari yang baru dipublikasikan.</p>
-              ) : (
-                <p className="text-xs text-muted-foreground">Diurutkan dari tanggal terdekat.</p>
-              )}
-            </div>
-            <label className="flex items-center gap-2 text-xs">
-              <span className="text-muted-foreground">Urutkan</span>
+          {/* Search bar & Sort Controls */}
+          <div className="flex flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs sm:flex-row sm:items-center sm:justify-between">
+            <form onSubmit={onSearch} className="relative flex-1">
+              <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                id="events-search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Cari berdasarkan judul, nama artis, atau venue..."
+                className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 text-xs font-medium text-slate-800 placeholder:text-slate-400 transition-colors focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100"
+              />
+            </form>
+
+            <div className="flex items-center justify-between gap-3 sm:justify-end">
+              <span className="text-xs font-semibold text-slate-500 whitespace-nowrap">
+                {eventsQuery.isLoading ? 'Memuat...' : `${meta?.total ?? 0} acara`}
+              </span>
               <select
                 value={filters.sort}
                 onChange={(event) => update({ sort: event.target.value })}
-                className="h-9 rounded-md border border-ink/20 bg-card px-2 text-xs font-semibold"
+                className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-semibold text-slate-800 focus:border-blue-600 focus:outline-none"
               >
-                <option value="starts_soon">Tanggal terdekat</option>
-                <option value="published_newest">Baru dipublikasikan</option>
+                <option value="starts_soon">Tanggal Terdekat</option>
+                <option value="published_newest">Baru Dirilis</option>
               </select>
-            </label>
+            </div>
           </div>
 
+          {/* Active Filter Chips */}
           {activeFilters.length ? (
-            <div className="flex flex-wrap gap-2 py-3">
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <span className="text-xs font-bold text-slate-400">Filter Aktif:</span>
               {activeFilters.map((item) => (
                 <button
                   key={item.key}
                   type="button"
                   onClick={() => update({ [item.key]: undefined })}
-                  className="inline-flex items-center gap-1.5 rounded-sm border border-warm-border bg-warm-muted px-2 py-1 text-xs font-semibold"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-600 shadow-2xs hover:bg-blue-100 transition-colors"
                 >
                   {item.label}
-                  <X className="h-3 w-3" aria-hidden />
-                  <span className="sr-only">Hapus filter {item.label}</span>
+                  <X className="h-3.5 w-3.5" aria-hidden />
                 </button>
               ))}
-              <button type="button" onClick={reset} className="px-1 text-xs font-semibold text-brick">
-                Hapus semua
+              <button
+                type="button"
+                onClick={reset}
+                className="text-xs font-bold text-rose-600 hover:underline px-2"
+              >
+                Hapus Semua
               </button>
             </div>
           ) : null}
 
-          {eventsQuery.isLoading ? (
-            <LoadingState rows={5} />
-          ) : eventsQuery.isError ? (
-            <ErrorState
-              error={eventsQuery.error}
-              onRetry={() => void eventsQuery.refetch()}
-              className="mt-6"
-            />
-          ) : events.length === 0 ? (
-            <EmptyState
-              className="mt-6"
-              title="Tidak ada acara yang cocok"
-              description="Coba longgarkan filter, hapus kata kunci, atau lihat semua acara yang sedang tayang."
-              action={
-                <div className="flex flex-wrap justify-center gap-2">
-                  <Button type="button" onClick={reset} className="bg-ink text-paper">
-                    Atur ulang filter
-                  </Button>
-                  <Link to="/">
-                    <Button type="button" variant="outline" className="border-ink/25">
-                      Ke beranda
-                    </Button>
-                  </Link>
-                </div>
-              }
-            />
-          ) : (
-            <>
-              <div className={cn('mt-2', eventsQuery.isFetching && 'opacity-60 transition-opacity')}>
-                {events.map((event) => (
-                  <EventCard key={event.id} event={event} />
-                ))}
-              </div>
-              <Pagination
-                meta={meta}
-                onPageChange={(page) => {
-                  update({ page });
-                  document.getElementById('event-results')?.scrollIntoView({ behavior: 'smooth' });
-                }}
+          {/* Event Results Grid */}
+          <div className="mt-6">
+            {eventsQuery.isLoading ? (
+              <LoadingState rows={4} />
+            ) : eventsQuery.isError ? (
+              <ErrorState
+                error={eventsQuery.error}
+                onRetry={() => void eventsQuery.refetch()}
                 className="mt-6"
               />
-            </>
-          )}
+            ) : events.length === 0 ? (
+              <EmptyState
+                className="mt-6 rounded-2xl border border-slate-200 bg-white p-12 text-center"
+                title="Tidak Ada Acara Ditemukan"
+                description="Coba ubah kata kunci pencarian atau bersihkan filter kota/kategori untuk melihat acara lainnya."
+                action={
+                  <div className="flex flex-wrap justify-center gap-3">
+                    <Button
+                      type="button"
+                      onClick={reset}
+                      className="rounded-xl bg-blue-600 text-xs font-bold text-white shadow-xs hover:bg-blue-700"
+                    >
+                      Reset Semua Filter
+                    </Button>
+                    <Link to="/">
+                      <Button type="button" variant="outline" className="rounded-xl border-slate-200 text-xs font-bold">
+                        Kembali ke Beranda
+                      </Button>
+                    </Link>
+                  </div>
+                }
+              />
+            ) : (
+              <>
+                <div
+                  className={cn(
+                    'grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3',
+                    eventsQuery.isFetching && 'opacity-60 transition-opacity',
+                  )}
+                >
+                  {events.map((event) => (
+                    <EventCard key={event.id} event={event} layout="grid" />
+                  ))}
+                </div>
+
+                <div className="mt-8 border-t border-slate-100 pt-6">
+                  <Pagination
+                    meta={meta}
+                    onPageChange={(page) => {
+                      update({ page });
+                      document.getElementById('event-results')?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                  />
+                </div>
+              </>
+            )}
+          </div>
         </section>
       </div>
     </main>

@@ -52,17 +52,17 @@ export function AccountProfilePage() {
   return (
     <div className="max-w-xl space-y-6">
       <div>
-        <h2 className="text-xl font-bold tracking-tight text-ink">Informasi Akun</h2>
-        <p className="mt-0.5 text-xs text-muted-foreground">
+        <h2 className="text-xl font-bold tracking-tight text-slate-900">Informasi Akun</h2>
+        <p className="mt-0.5 text-xs text-slate-500">
           Perbarui nama dan nomor kontak untuk komunikasi pesanan tiketmu
         </p>
       </div>
 
-      <form onSubmit={onSubmit} className="space-y-4 rounded-md border border-warm-border bg-card p-6">
+      <form onSubmit={onSubmit} className="space-y-4 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
         <InlineError error={generalError} />
 
         <Field label="Alamat Email" htmlFor="email" hint="Email login tidak dapat diubah langsung">
-          <Input id="email" value={user?.email ?? ''} disabled className="bg-warm-muted/40 cursor-not-allowed" />
+          <Input id="email" value={user?.email ?? ''} disabled className="bg-slate-100 text-slate-500 cursor-not-allowed rounded-xl border-slate-200" />
         </Field>
 
         <Field label="Nama Lengkap" htmlFor="name" required error={errors.name}>
@@ -72,6 +72,7 @@ export function AccountProfilePage() {
             onChange={(e) => setName(e.target.value)}
             placeholder="Nama lengkap sesuai identitas"
             required
+            className="rounded-xl border-slate-200 bg-slate-50 focus:bg-white"
           />
         </Field>
 
@@ -81,11 +82,12 @@ export function AccountProfilePage() {
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="Contoh: 08123456789"
+            className="rounded-xl border-slate-200 bg-slate-50 focus:bg-white"
           />
         </Field>
 
         <div className="pt-2">
-          <Button type="submit" disabled={saving}>
+          <Button type="submit" disabled={saving} className="rounded-xl bg-blue-600 px-6 font-bold text-white shadow-xs hover:bg-blue-700">
             {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
           </Button>
         </div>

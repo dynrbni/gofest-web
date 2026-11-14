@@ -21,15 +21,15 @@ export function Pagination({
 
   return (
     <nav className={cn('flex flex-wrap items-center justify-between gap-3', className)} aria-label="Navigasi halaman">
-      <p className="text-xs text-muted-foreground tabular-nums">
-        Halaman {meta.page} dari {meta.totalPages} · {meta.total} data
+      <p className="text-xs font-medium text-slate-500 tabular-nums">
+        Halaman {meta.page} dari {meta.totalPages} · Total {meta.total} acara
       </p>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1.5">
         <button
           type="button"
           onClick={() => onPageChange(meta.page - 1)}
           disabled={meta.page <= 1}
-          className="inline-flex h-8 items-center gap-1 rounded-sm border border-warm-border px-2 text-sm font-semibold disabled:opacity-40"
+          className="inline-flex h-9 items-center gap-1 rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-40"
           aria-label="Halaman sebelumnya"
         >
           <ChevronLeft className="h-4 w-4" aria-hidden />
@@ -40,16 +40,16 @@ export function Pagination({
           const gap = previous !== undefined && page - previous > 1;
           return (
             <span key={page} className="flex items-center gap-1">
-              {gap ? <span className="px-1 text-xs text-muted-foreground">…</span> : null}
+              {gap ? <span className="px-1 text-xs text-slate-400">…</span> : null}
               <button
                 type="button"
                 onClick={() => onPageChange(page)}
                 aria-current={page === meta.page ? 'page' : undefined}
                 className={cn(
-                  'h-8 min-w-8 rounded-sm border px-2 text-sm font-semibold tabular-nums',
+                  'h-9 min-w-9 rounded-xl border px-3 text-xs font-bold tabular-nums transition-colors',
                   page === meta.page
-                    ? 'border-ink bg-ink text-paper'
-                    : 'border-warm-border hover:bg-warm-muted',
+                    ? 'border-blue-600 bg-blue-600 text-white shadow-xs'
+                    : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100',
                 )}
               >
                 {page}
@@ -61,7 +61,7 @@ export function Pagination({
           type="button"
           onClick={() => onPageChange(meta.page + 1)}
           disabled={meta.page >= meta.totalPages}
-          className="inline-flex h-8 items-center gap-1 rounded-sm border border-warm-border px-2 text-sm font-semibold disabled:opacity-40"
+          className="inline-flex h-9 items-center gap-1 rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-40"
           aria-label="Halaman berikutnya"
         >
           Berikutnya

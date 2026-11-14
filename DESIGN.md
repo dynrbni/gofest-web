@@ -1,147 +1,71 @@
 # DESIGN.md
 
-Arah desain ini mengikat seluruh halaman Gofest. Baca bersama `antislop` sebelum membuat komponen atau halaman baru.
+Arah desain ini mengikat seluruh halaman Gofest. Mengadopsi standar komersial industri event ticketing Indonesia seperti **Artatix** dan **Loket.com**.
 
-## 1. Design read
+## 1. Design Philosophy
 
-> Reading this as: platform ticketing event untuk penonton dan organizer di Indonesia, dengan bahasa visual editorial event guide, dial ENERGY 2 / RHYTHM 3 / MOTION 1 untuk halaman publik dan ENERGY 1 / RHYTHM 1 / MOTION 1 untuk workspace.
+> Standar platform discovery & ticketing event modern: kanvas putih bersih, tipografi geometric sans-serif modern, kartu event komersial dengan poster tajam, date chip, harga jelas "Mulai dari Rp X", dan alur pemesanan sticky yang cepat dan responsif.
 
-Gofest terasa seperti majalah acara yang serius, bukan template SaaS. Poster dan tipografi membawa identitas. Struktur dibuat untuk membantu orang memilih acara dan menyelesaikan pembelian, bukan untuk mengisi section.
+Gofest dirancang untuk kecepatan navigasi dan konversi pembelian tiket, dengan hierarki visual yang jelas, banner promosi heroik, dan interaksi yang solid tanpa elemen retro/kuno.
 
-## 2. Prinsip yang tidak boleh dilanggar
+## 2. Prinsip Utama
 
-1. Satu focal point per layar. Sisanya memberi jalan.
-2. Poster event adalah materi visual utama. Jangan menggantinya dengan ilustrasi 3D, blob, atau stok foto generik.
-3. Komposisi mengikuti kebutuhan konten. Tidak semua section berbentuk grid kartu yang sama.
-4. Data yang ditampilkan harus berasal dari database. Tidak ada statistik, testimoni, logo partner, atau avatar rekaan.
-5. Setiap kontrol harus bekerja. Tidak ada tautan `#`, tombol hiasan, atau menu tanpa tujuan.
-6. Light theme adalah keputusan brand, bukan keterbatasan. Permukaan paper, tinta gelap, dan aksen vermilion adalah identitas.
-7. Motion hanya untuk menjelaskan perubahan state atau orientasi. Tidak ada animasi dekoratif yang berjalan terus.
-8. Aksesibilitas bukan lapisan akhir. Kontras, keyboard, focus, label, dan touch target masuk sejak komponen pertama.
+1. **Clean & High Contrast Canvas**: Kanvas putih bersih (`#FFFFFF` dan `#F8FAFC`) dengan border halus (`#E2E8F0`) dan tipografi tajam (`#0F172A`).
+2. **Poster Event Menjadi Pusat Perhatian**: Gambar cover poster event dengan rasio tajam (16:9 atau 4:5), sudut membulat modern (`rounded-xl`/`rounded-2xl`), dan efek hover halus (`hover:shadow-lg hover:-translate-y-1`).
+3. **Standar Komersial Loket / Artatix**:
+   - Hero banner carousel dengan navigation dots & arrows untuk event unggulan / trending.
+   - Category chips dengan ikon yang intuitif (Musik, Festival, Olahraga, Pameran, Workshop, Standup Comedy).
+   - Event card dengan date pill, city/venue dengan ikon lokasi, dan harga terformat jelas "Mulai dari Rp 150.000" atau "Gratis".
+   - Sticky booking widget di event detail dan floating bottom purchase drawer di mobile.
+4. **Data Riil dari Database**: Seluruh data acara, kuota tiket, dan organizer terhubung langsung ke backend PostgreSQL.
+5. **Aksesibilitas & Standar Antislop**: Focus state yang jelas, kontras warna AA/AAA, ukuran tap target ramah sentuhan, dan transisi motion yang fungsional.
 
-## 3. Palet
+## 3. Palet Warna (Loket & Artatix Modern)
 
-| Token       | Nilai     | Peran                                                 |
-| ----------- | --------- | ----------------------------------------------------- |
-| Paper       | `#F5F2EA` | Latar utama, ruang baca                               |
-| Ink         | `#191B1A` | Teks utama, garis tegas, tombol netral                |
-| Vermilion   | `#D9573F` | Aksen editorial, garis, penanda tanggal, elemen besar |
-| Brick       | `#B8432C` | Tombol aksi utama, aman untuk teks paper              |
-| Olive       | `#65735D` | Informasi sekunder, label, status tenang              |
-| Warm border | `#D9D4CA` | Pemisah dan border                                    |
-| Warm muted  | `#EDE8DD` | Permukaan sekunder                                    |
-
-Aturan kontras:
-
-- Teks normal memakai Ink atau Olive di atas Paper.
-- Vermilion hanya untuk teks besar (di atas 18px), garis, ikon non-teks, dan aksen. Jangan memakai Vermilion sebagai latar teks kecil berwarna Paper.
-- Tombol utama memakai Brick dengan teks Paper.
-- Status memakai teks dan ikon, bukan warna saja.
-
-Tidak ada gradient biru-ungu, glow, glassmorphism, atau dark mode setengah jadi. Shadow hanya untuk elemen yang benar-benar terangkat, seperti dialog dan sticky purchase panel.
+| Token           | Nilai / HSL              | Peran                                                |
+| --------------- | ------------------------ | ---------------------------------------------------- |
+| Background      | `#F8FAFC`                | Latar belakang utama halaman discovery               |
+| Card / Surface  | `#FFFFFF`                | Kartu event, panel transaksi, form modal             |
+| Primary Brand   | `#0052CC` (Royal Blue)   | Brand utama, tombol CTA primer, badge aktif          |
+| Secondary Accent| `#FF5A36` (Coral Orange) | Badge promo, countdown, status hot / trending        |
+| Foreground / Ink| `#0F172A` (Slate 900)    | Judul teks, heading, harga tebal                     |
+| Body Text       | `#334155` (Slate 700)    | Deskripsi, narasi, isi syarat & ketentuan            |
+| Muted / Meta    | `#64748B` (Slate 500)    | Tanggal, venue, kota, label sekunder                 |
+| Border          | `#E2E8F0` (Slate 200)    | Garis pemisah, border kartu, input field             |
+| Muted Fill      | `#F1F5F9` (Slate 100)    | Chip nonaktif, background badge, placeholder preview |
 
 ## 4. Tipografi
 
-- **Manrope Variable** untuk UI, label, tabel, dan body. Dipilih karena netral, terbaca di ukuran kecil, dan tidak terasa seperti font default template.
-- **Instrument Serif** hanya untuk headline editorial dan angka besar. Tidak dipakai untuk tombol, label form, atau isi tabel.
-- **IBM Plex Mono** tidak dipakai sebagai tema. Kode tiket dan order memakai Manrope dengan tabular numerals agar tetap konsisten.
+- **Font Keluarga**: Pure modern sans-serif menggunakan **Manrope Variable** (dan system-ui sans-serif fallback).
+- Tidak menggunakan font serif vintage/antik pada headline atau navigasi.
+- **Heading**: Manrope 700 / 800 bold dengan letter-spacing tight (`-0.025em`).
+- **Body**: Manrope 400 / 500 dengan line-height 1.6.
+- **Harga & Angka**: Manrope 700 / 800 dengan `tabular-nums`.
 
-Skala:
+## 5. Komponen Utama
 
-| Peran           | Ukuran         | Catatan                            |
-| --------------- | -------------- | ---------------------------------- |
-| Hero display    | 56 sampai 88px | Instrument Serif, line-height 0.95 |
-| Section display | 36 sampai 56px | Instrument Serif                   |
-| Heading         | 24 sampai 32px | Manrope 700                        |
-| Body            | 15 sampai 17px | Manrope 400, line-height 1.65      |
-| Label           | 12 sampai 13px | Manrope 600, tanpa uppercase lebar |
-| Data            | 14px           | tabular numerals                   |
+### Header & Navigasi
+- Sticky navbar putih dengan border bawah halus dan backdrop blur.
+- Logo brand Gofest dengan tiket icon badge royal blue.
+- Search input cepat dengan shortcut kota.
+- Link: Jelajah Event, Acara Gratis, Tiket Saya, dan tombol CTA "+ Buat Event".
+- Menu profil akun dengan dropdown responsif.
 
-## 5. Spacing, radius, elevation
+### Hero Banner Carousel
+- Carousel banner lebar untuk event headline mingguan.
+- Overlay gradient, date badge, judul tebal, venue, harga awal, dan tombol "Beli Tiket".
+- Navigasi tombol panah kiri-kanan dan indicator dots.
 
-- Spacing mengikuti skala 4px. Section memakai 64, 80, atau 96px di desktop dan 40 sampai 56px di mobile.
-- Radius: 4px untuk input kecil, 8px untuk tombol dan panel, 12px untuk dialog. Tidak semua elemen pill.
-- Border 1px adalah pemisah utama. Shadow hanya untuk dialog, dropdown, dan panel pembelian sticky.
-- Grid 12 kolom di desktop, 4 kolom di mobile. Lebar baca maksimal 68 karakter.
+### Event Cards (Loket / Artatix Grid)
+- Aspect ratio poster 16:9 atau 4:5 dengan rounded-xl.
+- Category badge mengambang di pojok poster.
+- Date dengan CalendarDays icon berwarna biru.
+- Judul 2 baris `line-clamp-2` dengan hover state warna brand.
+- Info lokasi (venue & kota) dengan ikon MapPin.
+- Footer kartu: "Mulai dari" dengan teks harga tebal.
 
-## 6. Identitas visual
-
-Motif: **ticket stub dan halaman event guide**.
-
-- Garis perforasi tipis boleh dipakai pada tiket digital dan ringkasan order, tidak di semua kartu.
-- Tanggal event ditampilkan sebagai blok tipografi besar, bukan badge kecil.
-- Poster event memakai rasio 4:5. Jika belum ada gambar, tampilkan poster tipografi dari judul, tanggal, kota, dan kategori. Jangan memakai placeholder abu-abu.
-- Nomor dan kode tiket memakai tabular numerals dan garis pemisah.
-- Ikon dari `lucide-react` dipakai fungsional, bukan dekorasi. Tidak ada sparkle, magic, robot, atau orb.
-
-## 7. Halaman publik
-
-### Homepage
-
-- Pembuka berupa pencarian dan satu poster event utama, bukan headline generik dengan dua tombol.
-- Urutan: pembuka editorial, pencarian, event yang sedang dijual, kategori sebagai indeks teks, event terdekat, ajakan organizer.
-- Tidak ada logo partner, testimoni, atau angka statistik palsu.
-- Event yang tidak tersedia tetap ditampilkan dengan status jelas, bukan disembunyikan diam-diam.
-
-### Event discovery
-
-- Filter di rail kiri pada desktop, sheet pada mobile.
-- Hasil memakai baris editorial: poster kecil, judul, tanggal, venue, harga, ketersediaan.
-- URL menyimpan filter. Empty state memberi aksi reset dan saran memperluas pencarian.
-
-### Event detail
-
-- Poster besar, judul, waktu, venue, organizer, deskripsi, aturan.
-- Panel tiket sticky di desktop dan bar pembelian di mobile.
-- Harga, sisa kuota, dan periode penjualan terlihat sebelum checkout.
-- Sold out tetap bisa dibaca, tombol beli diganti penjelasan.
-
-### Checkout
-
-- Satu kolom di mobile, dua kolom di desktop.
-- Ringkasan biaya selalu terlihat, termasuk diskon dan biaya platform.
-- Tidak ada biaya tersembunyi yang muncul setelah konfirmasi.
-- Form memakai label terlihat, error di dekat field, dan tombol submit dengan loading state.
-
-### Order dan tiket
-
-- Order pending menampilkan countdown, instruksi, dan tombol cek status.
-- Tiket digital terasa seperti tiket fisik: tipografi besar, kode, QR, status, dan tombol cetak.
-- Halaman tiket dapat dicetak tanpa navigasi dan elemen dekoratif.
-
-## 8. Workspace
-
-Workspace lebih tenang dari halaman publik.
-
-- Organizer dashboard: status event, penjualan, sisa kuota, order terbaru, check-in. Tanpa chart jika data belum cukup.
-- Tabel padat, filter jelas, aksi baris tidak tersembunyi di balik ikon tanpa label.
-- Form event dibagi menjadi bagian: informasi, waktu dan lokasi, tiket, publikasi. Save state jelas.
-- Admin panel utilitarian. Jangan menyalin hero homepage.
-- Scanner check-in: hasil scan besar, teks jelas, warna plus ikon plus teks, dan `aria-live`.
-
-## 9. Motion
-
-- Hover dan focus: 120 sampai 160ms.
-- Dialog, sheet, dan dropdown: 180 sampai 220ms.
-- Tidak ada infinite float, pulse, atau parallax.
-- `prefers-reduced-motion: reduce` mematikan transisi non-esensial.
-
-## 10. Copy
-
-- Bahasa Indonesia, ringkas, spesifik.
-- Hindari "seamless", "next level", "revolusioner", "unlock", "experience terbaik".
-- CTA menjelaskan aksi: "Pilih tiket", "Lanjut ke pembayaran", "Unduh tiket", "Buka scanner".
-- Jangan memakai em dash.
-- Empty state menjelaskan apa yang kosong dan langkah berikutnya.
-- Error menjelaskan apa yang gagal dan apa yang bisa dilakukan.
-
-## 11. Checklist sebelum halaman dianggap selesai
-
-- Ada loading, empty, dan error state.
-- Mobile 360px tidak overflow.
-- Semua kontrol bisa dijangkau keyboard dan punya focus terlihat.
-- Kontras teks memenuhi WCAG AA.
-- Semua gambar punya dimensi dan alt yang sesuai.
-- Tidak ada data rekaan yang terlihat nyata.
-- Tidak ada tombol atau tautan mati.
-- Motion menghormati reduced motion.
+### Event Detail
+- Large cover visual dengan ambient blur.
+- Tab navigasi internal: Deskripsi, Tiket, Syarat & Ketentuan, Lokasi.
+- Sticky ticket booking panel di desktop dan fixed bottom action bar di mobile.
+- Counter kuota tiket real-time dan validasi status penjualan.

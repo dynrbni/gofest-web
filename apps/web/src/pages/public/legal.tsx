@@ -1,12 +1,12 @@
 import { useDocumentTitle } from '@/lib/hooks';
 
 export function TermsPage() {
-  useDocumentTitle('Syarat layanan');
+  useDocumentTitle('Syarat Layanan');
   return (
     <main className="container max-w-3xl py-10 sm:py-14">
-      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-olive">Ketentuan</p>
-      <h1 className="mt-2 font-display text-5xl leading-none tracking-tightest">Syarat layanan</h1>
-      <p className="mt-3 text-sm text-muted-foreground">Terakhir diperbarui: 14 November 2026</p>
+      <p className="text-xs font-bold uppercase tracking-wider text-blue-600">Ketentuan Layanan</p>
+      <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">Syarat & Ketentuan Layanan</h1>
+      <p className="mt-2 text-xs text-slate-500">Terakhir diperbarui: 14 November 2026</p>
 
       <div className="mt-8 space-y-7 text-[15px] leading-[1.75]">
         <section>
@@ -59,9 +59,9 @@ export function PrivacyPage() {
   useDocumentTitle('Kebijakan privasi');
   return (
     <main className="container max-w-3xl py-10 sm:py-14">
-      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-olive">Privasi</p>
-      <h1 className="mt-2 font-display text-5xl leading-none tracking-tightest">Kebijakan privasi</h1>
-      <p className="mt-3 text-sm text-muted-foreground">Terakhir diperbarui: 14 November 2026</p>
+      <p className="text-xs font-bold uppercase tracking-wider text-blue-600">Privasi & Keamanan</p>
+      <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">Kebijakan Privasi</h1>
+      <p className="mt-2 text-xs text-slate-500">Terakhir diperbarui: 14 November 2026</p>
 
       <div className="mt-8 space-y-7 text-[15px] leading-[1.75]">
         <section>

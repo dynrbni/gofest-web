@@ -79,7 +79,7 @@ export function RegisterPage() {
             autoComplete="name"
             value={form.name}
             onChange={(event) => setField('name', event.target.value)}
-            className="h-11 border-ink/25 bg-paper"
+            className="h-11 rounded-xl border-slate-200 bg-slate-50 focus:bg-white"
           />
         </Field>
         <Field label="Email" htmlFor="register-email" error={errors.email} required>
@@ -89,7 +89,7 @@ export function RegisterPage() {
             autoComplete="email"
             value={form.email}
             onChange={(event) => setField('email', event.target.value)}
-            className="h-11 border-ink/25 bg-paper"
+            className="h-11 rounded-xl border-slate-200 bg-slate-50 focus:bg-white"
           />
         </Field>
         <Field
@@ -104,7 +104,7 @@ export function RegisterPage() {
             autoComplete="tel"
             value={form.phone}
             onChange={(event) => setField('phone', event.target.value)}
-            className="h-11 border-ink/25 bg-paper"
+            className="h-11 rounded-xl border-slate-200 bg-slate-50 focus:bg-white"
           />
         </Field>
         <Field
@@ -120,7 +120,7 @@ export function RegisterPage() {
             autoComplete="new-password"
             value={form.password}
             onChange={(event) => setField('password', event.target.value)}
-            className="h-11 border-ink/25 bg-paper"
+            className="h-11 rounded-xl border-slate-200 bg-slate-50 focus:bg-white"
           />
         </Field>
         <Field label="Ulangi password" htmlFor="register-confirm" error={errors.confirm} required>
@@ -130,33 +130,33 @@ export function RegisterPage() {
             autoComplete="new-password"
             value={form.confirm}
             onChange={(event) => setField('confirm', event.target.value)}
-            className="h-11 border-ink/25 bg-paper"
+            className="h-11 rounded-xl border-slate-200 bg-slate-50 focus:bg-white"
           />
         </Field>
 
         <div>
-          <label className="flex items-start gap-2 text-sm">
+          <label className="flex items-start gap-2 text-sm text-slate-700">
             <input
               type="checkbox"
               checked={accepted}
               onChange={(event) => setAccepted(event.target.checked)}
-              className="mt-1 h-4 w-4 accent-[#B8432C]"
+              className="mt-1 h-4 w-4 rounded accent-blue-600"
               aria-describedby={errors.terms ? 'register-terms-error' : undefined}
             />
             <span>
               Saya menyetujui{' '}
-              <Link to="/terms" className="font-semibold underline underline-offset-4">
-                syarat layanan
+              <Link to="/terms" className="font-bold text-blue-600 underline underline-offset-4">
+                Syarat Layanan
               </Link>{' '}
               dan{' '}
-              <Link to="/privacy" className="font-semibold underline underline-offset-4">
-                kebijakan privasi
+              <Link to="/privacy" className="font-bold text-blue-600 underline underline-offset-4">
+                Kebijakan Privasi
               </Link>
               .
             </span>
           </label>
           {errors.terms ? (
-            <p id="register-terms-error" className="mt-1 text-xs font-semibold text-brick">
+            <p id="register-terms-error" className="mt-1 text-xs font-semibold text-rose-600">
               {errors.terms}
             </p>
           ) : null}
@@ -167,9 +167,9 @@ export function RegisterPage() {
         <Button
           type="submit"
           disabled={submitting}
-          className="h-11 w-full bg-brick text-paper hover:bg-brick/90"
+          className="h-12 w-full rounded-xl bg-blue-600 font-bold text-white shadow-md transition-all hover:bg-blue-700 active:scale-95"
         >
-          {submitting ? 'Membuat akun...' : 'Buat akun'}
+          {submitting ? 'Membuat akun...' : 'Daftar Sekarang'}
         </Button>
       </form>
     </AuthShell>

@@ -175,7 +175,7 @@ export function OrderPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Link
           to={`/events/${order.event.slug}`}
-          className="inline-flex items-center gap-2 text-sm font-semibold text-olive hover:text-ink"
+          className="inline-flex items-center gap-2 text-sm font-bold text-blue-600 hover:underline"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden />
           Halaman acara
@@ -183,7 +183,7 @@ export function OrderPage() {
         <button
           type="button"
           onClick={() => void orderQuery.refetch()}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-olive hover:text-ink"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-blue-600"
           disabled={orderQuery.isFetching}
         >
           <RefreshCw className={cn('h-3.5 w-3.5', orderQuery.isFetching && 'animate-spin')} aria-hidden />
@@ -191,64 +191,63 @@ export function OrderPage() {
         </button>
       </div>
 
-      <header className="mt-5 border-b border-ink pb-5">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-olive">Pesanan</p>
+      <header className="mt-5 border-b border-slate-200 pb-5">
+        <p className="text-xs font-bold uppercase tracking-wider text-blue-600">Pesanan Tiket</p>
         <div className="mt-1 flex flex-wrap items-center gap-3">
-          <h1 className="font-display text-4xl leading-none tracking-tightest sm:text-5xl">
+          <h1 className="text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
             {order.orderCode}
           </h1>
           <OrderStatusBadge status={order.status} />
         </div>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p className="mt-2 text-sm text-slate-500">
           Dibuat {formatDateTime(order.createdAt)} · {order.event.title}
         </p>
       </header>
 
       {order.status === 'PENDING_PAYMENT' ? (
-        <section className="mt-6 border border-ink/20 bg-card p-5 sm:p-6" aria-labelledby="payment-heading">
+        <section className="mt-6 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-md" aria-labelledby="payment-heading">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <div className="flex items-center gap-2 text-sm font-semibold text-brick">
+              <div className="flex items-center gap-2 text-sm font-bold text-coral-600">
                 <Clock className="h-4 w-4" aria-hidden />
-                Selesaikan pembayaran
+                Selesaikan Pembayaran Sebelum Waktu Habis
               </div>
-              <h2 id="payment-heading" className="mt-1 text-xl font-bold">
-                Sisa waktu <Countdown target={order.expiresAt} />
+              <h2 id="payment-heading" className="mt-1 text-2xl font-black text-slate-900">
+                Sisa Waktu: <Countdown target={order.expiresAt} />
               </h2>
-              <p className="mt-1 max-w-prose text-sm text-muted-foreground">
-                Kuota tiket direservasi sampai batas waktu ini. Setelah lewat, order kedaluwarsa dan kuota
-                dilepas otomatis.
+              <p className="mt-1 max-w-prose text-xs text-slate-500">
+                Tiket direservasi khusus untukmu sampai batas waktu di atas.
               </p>
             </div>
-            <p className="text-2xl font-bold tabular-nums">{formatIDR(order.total)}</p>
+            <p className="text-3xl font-black text-blue-600 tabular-nums">{formatIDR(order.total)}</p>
           </div>
 
           {order.payment ? (
-            <dl className="mt-5 grid gap-2 border-t border-warm-border pt-4 text-sm sm:grid-cols-2">
+            <dl className="mt-5 grid gap-3 border-t border-slate-100 pt-4 text-sm sm:grid-cols-2">
               <div>
-                <dt className="text-xs text-muted-foreground">Referensi pembayaran</dt>
-                <dd className="font-semibold tabular-nums">{order.payment.providerReference}</dd>
+                <dt className="text-xs font-medium text-slate-400">Kode / Referensi Bayar</dt>
+                <dd className="font-mono text-base font-bold text-slate-900 tabular-nums">{order.payment.providerReference}</dd>
               </div>
               <div>
-                <dt className="text-xs text-muted-foreground">Metode</dt>
-                <dd className="font-semibold">{order.payment.method ?? order.payment.provider}</dd>
+                <dt className="text-xs font-medium text-slate-400">Metode Pembayaran</dt>
+                <dd className="font-semibold text-slate-800">{order.payment.method ?? order.payment.provider}</dd>
               </div>
             </dl>
           ) : (
-            <p className="mt-4 border-l-2 border-warm-border pl-3 text-sm text-muted-foreground">
+            <p className="mt-4 border-l-2 border-blue-500 pl-3 text-sm text-slate-500">
               Instruksi pembayaran belum dibuat. Klik tombol di bawah untuk membuat sesi pembayaran.
             </p>
           )}
 
-          <div className="mt-5 flex flex-wrap gap-3">
+          <div className="mt-6 flex flex-wrap gap-3">
             <Button
               type="button"
               onClick={() => void createPayment()}
               disabled={busy !== null}
-              className="h-10 bg-brick text-paper hover:bg-brick/90"
+              className="h-11 rounded-xl bg-blue-600 px-6 font-bold text-white shadow-md transition-all hover:bg-blue-700 active:scale-95"
             >
               <CreditCard className="h-4 w-4" aria-hidden />
-              {busy === 'payment' ? 'Menyiapkan...' : order.payment ? 'Buat ulang instruksi' : 'Buat instruksi pembayaran'}
+              {busy === 'payment' ? 'Menyiapkan...' : order.payment ? 'Buat Ulang Instruksi' : 'Lanjut ke Pembayaran'}
             </Button>
             {order.payment?.provider === 'mock' ? (
               <Button
@@ -256,18 +255,14 @@ export function OrderPage() {
                 variant="outline"
                 onClick={() => void mockPay()}
                 disabled={busy !== null}
-                className="h-10 border-ink/30 bg-transparent"
+                className="h-11 rounded-xl border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-100"
               >
-                {busy === 'mock' ? 'Memproses...' : 'Simulasikan pembayaran berhasil'}
+                {busy === 'mock' ? 'Memproses...' : 'Simulasikan Pembayaran Berhasil'}
               </Button>
             ) : null}
           </div>
-          <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
-            Tombol simulasi hanya tersedia pada lingkungan pengembangan dengan payment provider mock.
-            Status lunas tetap ditentukan oleh webhook pembayaran di server.
-          </p>
           {actionError ? (
-            <p className="mt-3 text-sm font-semibold text-brick" role="alert">
+            <p className="mt-3 text-sm font-semibold text-rose-600" role="alert">
               {errorMessage(actionError)}
             </p>
           ) : null}
@@ -275,13 +270,12 @@ export function OrderPage() {
       ) : null}
 
       {order.status === 'PAID' ? (
-        <section className="mt-6 flex items-start gap-3 border border-olive/30 bg-olive/5 p-5" aria-live="polite">
-          <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-olive" aria-hidden />
+        <section className="mt-6 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-6 text-emerald-950" aria-live="polite">
+          <CheckCircle2 className="mt-0.5 h-6 w-6 shrink-0 text-emerald-600" aria-hidden />
           <div>
-            <h2 className="text-lg font-bold text-olive">Pembayaran terkonfirmasi</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Tiket sudah diterbitkan. Buka tiket satu per satu di bawah, atau cek email konfirmasi untuk
-              tautan yang sama.
+            <h2 className="text-xl font-black text-emerald-900">Pembayaran Berhasil & Terkonfirmasi!</h2>
+            <p className="mt-1 text-sm text-emerald-800">
+              Tiket resmi sudah diterbitkan. Kamu bisa langsung membuka dan mengunduh e-tiket di bawah ini untuk dibawa saat check-in di venue.
             </p>
           </div>
         </section>
@@ -325,24 +319,24 @@ export function OrderPage() {
       ) : null}
 
       {paid && order.tickets.length > 0 ? (
-        <section className="mt-8">
-          <h2 className="border-b border-ink pb-2 text-lg font-bold">Tiket kamu</h2>
-          <div className="mt-2 divide-y divide-warm-border">
+        <section className="mt-8 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
+          <h2 className="border-b border-slate-100 pb-3 text-base font-bold text-slate-900">E-Tiket Resmi Kamu</h2>
+          <div className="mt-2 divide-y divide-slate-100">
             {order.tickets.map((ticket) => (
-              <div key={ticket.id} className="flex flex-wrap items-center justify-between gap-3 py-4">
+              <div key={ticket.id} className="flex flex-wrap items-center justify-between gap-3 py-4 first:pt-2 last:pb-0">
                 <div>
-                  <p className="text-sm font-bold">{ticket.holderName}</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    {ticket.ticketTypeName ?? 'Tiket'} · <span className="tabular-nums">{ticket.ticketCode}</span>
+                  <p className="text-sm font-bold text-slate-900">{ticket.holderName}</p>
+                  <p className="mt-0.5 text-xs text-slate-500">
+                    {ticket.ticketTypeName ?? 'Tiket'} · <span className="font-mono font-bold text-blue-600 tabular-nums">{ticket.ticketCode}</span>
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
                   <TicketStatusBadge status={ticket.status} />
                   <Link
                     to={`/ticket/${ticket.ticketCode}${ticketTokenQuery}`}
-                    className="rounded-md bg-ink px-3 py-1.5 text-xs font-semibold text-paper"
+                    className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-xs transition-colors hover:bg-blue-700"
                   >
-                    Buka tiket
+                    Buka E-Tiket
                   </Link>
                 </div>
               </div>
@@ -352,55 +346,55 @@ export function OrderPage() {
       ) : null}
 
       <section className="mt-8 grid gap-8 lg:grid-cols-[1fr_320px]">
-        <div>
-          <h2 className="border-b border-ink pb-2 text-lg font-bold">Rincian pesanan</h2>
-          <div className="mt-3 space-y-2 text-sm">
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
+          <h2 className="border-b border-slate-100 pb-3 text-base font-bold text-slate-900">Rincian Tagihan</h2>
+          <div className="mt-3 space-y-2 text-xs text-slate-700">
             {order.items.map((item) => (
               <div key={item.id} className="flex justify-between gap-4">
                 <span>
                   {item.ticketNameSnapshot ?? item.ticketTypeName} × {item.quantity}
                 </span>
-                <span className="tabular-nums">{formatIDR(item.lineTotal)}</span>
+                <span className="font-bold tabular-nums">{formatIDR(item.lineTotal)}</span>
               </div>
             ))}
           </div>
-          <div className="mt-4 space-y-2 border-t border-dashed border-warm-border pt-3 text-sm">
-            <div className="flex justify-between">
+          <div className="mt-4 space-y-2 border-t border-dashed border-slate-200 pt-3 text-xs">
+            <div className="flex justify-between text-slate-600">
               <span>Subtotal</span>
-              <span className="tabular-nums">{formatIDR(order.subtotal)}</span>
+              <span className="font-bold tabular-nums">{formatIDR(order.subtotal)}</span>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between text-emerald-600">
               <span>Diskon</span>
-              <span className="tabular-nums text-olive">
+              <span className="font-bold tabular-nums">
                 {order.discount ? `− ${formatIDR(order.discount)}` : formatIDR(0)}
               </span>
             </div>
-            <div className="flex justify-between">
-              <span>Biaya platform</span>
-              <span className="tabular-nums">{formatIDR(order.platformFee)}</span>
+            <div className="flex justify-between text-slate-600">
+              <span>Biaya Layanan</span>
+              <span className="font-bold tabular-nums">{formatIDR(order.platformFee)}</span>
             </div>
-            <div className="flex justify-between border-t border-ink pt-2 font-bold">
-              <span>Total</span>
-              <span className="tabular-nums">{formatIDR(order.total)}</span>
+            <div className="flex justify-between border-t border-slate-200 pt-2 text-sm font-black text-slate-900">
+              <span>Total Akhir</span>
+              <span className="text-base text-blue-600 tabular-nums">{formatIDR(order.total)}</span>
             </div>
           </div>
         </div>
 
-        <aside className="text-sm">
-          <h2 className="border-b border-ink pb-2 text-lg font-bold">Pembeli</h2>
-          <dl className="mt-3 space-y-2">
+        <aside className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs text-xs">
+          <h2 className="border-b border-slate-100 pb-3 text-base font-bold text-slate-900">Data Pemesan</h2>
+          <dl className="mt-3 space-y-3">
             <div>
-              <dt className="text-xs text-muted-foreground">Nama</dt>
-              <dd className="font-semibold">{order.buyerName}</dd>
+              <dt className="text-slate-400 font-medium">Nama Pembeli</dt>
+              <dd className="font-bold text-slate-900">{order.buyerName}</dd>
             </div>
             <div>
-              <dt className="text-xs text-muted-foreground">Email</dt>
-              <dd className="break-all">{order.buyerEmail}</dd>
+              <dt className="text-slate-400 font-medium">Email Konfirmasi</dt>
+              <dd className="break-all font-semibold text-slate-800">{order.buyerEmail}</dd>
             </div>
             {order.buyerPhone ? (
               <div>
-                <dt className="text-xs text-muted-foreground">WhatsApp</dt>
-                <dd>{order.buyerPhone}</dd>
+                <dt className="text-slate-400 font-medium">Nomor WhatsApp</dt>
+                <dd className="font-semibold text-slate-800">{order.buyerPhone}</dd>
               </div>
             ) : null}
           </dl>
@@ -414,14 +408,11 @@ export function OrderPage() {
                 toast.error('Tautan tidak dapat disalin');
               }
             }}
-            className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-olive underline underline-offset-4"
+            className="mt-5 inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:underline"
           >
             <Copy className="h-3.5 w-3.5" aria-hidden />
-            Salin tautan pesanan
+            Salin Tautan Akses Pesanan
           </button>
-          <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
-            Tautan memuat token akses. Jangan bagikan ke orang yang tidak berkepentingan.
-          </p>
         </aside>
       </section>
     </main>

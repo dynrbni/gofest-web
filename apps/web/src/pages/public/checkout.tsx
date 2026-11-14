@@ -7,11 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { api, fieldErrors, ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { formatDateLong, formatEventWhen, formatIDR, formatTime } from '@/lib/format';
+import { formatDateLong, formatIDR, formatTime } from '@/lib/format';
 import { useDebouncedValue, useDocumentTitle } from '@/lib/hooks';
 import type { Order } from '@/lib/models';
 import { usePublicEvent } from '@/lib/queries';
-import { cn } from '@/lib/utils';
 
 interface QuoteResult {
   subtotal: number;
@@ -206,7 +205,7 @@ export function CheckoutPage() {
   if (eventQuery.isError || !event) {
     return (
       <main className="container max-w-3xl py-14">
-        <Link to="/events" className="inline-flex items-center gap-2 text-sm font-semibold text-olive">
+        <Link to="/events" className="inline-flex items-center gap-2 text-sm font-bold text-blue-600 hover:underline">
           <ArrowLeft className="h-4 w-4" aria-hidden />
           Kembali ke acara
         </Link>
@@ -226,36 +225,36 @@ export function CheckoutPage() {
     <main className="container py-8 sm:py-12">
       <Link
         to={`/events/${event.slug}`}
-        className="inline-flex items-center gap-2 text-sm font-semibold text-olive hover:text-ink"
+        className="inline-flex items-center gap-2 text-sm font-bold text-blue-600 hover:underline"
       >
         <ArrowLeft className="h-4 w-4" aria-hidden />
         Kembali ke detail acara
       </Link>
 
-      <div className="mt-5 border-b border-ink pb-5">
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-olive">Checkout</p>
-        <h1 className="mt-1 font-display text-4xl leading-none tracking-tightest sm:text-5xl">
+      <div className="mt-5 border-b border-slate-200 pb-5">
+        <p className="text-xs font-bold uppercase tracking-wider text-blue-600">Checkout Tiket</p>
+        <h1 className="mt-1 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
           {event.title}
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p className="mt-2 text-sm text-slate-500">
           {formatDateLong(event.startsAt, event.timezone)} · {formatTime(event.startsAt, event.timezone)} ·{' '}
           {event.type === 'ONLINE' ? 'Online' : `${event.venueName ?? 'Venue'}${event.city ? `, ${event.city}` : ''}`}
         </p>
       </div>
 
-      <form onSubmit={onSubmit} className="mt-8 grid gap-10 lg:grid-cols-[1fr_360px] lg:gap-14" noValidate>
-        <div className="space-y-10">
-          <section aria-labelledby="tickets-heading">
-            <div className="flex items-end justify-between gap-3 border-b border-ink pb-2">
-              <h2 id="tickets-heading" className="text-lg font-bold">
-                1. Pilih tiket
+      <form onSubmit={onSubmit} className="mt-8 grid gap-10 lg:grid-cols-[1fr_380px] lg:gap-12" noValidate>
+        <div className="space-y-8">
+          <section aria-labelledby="tickets-heading" className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
+            <div className="flex items-end justify-between gap-3 border-b border-slate-100 pb-3">
+              <h2 id="tickets-heading" className="text-base font-bold text-slate-900">
+                1. Pilih Jumlah Tiket
               </h2>
-              <p className="text-xs text-muted-foreground">Maksimal 10 tiket per order</p>
+              <p className="text-xs text-slate-400">Maksimal 10 tiket per pesanan</p>
             </div>
-            {errors.items ? <p className="mt-2 text-xs font-semibold text-brick">{errors.items}</p> : null}
-            <div className="mt-1 divide-y divide-warm-border">
+            {errors.items ? <p className="mt-2 text-xs font-semibold text-rose-600">{errors.items}</p> : null}
+            <div className="mt-2 divide-y divide-slate-100">
               {sellable.length === 0 ? (
-                <p className="py-5 text-sm text-muted-foreground">
+                <p className="py-5 text-sm text-slate-500">
                   Tidak ada tiket yang sedang dijual untuk acara ini. Kembali ke halaman acara untuk
                   melihat status penjualan.
                 </p>
@@ -264,41 +263,41 @@ export function CheckoutPage() {
                   const quantity = quantities[ticket.id] ?? 0;
                   const max = Math.min(ticket.maxPerOrder, ticket.available ?? 0);
                   return (
-                    <div key={ticket.id} className="py-4">
+                    <div key={ticket.id} className="py-4 first:pt-2 last:pb-0">
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <p className="text-sm font-bold">{ticket.name}</p>
+                          <p className="text-sm font-bold text-slate-900">{ticket.name}</p>
                           {ticket.description ? (
-                            <p className="mt-0.5 max-w-md text-xs leading-relaxed text-muted-foreground">
+                            <p className="mt-0.5 max-w-md text-xs leading-relaxed text-slate-500">
                               {ticket.description}
                             </p>
                           ) : null}
-                          <p className="mt-1 text-xs text-muted-foreground">
+                          <p className="mt-1 text-xs text-slate-400">
                             {ticket.available ?? 0} tersisa · min. {ticket.minPerOrder}, maks. {ticket.maxPerOrder} per order
                           </p>
                         </div>
                         <div className="flex items-center gap-3">
-                          <p className="text-sm font-bold tabular-nums">
+                          <p className="text-sm font-extrabold text-slate-900 tabular-nums">
                             {ticket.price === 0 ? 'Gratis' : formatIDR(ticket.price)}
                           </p>
-                          <div className="flex items-center rounded-md border border-ink/25">
+                          <div className="flex items-center rounded-xl border border-slate-200 bg-slate-50">
                             <button
                               type="button"
                               onClick={() => setQuantity(ticket.id, quantity - 1, max, ticket.minPerOrder)}
                               disabled={quantity <= 0}
-                              className="flex h-9 w-9 items-center justify-center disabled:opacity-40"
+                              className="flex h-9 w-9 items-center justify-center text-slate-600 transition-colors hover:bg-slate-200 disabled:opacity-30 rounded-l-xl"
                               aria-label={`Kurangi tiket ${ticket.name}`}
                             >
                               <Minus className="h-4 w-4" aria-hidden />
                             </button>
-                            <span className="w-8 text-center text-sm font-semibold tabular-nums" aria-live="polite">
+                            <span className="w-8 text-center text-sm font-bold text-slate-900 tabular-nums" aria-live="polite">
                               {quantity}
                             </span>
                             <button
                               type="button"
                               onClick={() => setQuantity(ticket.id, quantity + 1, max, ticket.minPerOrder)}
                               disabled={quantity >= max}
-                              className="flex h-9 w-9 items-center justify-center disabled:opacity-40"
+                              className="flex h-9 w-9 items-center justify-center text-slate-600 transition-colors hover:bg-slate-200 disabled:opacity-30 rounded-r-xl"
                               aria-label={`Tambah tiket ${ticket.name}`}
                             >
                               <Plus className="h-4 w-4" aria-hidden />
@@ -313,12 +312,12 @@ export function CheckoutPage() {
             </div>
           </section>
 
-          <section aria-labelledby="buyer-heading">
-            <h2 id="buyer-heading" className="border-b border-ink pb-2 text-lg font-bold">
-              2. Data pembeli
+          <section aria-labelledby="buyer-heading" className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
+            <h2 id="buyer-heading" className="border-b border-slate-100 pb-3 text-base font-bold text-slate-900">
+              2. Data Informasi Pembeli
             </h2>
-            <p className="mt-2 text-xs text-muted-foreground">
-              Tiket dan tautan pesanan dikirim ke email ini. Nama pada tiket mengikuti nama pembeli.
+            <p className="mt-2 text-xs text-slate-500">
+              Tiket dan konfirmasi pesanan dikirim ke email ini. Nama pada tiket mengikuti data pembeli.
             </p>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <Field label="Nama lengkap" htmlFor="checkout-name" error={errors.buyerName} required>
@@ -329,7 +328,7 @@ export function CheckoutPage() {
                   onChange={(changeEvent) =>
                     setBuyer((current) => ({ ...current, name: changeEvent.target.value }))
                   }
-                  className="h-11 border-ink/25 bg-card"
+                  className="h-11 rounded-xl border-slate-200 bg-slate-50 focus:bg-white"
                 />
               </Field>
               <Field label="Email" htmlFor="checkout-email" error={errors.buyerEmail} required>
@@ -341,13 +340,13 @@ export function CheckoutPage() {
                   onChange={(changeEvent) =>
                     setBuyer((current) => ({ ...current, email: changeEvent.target.value }))
                   }
-                  className="h-11 border-ink/25 bg-card"
+                  className="h-11 rounded-xl border-slate-200 bg-slate-50 focus:bg-white"
                 />
               </Field>
               <Field
-                label="Nomor WhatsApp"
+                label="Nomor WhatsApp / HP"
                 htmlFor="checkout-phone"
-                hint="Opsional. Membantu organizer menghubungi soal acara."
+                hint="Opsional. Untuk notifikasi WhatsApp tiket resmi."
                 error={errors.buyerPhone}
               >
                 <Input
@@ -358,25 +357,24 @@ export function CheckoutPage() {
                   onChange={(changeEvent) =>
                     setBuyer((current) => ({ ...current, phone: changeEvent.target.value }))
                   }
-                  className="h-11 border-ink/25 bg-card"
+                  className="h-11 rounded-xl border-slate-200 bg-slate-50 focus:bg-white"
                 />
               </Field>
             </div>
             {!user ? (
-              <p className="mt-3 text-xs text-muted-foreground">
-                Kamu checkout sebagai tamu. Simpan tautan pesanan yang muncul setelah ini untuk membuka
-                tiket kembali.{' '}
-                <Link to="/login" className="font-semibold underline underline-offset-4">
-                  Masuk
+              <p className="mt-4 text-xs text-slate-500">
+                Kamu memesan sebagai tamu.{' '}
+                <Link to="/login" className="font-bold text-blue-600 underline underline-offset-4">
+                  Masuk ke akun
                 </Link>{' '}
-                bila sudah punya akun.
+                untuk menyimpan tiket langsung di akunmu.
               </p>
             ) : null}
           </section>
 
-          <section aria-labelledby="coupon-heading">
-            <h2 id="coupon-heading" className="border-b border-ink pb-2 text-lg font-bold">
-              3. Kode promo
+          <section aria-labelledby="coupon-heading" className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
+            <h2 id="coupon-heading" className="border-b border-slate-100 pb-3 text-base font-bold text-slate-900">
+              3. Kode Promo & Voucher Diskon
             </h2>
             <div className="mt-4 flex max-w-md gap-2">
               <label htmlFor="checkout-coupon" className="sr-only">
@@ -386,127 +384,117 @@ export function CheckoutPage() {
                 id="checkout-coupon"
                 value={couponInput}
                 onChange={(changeEvent) => setCouponInput(changeEvent.target.value.toUpperCase())}
-                placeholder="Contoh: PRESALE10"
-                className="h-10 border-ink/25 bg-card uppercase"
+                placeholder="Contoh: GOFEST10"
+                className="h-11 rounded-xl border-slate-200 bg-slate-50 uppercase focus:bg-white"
               />
-              <Button type="button" variant="outline" onClick={applyCoupon} className="h-10 border-ink/25">
+              <Button type="button" variant="outline" onClick={applyCoupon} className="h-11 rounded-xl border-slate-200 font-bold text-slate-700 hover:bg-slate-100">
                 Terapkan
               </Button>
               {couponCode ? (
-                <Button type="button" variant="ghost" onClick={resetCoupon} className="h-10">
+                <Button type="button" variant="ghost" onClick={resetCoupon} className="h-11 rounded-xl text-rose-600 hover:bg-rose-50 font-bold">
                   Hapus
                 </Button>
               ) : null}
             </div>
             {quoteError ? (
-              <p className="mt-2 max-w-md text-xs font-semibold text-brick" role="alert">
-                {quoteError instanceof ApiError ? quoteError.message : 'Kode promo tidak dapat diperiksa.'}
+              <p className="mt-2 max-w-md text-xs font-semibold text-rose-600" role="alert">
+                {quoteError instanceof ApiError ? quoteError.message : 'Kode promo tidak valid atau kuota habis.'}
               </p>
             ) : couponCode && quote?.couponCode ? (
-              <p className="mt-2 text-xs font-semibold text-olive">
-                Kode {quote.couponCode} diterapkan. Potongan tampil di ringkasan.
+              <p className="mt-2 text-xs font-semibold text-emerald-600">
+                ✓ Kode promo {quote.couponCode} berhasil diterapkan!
               </p>
             ) : null}
           </section>
 
-          <section aria-labelledby="terms-heading">
+          <section aria-labelledby="terms-heading" className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
             <h2 id="terms-heading" className="sr-only">
               Persetujuan
             </h2>
-            <label className="flex items-start gap-2 text-sm">
+            <label className="flex cursor-pointer items-start gap-3 text-sm text-slate-700">
               <input
                 type="checkbox"
                 checked={accepted}
                 onChange={(changeEvent) => setAccepted(changeEvent.target.checked)}
-                className="mt-1 h-4 w-4 accent-[#B8432C]"
+                className="mt-1 h-4 w-4 rounded accent-blue-600"
               />
               <span>
-                Saya sudah membaca detail acara dan menyetujui{' '}
-                <Link to="/terms" className="font-semibold underline underline-offset-4">
-                  syarat layanan
+                Saya telah membaca dan menyetujui{' '}
+                <Link to="/terms" className="font-bold text-blue-600 underline underline-offset-4">
+                  Syarat & Ketentuan Layanan
                 </Link>
-                . Saya memahami tiket hanya berlaku satu kali dan tidak dapat dipindahtangankan di luar
-                ketentuan organizer.
+                . Tiket berlaku sah sesuai aturan organizer.
               </span>
             </label>
-            {errors.terms ? <p className="mt-1 text-xs font-semibold text-brick">{errors.terms}</p> : null}
+            {errors.terms ? <p className="mt-2 text-xs font-semibold text-rose-600">{errors.terms}</p> : null}
           </section>
         </div>
 
         <aside className="lg:sticky lg:top-24 lg:h-fit">
-          <div className="border border-ink/20 bg-card shadow-sm">
-            <div className="border-b border-warm-border p-5">
-              <h2 className="text-lg font-bold">Ringkasan biaya</h2>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Dihitung dari data tiket di server. Tidak ada biaya tambahan setelah konfirmasi.
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-lg">
+            <div className="border-b border-slate-100 pb-4">
+              <h2 className="text-base font-bold text-slate-900">Ringkasan Pembayaran</h2>
+              <p className="mt-0.5 text-xs text-slate-400">
+                Perhitungan resmi dari server
               </p>
             </div>
-            <div className="space-y-2 p-5 text-sm">
+            <div className="space-y-3 pt-4 text-sm">
               {selectedItems.length === 0 ? (
-                <p className="text-muted-foreground">Belum ada tiket dipilih.</p>
+                <p className="text-xs text-slate-400">Belum ada tiket dipilih.</p>
               ) : (
                 selectedItems.map((item) => {
                   const ticket = ticketTypes.find((entry) => entry.id === item.ticketTypeId);
                   if (!ticket) return null;
                   return (
-                    <div key={item.ticketTypeId} className="flex justify-between gap-3">
+                    <div key={item.ticketTypeId} className="flex justify-between gap-3 text-xs text-slate-700">
                       <span>
                         {ticket.name} × {item.quantity}
                       </span>
-                      <span className="tabular-nums">{formatIDR(ticket.price * item.quantity)}</span>
+                      <span className="font-bold tabular-nums">{formatIDR(ticket.price * item.quantity)}</span>
                     </div>
                   );
                 })
               )}
-              <div className="my-3 border-t border-dashed border-warm-border" />
-              <div className="flex justify-between gap-3">
+              <div className="my-2 border-t border-dashed border-slate-200" />
+              <div className="flex justify-between gap-3 text-xs text-slate-600">
                 <span>Subtotal</span>
-                <span className="tabular-nums">{formatIDR(quote?.subtotal ?? localSubtotal)}</span>
+                <span className="font-bold tabular-nums">{formatIDR(quote?.subtotal ?? localSubtotal)}</span>
               </div>
-              <div className="flex justify-between gap-3">
-                <span>Diskon</span>
-                <span className="tabular-nums text-olive">
+              <div className="flex justify-between gap-3 text-xs text-emerald-600">
+                <span>Potongan Promo</span>
+                <span className="font-bold tabular-nums">
                   {quote?.discount ? `− ${formatIDR(quote.discount)}` : formatIDR(0)}
                 </span>
               </div>
-              <div className="flex justify-between gap-3">
-                <span>Biaya platform</span>
-                <span className="tabular-nums">
+              <div className="flex justify-between gap-3 text-xs text-slate-600">
+                <span>Biaya Layanan Platform</span>
+                <span className="font-bold tabular-nums">
                   {quoteLoading ? 'Menghitung...' : quote ? formatIDR(quote.platformFee) : '—'}
                 </span>
               </div>
-              <div className="mt-2 flex items-baseline justify-between border-t border-ink pt-3">
-                <span className="font-bold">Total</span>
-                <span className="text-xl font-bold tabular-nums">
+              <div className="mt-3 flex items-baseline justify-between border-t border-slate-200 pt-3">
+                <span className="font-bold text-slate-900">Total Pembayaran</span>
+                <span className="text-xl font-black text-blue-600 tabular-nums">
                   {quote ? formatIDR(quote.total) : formatIDR(localSubtotal)}
                 </span>
               </div>
               {quote ? (
-                <p className="text-[11px] leading-relaxed text-muted-foreground">
-                  Kuota dikunci selama {quote.reservationMinutes} menit setelah pesanan dibuat.
+                <p className="text-[11px] leading-relaxed text-slate-400">
+                  Kuota tiket dikunci aman selama {quote.reservationMinutes} menit.
                 </p>
               ) : quoteLoading ? (
-                <p className="text-[11px] text-muted-foreground">Memeriksa kode promo dan biaya.</p>
+                <p className="text-[11px] text-slate-400">Memeriksa kupon & kalkulasi biaya...</p>
               ) : null}
               {error ? <InlineError error={error} /> : null}
               <Button
                 type="submit"
                 disabled={submitting || totalQuantity === 0 || sellable.length === 0}
-                className="mt-3 h-11 w-full bg-brick text-paper hover:bg-brick/90"
+                className="mt-4 h-12 w-full rounded-xl bg-blue-600 text-sm font-bold text-white shadow-md transition-all hover:bg-blue-700 active:scale-95"
               >
-                {submitting ? 'Membuat pesanan...' : 'Lanjut ke pembayaran'}
+                {submitting ? 'Memproses Pesanan...' : 'Lanjut ke Pembayaran'}
               </Button>
-              <p className="text-center text-[11px] text-muted-foreground">
-                Dengan melanjutkan, tiket akan direservasi sementara. Pembayaran diverifikasi lewat
-                webhook, bukan dari halaman sukses browser.
-              </p>
             </div>
           </div>
-          {event.salesEndAt ? (
-            <p className={cn('mt-3 text-xs text-muted-foreground')}>
-              Penjualan berakhir {formatEventWhen(event.salesEndAt, event.salesEndAt, event.timezone)}.
-            </p>
-          ) : null}
         </aside>
       </form>
     </main>

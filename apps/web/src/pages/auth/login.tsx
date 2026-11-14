@@ -83,7 +83,7 @@ export function LoginPage() {
             onChange={(event) => setEmail(event.target.value)}
             aria-invalid={Boolean(errors.email)}
             aria-describedby={errors.email ? 'login-email-error' : undefined}
-            className="h-11 border-ink/25 bg-paper"
+            className="h-11 rounded-xl border-slate-200 bg-slate-50 focus:bg-white"
           />
         </Field>
 
@@ -97,12 +97,12 @@ export function LoginPage() {
               onChange={(event) => setPassword(event.target.value)}
               aria-invalid={Boolean(errors.password)}
               aria-describedby={errors.password ? 'login-password-error' : undefined}
-              className="h-11 border-ink/25 bg-paper pr-10"
+              className="h-11 rounded-xl border-slate-200 bg-slate-50 pr-10 focus:bg-white"
             />
             <button
               type="button"
               onClick={() => setShowPassword((value) => !value)}
-              className="absolute right-1 top-1 flex h-9 w-9 items-center justify-center rounded-sm text-muted-foreground hover:text-ink"
+              className="absolute right-1 top-1 flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 hover:text-slate-800"
               aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
             >
               {showPassword ? <EyeOff className="h-4 w-4" aria-hidden /> : <Eye className="h-4 w-4" aria-hidden />}
@@ -111,7 +111,7 @@ export function LoginPage() {
         </Field>
 
         <div className="flex justify-end">
-          <Link to="/forgot-password" className="text-xs font-semibold text-olive underline underline-offset-4">
+          <Link to="/forgot-password" className="text-xs font-bold text-blue-600 hover:underline">
             Lupa password?
           </Link>
         </div>
@@ -121,9 +121,9 @@ export function LoginPage() {
         <Button
           type="submit"
           disabled={submitting}
-          className="h-11 w-full bg-brick text-paper hover:bg-brick/90"
+          className="h-12 w-full rounded-xl bg-blue-600 font-bold text-white shadow-md transition-all hover:bg-blue-700 active:scale-95"
         >
-          {submitting ? 'Memeriksa akun...' : 'Masuk'}
+          {submitting ? 'Memeriksa akun...' : 'Masuk Sekarang'}
         </Button>
       </form>
     </AuthShell>
