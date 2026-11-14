@@ -32,6 +32,15 @@ import { EventCheckInSummaryPage } from '@/pages/organizer/events/checkin-summar
 import { OrganizerSettingsPage } from '@/pages/organizer/settings';
 import { StaffEventsPage } from '@/pages/staff/events';
 import { StaffCheckInScannerPage } from '@/pages/staff/check-in';
+import { AdminShell } from '@/pages/admin/admin-shell';
+import { AdminOverviewPage } from '@/pages/admin/overview';
+import { AdminUsersPage } from '@/pages/admin/users';
+import { AdminOrganizersPage } from '@/pages/admin/organizers';
+import { AdminEventsPage } from '@/pages/admin/events';
+import { AdminOrdersPage } from '@/pages/admin/orders';
+import { AdminCategoriesPage } from '@/pages/admin/categories';
+import { AdminSettingsPage } from '@/pages/admin/settings';
+import { AdminAuditLogsPage } from '@/pages/admin/audit-logs';
 
 function RootLayout() {
   return (
@@ -144,6 +153,24 @@ export const router = createBrowserRouter([
         children: [
           { path: 'events', element: <StaffEventsPage /> },
           { path: 'events/:id/check-in', element: <StaffCheckInScannerPage /> },
+        ],
+      },
+      {
+        path: '/admin',
+        element: (
+          <RequireAuth roles={['ADMIN']}>
+            <AdminShell />
+          </RequireAuth>
+        ),
+        children: [
+          { index: true, element: <AdminOverviewPage /> },
+          { path: 'users', element: <AdminUsersPage /> },
+          { path: 'organizers', element: <AdminOrganizersPage /> },
+          { path: 'events', element: <AdminEventsPage /> },
+          { path: 'orders', element: <AdminOrdersPage /> },
+          { path: 'categories', element: <AdminCategoriesPage /> },
+          { path: 'settings', element: <AdminSettingsPage /> },
+          { path: 'audit-logs', element: <AdminAuditLogsPage /> },
         ],
       },
     ],
