@@ -9,10 +9,12 @@ import {
   eventUpdateSchema,
   addStaffSchema,
   orderListQuerySchema,
+  ticketListQuerySchema,
   ticketTypeInputSchema,
   ticketTypeUpdateSchema,
   type EventListQuery,
   type EventManageQuery,
+  type TicketListQuery,
 } from '@gofest/shared';
 import { validate } from '../../middleware/validate';
 import { requireAuth, requireActiveOrganizer } from '../../middleware/auth';
@@ -45,6 +47,8 @@ import { addStaff, listStaff, removeStaff } from './staff.service';
 import { getOrganizerDashboard } from '../dashboard/dashboard.service';
 import { exportAttendees } from './attendee-export';
 import { listEventOrders } from '../orders/order.service';
+import { getOrganizerCheckInSummary } from '../check-in/check-in.service';
+import { listEventTickets } from '../tickets/ticket.service';
 
 export const publicEventRouter = Router();
 
@@ -249,3 +253,24 @@ organizerWorkspaceRouter.get(
     return ok(res, result.data, result.meta);
   },
 );
+
+organizerWorkspaceRouter.get(
+  '/events/:eventId/tickets',
+  validate(ticketListQuerySchema, 'query'),
+  async (req, res) => {
+    const result = await listEventTickets(
+      req.params.eventId!,
+      req.auth!.organizerId!,
+      req.query as unknown as TicketListQuery,
+    );
+    return ok(res, result.data, result.meta);
+  },
+);
+
+organizerWorkspaceRouter.get('/events/:eventId/check-in/summary', async (req, res) => {
+  const summary = await getOrganizerCheckInSummary(
+    req.params.eventId!,
+    req.auth!.organizerId!,
+  );
+  return ok(res, summary);
+});

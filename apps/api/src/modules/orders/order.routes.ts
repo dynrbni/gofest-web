@@ -13,6 +13,7 @@ import {
   getOrderTickets,
   listAccountOrders,
   mockPayOrder,
+  regenerateTicketQr,
 } from './order.service';
 
 export const orderRouter = Router();
@@ -54,6 +55,19 @@ orderRouter.post('/:orderCode/payment', optionalAuth, checkoutLimiter, async (re
   const result = await createOrderPaymentSession(req.params.orderCode!, req);
   return ok(res, result);
 });
+
+orderRouter.post(
+  '/:orderCode/tickets/:ticketId/qr/regenerate',
+  optionalAuth,
+  async (req, res) => {
+    const result = await regenerateTicketQr(
+      req.params.orderCode!,
+      req.params.ticketId!,
+      req,
+    );
+    return ok(res, result);
+  },
+);
 
 orderRouter.post('/:orderCode/mock-pay', optionalAuth, async (req, res) => {
   const result = await mockPayOrder(req.params.orderCode!, req);

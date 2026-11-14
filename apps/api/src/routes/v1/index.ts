@@ -9,6 +9,7 @@ import { categoryRouter } from '../../modules/categories/category.routes';
 import { uploadRouter } from '../../modules/uploads/upload.routes';
 import { orderRouter, accountOrderRouter } from '../../modules/orders/order.routes';
 import { webhookRouter } from '../../modules/payments/webhook.routes';
+import { checkInRouter, staffRouter } from '../../modules/check-in/check-in.routes';
 
 export const v1Router = Router();
 
@@ -30,6 +31,8 @@ v1Router.use('/uploads', uploadRouter);
 v1Router.use('/orders', orderRouter);
 v1Router.use('/account/orders', accountOrderRouter);
 v1Router.use('/webhooks', webhookRouter);
+v1Router.use('/staff', staffRouter);
+v1Router.use('/check-in', checkInRouter);
 
 v1Router.get('/health', async (_req, res) => {
   try {

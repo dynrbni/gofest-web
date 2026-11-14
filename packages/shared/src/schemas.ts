@@ -371,6 +371,8 @@ export const eventManageQuerySchema = paginationSchema.extend({
 
 export type EventListQuery = z.infer<typeof eventListQuerySchema>;
 export type EventManageQuery = z.infer<typeof eventManageQuerySchema>;
+export type ScanTicketInput = z.infer<typeof scanTicketSchema>;
+export type TicketListQuery = z.infer<typeof ticketListQuerySchema>;
 
 export const scanTicketSchema = z
   .object({

@@ -568,6 +568,49 @@ export async function getOrderTicketQr(orderCode: string, ticketId: string, req:
   return { ticket, qrImageKey: ticket.qrImageKey };
 }
 
+export async function regenerateTicketQr(orderCode: string, ticketId: string, req: Request) {
+  const order = await getOrderForAccess(orderCode, req);
+  if (order.status !== 'PAID') {
+    throw new ConflictError('QR hanya dapat diperbarui untuk order yang sudah dibayar', 'ORDER_NOT_PAID');
+  }
+  const ticket = await prisma.ticket.findFirst({
+    where: { id: ticketId, orderId: order.id },
+    select: { id: true, status: true, qrTokenHash: true, qrImageKey: true },
+  });
+  if (!ticket) throw new NotFoundError('Tiket tidak ditemukan', 'TICKET_NOT_FOUND');
+  if (ticket.status !== 'VALID') {
+    throw new ConflictError(
+      'Tiket yang sudah dipakai atau dibatalkan tidak dapat diperbarui QR-nya',
+      'TICKET_NOT_REGENERATABLE',
+    );
+  }
+
+  const token = randomToken(48);
+  const png = await QRCode.toBuffer(token, {
+    type: 'png',
+    width: 480,
+    margin: 1,
+    errorCorrectionLevel: 'M',
+  });
+  const newKey = await storePrivateFile(png, 'tickets');
+
+  const changed = await prisma.ticket.updateMany({
+    where: { id: ticket.id, status: 'VALID', qrTokenHash: ticket.qrTokenHash },
+    data: { qrTokenHash: sha256(token), qrImageKey: newKey },
+  });
+  if (changed.count !== 1) {
+    await removePrivateObject(newKey);
+    throw new ConflictError('Tiket berubah saat QR diperbarui. Coba lagi.', 'TICKET_NOT_REGENERATABLE');
+  }
+
+  await removePrivateObject(ticket.qrImageKey);
+  const requestToken = accessTokenFromRequest(req) ?? orderAccessToken(order.id);
+  return {
+    ticketId: ticket.id,
+    qrUrl: queryTokenUrl(order.orderCode, ticket.id, requestToken),
+  };
+}
+
 export async function createOrderPaymentSession(orderCode: string, req: Request) {
   let order = await getOrderForAccess(orderCode, req);
   if (order.status === 'PAID') {
