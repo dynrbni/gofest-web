@@ -26,9 +26,28 @@ interface RequestOptions extends Omit<RequestInit, 'body'> {
   body?: unknown;
   query?: Record<string, string | number | boolean | null | undefined>;
   orderToken?: string;
+  skipRefresh?: boolean;
 }
 
 const API_BASE = '/api/v1';
+
+let refreshPromise: Promise<boolean> | null = null;
+
+async function refreshSession(): Promise<boolean> {
+  if (!refreshPromise) {
+    refreshPromise = fetch(`${API_BASE}/auth/refresh`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { Accept: 'application/json' },
+    })
+      .then((response) => response.ok)
+      .catch(() => false)
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+  return refreshPromise;
+}
 
 function buildUrl(path: string, query?: RequestOptions['query']) {
   const url = new URL(`${API_BASE}${path}`, window.location.origin);
@@ -54,8 +73,9 @@ async function parseResponse(response: Response): Promise<unknown> {
 async function request<T>(
   path: string,
   options: RequestOptions = {},
+  isRetry = false,
 ): Promise<{ data: T; meta: PaginationMeta | Record<string, unknown> | null }> {
-  const { body, query, orderToken, headers: rawHeaders, ...rest } = options;
+  const { body, query, orderToken, headers: rawHeaders, skipRefresh, ...rest } = options;
   const headers = new Headers(rawHeaders);
   headers.set('Accept', 'application/json');
   if (orderToken) headers.set('x-order-token', orderToken);
@@ -89,9 +109,24 @@ async function request<T>(
     const envelope = parsed as {
       error?: { code?: string; message?: string; details?: ApiErrorDetail[]; requestId?: string };
     } | null;
+    const code = envelope?.error?.code ?? 'REQUEST_FAILED';
+
+    if (
+      response.status === 401 &&
+      code === 'SESSION_EXPIRED' &&
+      !isRetry &&
+      !skipRefresh &&
+      !path.startsWith('/auth/')
+    ) {
+      const refreshed = await refreshSession();
+      if (refreshed) {
+        return request<T>(path, options, true);
+      }
+    }
+
     throw new ApiError(
       response.status,
-      envelope?.error?.code ?? 'REQUEST_FAILED',
+      code,
       envelope?.error?.message ?? 'Permintaan gagal diproses.',
       envelope?.error?.details,
       envelope?.error?.requestId,

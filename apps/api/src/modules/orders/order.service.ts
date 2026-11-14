@@ -2,7 +2,7 @@ import { Prisma } from '@prisma/client';
 import type { Request } from 'express';
 import type { z } from 'zod';
 import QRCode from 'qrcode';
-import type { createOrderSchema, orderAccessSchema } from '@gofest/shared';
+import type { createOrderSchema, orderAccessSchema, quoteOrderSchema } from '@gofest/shared';
 import { env } from '../../config/env';
 import { prisma } from '../../lib/prisma';
 import {
@@ -23,6 +23,7 @@ import type { VerifiedPaymentEvent } from '../payments/payment.provider';
 
 export type CreateOrderInput = z.infer<typeof createOrderSchema>;
 export type OrderAccessInput = z.infer<typeof orderAccessSchema>;
+export type QuoteOrderInput = z.infer<typeof quoteOrderSchema>;
 
 const orderInclude = {
   event: {
@@ -240,6 +241,112 @@ function platformFeeFor(
     return Math.floor((taxable * settings.platformFeeValue) / 100);
   }
   return 0;
+}
+
+export async function quoteOrder(input: QuoteOrderInput, req: Request) {
+  const settings = await getPlatformSettings();
+  const now = new Date();
+  const event = await prisma.event.findUnique({ where: { id: input.eventId } });
+  if (!event) throw new NotFoundError('Event tidak ditemukan', 'EVENT_NOT_FOUND');
+  assertEventOnSale(event, now);
+
+  const ticketIds = input.items.map((item) => item.ticketTypeId);
+  if (new Set(ticketIds).size !== ticketIds.length) {
+    throw new UnprocessableEntityError('Tipe tiket tidak boleh dikirim dua kali');
+  }
+  const tickets = await prisma.ticketType.findMany({
+    where: { eventId: event.id, id: { in: ticketIds } },
+  });
+  if (tickets.length !== ticketIds.length) {
+    throw new NotFoundError('Salah satu tipe tiket tidak ditemukan', 'TICKET_TYPE_NOT_FOUND');
+  }
+  const byId = new Map(tickets.map((ticket) => [ticket.id, ticket]));
+
+  let subtotal = 0;
+  const lines: Array<{ ticketTypeId: string; name: string; quantity: number; unitPrice: number; lineTotal: number }> = [];
+  for (const item of input.items) {
+    const ticket = byId.get(item.ticketTypeId)!;
+    if (!ticket.isActive) {
+      throw new ConflictError(`Tipe tiket ${ticket.name} tidak aktif`, 'TICKET_TYPE_INACTIVE');
+    }
+    if (ticket.salesStartAt && ticket.salesStartAt > now) {
+      throw new ConflictError(
+        `Penjualan tipe tiket ${ticket.name} belum dibuka`,
+        'TICKET_SALES_NOT_STARTED',
+      );
+    }
+    if (ticket.salesEndAt && ticket.salesEndAt <= now) {
+      throw new ConflictError(
+        `Penjualan tipe tiket ${ticket.name} sudah ditutup`,
+        'TICKET_SALES_ENDED',
+      );
+    }
+    if (item.quantity < ticket.minPerOrder || item.quantity > ticket.maxPerOrder) {
+      throw new ConflictError(
+        `Jumlah tiket ${ticket.name} harus antara ${ticket.minPerOrder} dan ${ticket.maxPerOrder}`,
+        'TICKET_ORDER_LIMIT',
+      );
+    }
+    const available = ticket.quotaTotal - ticket.quantitySold - ticket.quantityReserved;
+    if (available < item.quantity) {
+      throw new ConflictError(`Kuota tipe tiket ${ticket.name} tidak mencukupi`, 'TICKET_SOLD_OUT');
+    }
+    const lineTotal = ticket.price * item.quantity;
+    subtotal += lineTotal;
+    lines.push({
+      ticketTypeId: ticket.id,
+      name: ticket.name,
+      quantity: item.quantity,
+      unitPrice: ticket.price,
+      lineTotal,
+    });
+  }
+
+  let discount = 0;
+  let couponCode: string | null = null;
+  if (input.couponCode) {
+    const coupon = await prisma.coupon.findFirst({
+      where: { eventId: event.id, code: input.couponCode },
+    });
+    if (!coupon) {
+      throw new ConflictError('Kode promo tidak ditemukan untuk event ini', 'COUPON_NOT_FOUND');
+    }
+    if (coupon.maxPerUser !== null && (input.buyerEmail || req.auth)) {
+      const used = await prisma.couponRedemption.count({
+        where: {
+          couponId: coupon.id,
+          releasedAt: null,
+          ...(req.auth
+            ? {
+                OR: [
+                  { userId: req.auth.userId },
+                  ...(input.buyerEmail ? [{ email: input.buyerEmail }] : []),
+                ],
+              }
+            : { email: input.buyerEmail }),
+        },
+      });
+      if (used >= coupon.maxPerUser) {
+        throw new ConflictError('Kode promo sudah dipakai untuk pembelian lain', 'COUPON_USER_LIMIT');
+      }
+    }
+    discount = computeDiscount(coupon, subtotal, now);
+    couponCode = coupon.code;
+  }
+
+  const platformFee = platformFeeFor(settings, subtotal - discount);
+  return {
+    subtotal,
+    discount,
+    platformFee,
+    total: subtotal - discount + platformFee,
+    currency: 'IDR',
+    coupon: couponCode,
+    couponCode,
+    reservationMinutes: settings.orderReservationMinutes,
+    expiresAt: new Date(now.getTime() + settings.orderReservationMinutes * 60_000).toISOString(),
+    lines,
+  };
 }
 
 export async function createOrder(input: CreateOrderInput, req: Request) {
@@ -1252,9 +1359,20 @@ export async function mockPayOrder(orderCode: string, req: Request) {
 
 export async function listAccountOrders(
   userId: string,
-  query: { page: number; limit: number },
+  query: { page: number; limit: number; status?: string; q?: string },
 ) {
-  const where = { userId };
+  const where: Prisma.OrderWhereInput = {
+    userId,
+    ...(query.status ? { status: query.status as Prisma.OrderWhereInput['status'] } : {}),
+    ...(query.q
+      ? {
+          OR: [
+            { orderCode: { contains: query.q, mode: 'insensitive' } },
+            { event: { title: { contains: query.q, mode: 'insensitive' } } },
+          ],
+        }
+      : {}),
+  };
   const [total, orders] = await Promise.all([
     prisma.order.count({ where }),
     prisma.order.findMany({

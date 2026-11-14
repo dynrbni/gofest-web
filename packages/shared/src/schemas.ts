@@ -353,6 +353,27 @@ export const orderAccessSchema = z.object({
   email: emailSchema,
 });
 
+export const quoteOrderSchema = z.object({
+  eventId: z.string().min(1),
+  items: z
+    .array(
+      z.object({
+        ticketTypeId: z.string().min(1),
+        quantity: z.coerce.number().int().min(1).max(50),
+      }),
+    )
+    .min(1)
+    .max(10),
+  couponCode: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .max(24)
+    .optional()
+    .transform((value) => value || undefined),
+  buyerEmail: emailSchema.optional(),
+});
+
 export const eventListQuerySchema = paginationSchema.extend({
   q: z.string().trim().max(120).optional(),
   category: z.string().trim().max(120).optional(),

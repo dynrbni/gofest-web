@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createOrderSchema, paginationSchema } from '@gofest/shared';
+import { createOrderSchema, orderListQuerySchema, quoteOrderSchema } from '@gofest/shared';
 import { requireAuth, optionalAuth } from '../../middleware/auth';
 import { validate } from '../../middleware/validate';
 import { checkoutLimiter } from '../../middleware/rate-limit';
@@ -14,10 +14,16 @@ import {
   getOrderTickets,
   listAccountOrders,
   mockPayOrder,
+  quoteOrder,
   regenerateTicketQr,
 } from './order.service';
 
 export const orderRouter = Router();
+
+orderRouter.post('/quote', optionalAuth, validate(quoteOrderSchema), async (req, res) => {
+  const result = await quoteOrder(req.body, req);
+  return ok(res, result);
+});
 
 orderRouter.post(
   '/',
@@ -79,8 +85,13 @@ export const accountOrderRouter = Router();
 
 accountOrderRouter.use(requireAuth);
 
-accountOrderRouter.get('/', validate(paginationSchema, 'query'), async (req, res) => {
-  const query = req.query as unknown as { page: number; limit: number };
+accountOrderRouter.get('/', validate(orderListQuerySchema, 'query'), async (req, res) => {
+  const query = req.query as unknown as {
+    page: number;
+    limit: number;
+    status?: string;
+    q?: string;
+  };
   const result = await listAccountOrders(req.auth!.userId, query);
   return ok(res, result.data, result.meta);
 });
