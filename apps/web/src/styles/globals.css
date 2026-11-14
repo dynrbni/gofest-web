@@ -1,0 +1,141 @@
+@import '@fontsource-variable/manrope';
+@import '@fontsource/instrument-serif';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 43 33% 94%;
+    --foreground: 150 5% 10%;
+    --card: 45 33% 96%;
+    --card-foreground: 150 5% 10%;
+    --popover: 45 33% 96%;
+    --popover-foreground: 150 5% 10%;
+    --primary: 8 61% 45%;
+    --primary-foreground: 43 33% 96%;
+    --secondary: 100 10% 41%;
+    --secondary-foreground: 43 33% 96%;
+    --muted: 40 25% 90%;
+    --muted-foreground: 48 6% 34%;
+    --accent: 40 25% 90%;
+    --accent-foreground: 150 5% 10%;
+    --destructive: 0 65% 42%;
+    --destructive-foreground: 43 33% 96%;
+    --border: 40 15% 82%;
+    --input: 40 15% 82%;
+    --ring: 9 67% 55%;
+    --radius: 0.5rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings:
+      'ss01' on,
+      'cv11' on;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply text-balance;
+  }
+
+  p {
+    @apply text-pretty;
+  }
+
+  ::selection {
+    background: #d9573f;
+    color: #f5f2ea;
+  }
+
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 3px;
+  }
+
+  a[href],
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  summary,
+  label[for] {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [aria-disabled='true'] {
+    cursor: not-allowed;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .text-pretty {
+    text-wrap: pretty;
+  }
+
+  .editorial-rule {
+    border-top: 1px solid hsl(var(--border));
+  }
+
+  .paper-panel {
+    background-color: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+  }
+
+  .display-tight {
+    letter-spacing: -0.045em;
+    line-height: 0.95;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  .print-ticket {
+    break-inside: avoid;
+    border: 1px solid #191b1a !important;
+    box-shadow: none !important;
+  }
+}

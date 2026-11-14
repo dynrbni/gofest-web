@@ -1,0 +1,37 @@
+{
+  "name": "gofest",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "dev": "concurrently -n api,web,worker -c blue,green,magenta \"pnpm --filter @gofest/api dev\" \"pnpm --filter @gofest/web dev\" \"pnpm --filter @gofest/api dev:worker\"",
+    "dev:web": "pnpm --filter @gofest/web dev",
+    "dev:api": "pnpm --filter @gofest/api dev",
+    "dev:worker": "pnpm --filter @gofest/api dev:worker",
+    "build": "pnpm --filter @gofest/api build && pnpm --filter @gofest/web build",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "pnpm --filter @gofest/shared typecheck && pnpm --filter @gofest/api typecheck && pnpm --filter @gofest/web typecheck",
+    "test": "pnpm --filter @gofest/api test",
+    "db:generate": "pnpm --filter @gofest/api db:generate",
+    "db:migrate": "pnpm --filter @gofest/api db:migrate",
+    "db:seed": "pnpm --filter @gofest/api db:seed",
+    "db:reset": "pnpm --filter @gofest/api db:reset",
+    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.31.0",
+    "concurrently": "^9.2.0",
+    "eslint": "^9.31.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.20",
+    "globals": "^16.3.0",
+    "prettier": "^3.6.2",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.38.0"
+  }
+}
