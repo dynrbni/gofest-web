@@ -554,20 +554,14 @@ export async function submitEvent(eventId: string, organizerId: string, req: Req
   return updated;
 }
 
-export async function cancelOwnEvent(
-  eventId: string,
-  organizerId: string,
+async function cancelEventInternal(
+  event: { id: string; title: string },
   reason: string,
   req: Request,
 ) {
-  const event = await getOwnedEvent(eventId, organizerId);
-  if (['CANCELLED', 'COMPLETED'].includes(event.status)) {
-    throw new ConflictError('Event ini sudah dibatalkan atau selesai', 'EVENT_ALREADY_CLOSED');
-  }
-
   await prisma.$transaction(async (tx) => {
     await tx.event.update({
-      where: { id: eventId },
+      where: { id: event.id },
       data: {
         status: 'CANCELLED',
         cancelledAt: new Date(),
@@ -575,11 +569,11 @@ export async function cancelOwnEvent(
       },
     });
     await tx.ticket.updateMany({
-      where: { eventId, status: 'VALID' },
+      where: { eventId: event.id, status: 'VALID' },
       data: { status: 'CANCELLED' },
     });
     const paidOrders = await tx.order.findMany({
-      where: { eventId, status: 'PAID' },
+      where: { eventId: event.id, status: 'PAID' },
       select: {
         id: true,
         orderCode: true,
@@ -614,7 +608,7 @@ export async function cancelOwnEvent(
         actorUserId: req.auth?.userId,
         action: 'EVENT_CANCELLED',
         resourceType: 'EVENT',
-        resourceId: eventId,
+        resourceId: event.id,
         metadata: { reason, affectedOrders: paidOrders.length },
         req,
       },
@@ -623,6 +617,31 @@ export async function cancelOwnEvent(
   });
 
   return { cancelled: true, refundPendingOrders: true };
+}
+
+export async function cancelOwnEvent(
+  eventId: string,
+  organizerId: string,
+  reason: string,
+  req: Request,
+) {
+  const event = await getOwnedEvent(eventId, organizerId);
+  if (['CANCELLED', 'COMPLETED'].includes(event.status)) {
+    throw new ConflictError('Event ini sudah dibatalkan atau selesai', 'EVENT_ALREADY_CLOSED');
+  }
+  return cancelEventInternal({ id: event.id, title: event.title }, reason, req);
+}
+
+export async function cancelEventAsAdmin(eventId: string, reason: string, req: Request) {
+  const event = await prisma.event.findUnique({
+    where: { id: eventId },
+    select: { id: true, title: true, status: true },
+  });
+  if (!event) throw new NotFoundError('Event tidak ditemukan', 'EVENT_NOT_FOUND');
+  if (['CANCELLED', 'COMPLETED'].includes(event.status)) {
+    throw new ConflictError('Event ini sudah dibatalkan atau selesai', 'EVENT_ALREADY_CLOSED');
+  }
+  return cancelEventInternal({ id: event.id, title: event.title }, reason, req);
 }
 
 export async function listOrganizerEvents(

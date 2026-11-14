@@ -373,6 +373,10 @@ export type EventListQuery = z.infer<typeof eventListQuerySchema>;
 export type EventManageQuery = z.infer<typeof eventManageQuerySchema>;
 export type ScanTicketInput = z.infer<typeof scanTicketSchema>;
 export type TicketListQuery = z.infer<typeof ticketListQuerySchema>;
+export type OrderListQuery = z.infer<typeof orderListQuerySchema>;
+export type AdminUserQuery = z.infer<typeof adminUserQuerySchema>;
+export type AdminOrganizerQuery = z.infer<typeof adminOrganizerQuerySchema>;
+export type AdminAuditQuery = z.infer<typeof adminAuditQuerySchema>;
 
 export const scanTicketSchema = z
   .object({
@@ -403,6 +407,8 @@ export const categoryInputSchema = z.object({
   description: z.string().trim().max(500).optional().nullable(),
   isActive: z.boolean().default(true),
 });
+
+export const categoryUpdateSchema = categoryInputSchema.partial();
 
 export const userStatusInputSchema = z
   .object({
@@ -454,4 +460,20 @@ export const ticketListQuerySchema = paginationSchema.extend({
 export const adminListQuerySchema = paginationSchema.extend({
   q: z.string().trim().max(120).optional(),
   status: z.enum([...EVENT_STATUSES, ...ORGANIZER_STATUSES, ...USER_STATUSES]).optional(),
+});
+
+export const adminUserQuerySchema = paginationSchema.extend({
+  q: z.string().trim().max(120).optional(),
+  status: z.enum(USER_STATUSES).optional(),
+});
+
+export const adminOrganizerQuerySchema = paginationSchema.extend({
+  q: z.string().trim().max(120).optional(),
+  status: z.enum(ORGANIZER_STATUSES).optional(),
+});
+
+export const adminAuditQuerySchema = paginationSchema.extend({
+  q: z.string().trim().max(120).optional(),
+  action: z.string().trim().max(80).optional(),
+  resourceType: z.string().trim().max(80).optional(),
 });

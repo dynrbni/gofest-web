@@ -24,8 +24,8 @@ export class AppError extends Error {
 }
 
 export class BadRequestError extends AppError {
-  constructor(message = 'Permintaan tidak valid', details?: ErrorDetail[]) {
-    super(400, 'BAD_REQUEST', message, { details });
+  constructor(message = 'Permintaan tidak valid', details?: ErrorDetail[], code = 'BAD_REQUEST') {
+    super(400, code, message, { details });
   }
 }
 
