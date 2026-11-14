@@ -1,4 +1,4 @@
-import { NavLink, Outlet, Link } from 'react-router-dom';
+import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 import { User, Ticket, Settings } from 'lucide-react';

@@ -7,12 +7,9 @@ import {
   Camera,
   CheckCircle2,
   XCircle,
-  AlertTriangle,
-  RotateCcw,
   Volume2,
   VolumeX,
   Keyboard,
-  ShieldCheck,
 } from 'lucide-react';
 import { api, errorMessage } from '@/lib/api';
 import { formatDateTime, formatEventWhen } from '@/lib/format';

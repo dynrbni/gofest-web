@@ -1,13 +1,12 @@
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Calendar, MapPin, Ticket, CreditCard, ExternalLink, QrCode } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, CreditCard, QrCode } from 'lucide-react';
 import { api } from '@/lib/api';
 import type { Order } from '@/lib/models';
 import { useDocumentTitle } from '@/lib/hooks';
 import { formatDateTime, formatEventWhen, formatIDR } from '@/lib/format';
 import { OrderStatusBadge, TicketStatusBadge } from '@/components/common/status-badge';
-import { EmptyState, ErrorState, LoadingState } from '@/components/common/states';
-import { Button } from '@/components/ui/button';
+import { ErrorState, LoadingState } from '@/components/common/states';
 
 export function AccountOrderDetailPage() {
   const { id } = useParams<{ id: string }>();

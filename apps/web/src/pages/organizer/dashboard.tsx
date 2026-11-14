@@ -1,11 +1,10 @@
 import { Link } from 'react-router-dom';
-import { Plus, Ticket, DollarSign, Calendar, Users, ArrowRight } from 'lucide-react';
+import { Plus, Ticket, DollarSign, Calendar, Users } from 'lucide-react';
 import { useOrganizerDashboard } from '@/lib/queries';
 import { useDocumentTitle } from '@/lib/hooks';
 import { formatDateTime, formatIDR } from '@/lib/format';
 import { OrderStatusBadge } from '@/components/common/status-badge';
 import { EmptyState, ErrorState, LoadingState } from '@/components/common/states';
-import { Button } from '@/components/ui/button';
 
 export function OrganizerDashboardPage() {
   useDocumentTitle('Dashboard Organizer');

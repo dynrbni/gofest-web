@@ -5,7 +5,7 @@ import { EventCard, EventPoster } from '@/components/common/event-presentation';
 import { EmptyState, ErrorState, LoadingState } from '@/components/common/states';
 import { useCategories, usePublicEvents } from '@/lib/queries';
 import { useDocumentTitle } from '@/lib/hooks';
-import { dateParts, formatDateLong, formatIDR, formatTime } from '@/lib/format';
+import { formatDateLong, formatIDR, formatTime } from '@/lib/format';
 
 export function HomePage() {
   useDocumentTitle('');

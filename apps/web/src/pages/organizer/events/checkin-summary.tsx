@@ -1,6 +1,5 @@
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { QrCode, CheckCircle2, AlertTriangle, Users, Clock } from 'lucide-react';
 import { api } from '@/lib/api';
 import { formatDateTime } from '@/lib/format';
 import type { CheckInSummary } from '@/lib/models';

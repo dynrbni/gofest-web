@@ -1,7 +1,6 @@
 import { useState, useEffect, type FormEvent } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Settings, ShieldAlert } from 'lucide-react';
 import { api, fieldErrors, ApiError } from '@/lib/api';
 import { useDocumentTitle } from '@/lib/hooks';
 import { Field, InlineError, LoadingState, ErrorState } from '@/components/common/states';

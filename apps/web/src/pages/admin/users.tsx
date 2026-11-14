@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Search, Shield, Ban, CheckCircle, UserCheck } from 'lucide-react';
+import { Search, Ban, CheckCircle } from 'lucide-react';
 import { api, apiPage, errorMessage } from '@/lib/api';
 import { formatDateTime } from '@/lib/format';
 import { useDebouncedValue, useDocumentTitle } from '@/lib/hooks';

@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth';
 import { api, fieldErrors, ApiError } from '@/lib/api';
@@ -8,11 +8,10 @@ import { Field, InlineError } from '@/components/common/states';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Building2, ArrowRight } from 'lucide-react';
 
 export function OrganizerApplyPage() {
   useDocumentTitle('Daftar Sebagai Organizer');
-  const { user, refreshMe } = useAuth();
+  const { refreshMe } = useAuth();
   const navigate = useNavigate();
 
   const [orgName, setOrgName] = useState('');

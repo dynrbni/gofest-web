@@ -1,8 +1,8 @@
 import { useState, useEffect, type FormEvent } from 'react';
-import { useNavigate, useParams, Link, useOutletContext } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { ArrowLeft, Upload, Calendar, MapPin, Globe, Sparkles } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { api, fieldErrors, ApiError } from '@/lib/api';
 import { useCategories, useOrganizerEvent } from '@/lib/queries';
 import { useDocumentTitle } from '@/lib/hooks';

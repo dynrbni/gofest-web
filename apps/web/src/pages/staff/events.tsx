@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Calendar, MapPin, QrCode, Shield, Users } from 'lucide-react';
+import { Calendar, MapPin, QrCode, Users } from 'lucide-react';
 import { useStaffEvents } from '@/lib/queries';
 import { useDocumentTitle } from '@/lib/hooks';
 import { formatEventWhen } from '@/lib/format';

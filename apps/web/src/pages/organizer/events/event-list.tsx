@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Plus, Search, Calendar, MapPin, Ticket, ExternalLink, Settings2 } from 'lucide-react';
+import { Plus, Search, Calendar, MapPin, ExternalLink, Settings2 } from 'lucide-react';
 import type { EventStatus } from '@gofest/shared';
 import { useOrganizerEvents, pageMeta } from '@/lib/queries';
 import { useDocumentTitle, useDebouncedValue } from '@/lib/hooks';
-import { formatDateLong, formatDateTime, formatEventWhen } from '@/lib/format';
+import { formatEventWhen } from '@/lib/format';
 import { EventStatusBadge } from '@/components/common/status-badge';
 import { Pagination } from '@/components/common/pagination';
 import { EmptyState, ErrorState, LoadingState } from '@/components/common/states';

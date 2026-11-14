@@ -1,11 +1,11 @@
 import { useState, type FormEvent } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Plus, Tag, Power } from 'lucide-react';
+import { Plus, Power } from 'lucide-react';
 import { api, fieldErrors, ApiError, errorMessage } from '@/lib/api';
 import { useDocumentTitle } from '@/lib/hooks';
 import type { Category } from '@/lib/models';
-import { EmptyState, ErrorState, Field, InlineError, LoadingState } from '@/components/common/states';
+import { ErrorState, Field, InlineError, LoadingState } from '@/components/common/states';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {

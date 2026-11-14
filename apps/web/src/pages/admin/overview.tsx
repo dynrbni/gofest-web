@@ -1,19 +1,16 @@
 import { Link } from 'react-router-dom';
 import {
   DollarSign,
-  CreditCard,
   Calendar,
   Users,
   Building2,
   AlertCircle,
-  Clock,
-  ArrowRight,
 } from 'lucide-react';
 import { useAdminDashboard } from '@/lib/queries';
 import { useDocumentTitle } from '@/lib/hooks';
 import { formatDateTime, formatIDR } from '@/lib/format';
 import { OrderStatusBadge } from '@/components/common/status-badge';
-import { EmptyState, ErrorState, LoadingState } from '@/components/common/states';
+import { ErrorState, LoadingState } from '@/components/common/states';
 
 export function AdminOverviewPage() {
   useDocumentTitle('Platform Overview · Super Admin');

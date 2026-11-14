@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Download, Search, Calendar, Users, Ticket } from 'lucide-react';
-import { api, apiPage } from '@/lib/api';
+import { Download, Search } from 'lucide-react';
+import { apiPage } from '@/lib/api';
 import { formatDateTime, formatIDR } from '@/lib/format';
-import { useDocumentTitle, useDebouncedValue } from '@/lib/hooks';
+import { useDebouncedValue } from '@/lib/hooks';
 import type { EventOrderRow } from '@/lib/queries';
 import { pageMeta } from '@/lib/queries';
 import { OrderStatusBadge } from '@/components/common/status-badge';

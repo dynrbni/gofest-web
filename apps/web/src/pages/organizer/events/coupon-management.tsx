@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Plus, Tag, Power } from 'lucide-react';
+import { Plus, Power } from 'lucide-react';
 import { api, fieldErrors, ApiError, errorMessage } from '@/lib/api';
 import { formatIDR } from '@/lib/format';
 import type { Coupon } from '@/lib/models';

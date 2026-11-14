@@ -1,4 +1,4 @@
-import { LayoutDashboard, Calendar, Settings, Building2 } from 'lucide-react';
+import { LayoutDashboard, Calendar, Building2 } from 'lucide-react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { WorkspaceLayout, type WorkspaceNavItem } from '@/components/layout/workspace-layout';
 import { useAuth } from '@/lib/auth';

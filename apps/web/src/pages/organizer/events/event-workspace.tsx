@@ -1,10 +1,9 @@
-import { NavLink, Outlet, useParams, Link, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useParams, Link } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import {
   ArrowLeft,
-  Calendar,
   Ticket,
   Tag,
   Users,
@@ -24,7 +23,6 @@ import { cn } from '@/lib/utils';
 
 export function EventWorkspaceLayout() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const eventQuery = useOrganizerEvent(id);
   const event = eventQuery.data?.event;
