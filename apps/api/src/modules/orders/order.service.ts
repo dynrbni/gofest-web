@@ -1276,6 +1276,18 @@ export async function listAccountOrders(
   };
 }
 
+export async function getAccountOrder(userId: string, orderIdOrCode: string) {
+  const order = await prisma.order.findFirst({
+    where: {
+      userId,
+      OR: [{ id: orderIdOrCode }, { orderCode: orderIdOrCode.toUpperCase() }],
+    },
+    include: orderInclude,
+  });
+  if (!order) throw new NotFoundError('Order tidak ditemukan', 'ORDER_NOT_FOUND');
+  return { order: serializeOrder(order) };
+}
+
 export async function listEventOrders(
   eventId: string,
   organizerId: string,

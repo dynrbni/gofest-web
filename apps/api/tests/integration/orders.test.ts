@@ -386,3 +386,46 @@ describe('order isolation', () => {
     expect(ownOrders.body.data).toHaveLength(1);
   });
 });
+
+describe('ticket page access', () => {
+  it('membuka tiket dengan token order dan menolak tanpa token', async () => {
+    const { organizer, event, ticketType } = await setupPublishedEvent(app, { price: 0 });
+    const created = await organizer.agent
+      .post('/api/v1/orders')
+      .send(checkoutPayload(event.id, ticketType.id));
+    expect(created.status).toBe(201);
+    const token = created.body.data.accessToken as string;
+    const ticket = created.body.data.order.tickets[0];
+
+    const withoutToken = await request(app).get(`/api/v1/tickets/${ticket.ticketCode}`);
+    expect(withoutToken.status).toBe(401);
+    expect(withoutToken.body.error.code).toBe('ORDER_ACCESS_DENIED');
+
+    const wrongToken = await request(app)
+      .get(`/api/v1/tickets/${ticket.ticketCode}`)
+      .query({ token: 'token-yang-salah' });
+    expect(wrongToken.status).toBe(401);
+
+    const detail = await request(app)
+      .get(`/api/v1/tickets/${ticket.ticketCode}`)
+      .query({ token });
+    expect(detail.status).toBe(200);
+    expect(detail.body.data.ticket.holderName).toBe('Budi Santoso');
+    expect(detail.body.data.ticket.qrUrl).toContain('token=');
+    expect(detail.body.data.ticket.orderCode).toBe(created.body.data.order.orderCode);
+
+    const qr = await request(app).get(detail.body.data.ticket.qrUrl as string);
+    expect(qr.status).toBe(200);
+    expect(qr.headers['content-type']).toContain('image/png');
+
+    const accountOrder = await organizer.agent.get(
+      `/api/v1/account/orders/${created.body.data.order.id}`,
+    );
+    expect(accountOrder.status).toBe(200);
+    expect(accountOrder.body.data.order.orderCode).toBe(created.body.data.order.orderCode);
+
+    const other = await setupOrganizer(app, 'Organizer Tiket Lain');
+    const hidden = await other.agent.get(`/api/v1/account/orders/${created.body.data.order.id}`);
+    expect(hidden.status).toBe(404);
+  });
+});

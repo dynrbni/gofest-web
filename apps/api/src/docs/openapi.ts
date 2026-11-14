@@ -590,6 +590,78 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
+  /account/orders/{idOrCode}:
+    get:
+      tags: [Orders]
+      summary: Detail order milik pengguna login
+      operationId: getAccountOrder
+      security:
+        - cookieAuth: []
+      parameters:
+        - { name: idOrCode, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: Detail order dan tiket.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDetailResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /tickets/{ticketCode}:
+    get:
+      tags: [Orders]
+      summary: Membuka halaman tiket dengan kode tiket
+      operationId: getTicketByCode
+      description: >-
+        Membutuhkan token akses order sebagai query token atau header
+        x-order-token, atau sesi pemilik order/admin. Token QR mentah tidak
+        pernah disimpan; hanya hash.
+      security:
+        - orderToken: []
+        - cookieAuth: []
+        - {}
+      parameters:
+        - { name: ticketCode, in: path, required: true, schema: { type: string } }
+        - $ref: '#/components/parameters/OrderTokenQuery'
+      responses:
+        '200':
+          description: Detail tiket, event, dan URL QR.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketByCodeResponse'
+        '401':
+          $ref: '#/components/responses/OrderAccessDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /tickets/{ticketCode}/qr:
+    get:
+      tags: [Orders]
+      summary: Mengunduh QR tiket berdasarkan kode tiket
+      operationId: getTicketQrByCode
+      security:
+        - orderToken: []
+        - cookieAuth: []
+        - {}
+      parameters:
+        - { name: ticketCode, in: path, required: true, schema: { type: string } }
+        - $ref: '#/components/parameters/OrderTokenQuery'
+      responses:
+        '200':
+          description: PNG QR privat.
+          content:
+            image/png:
+              schema: { type: string, format: binary }
+        '401':
+          $ref: '#/components/responses/OrderAccessDenied'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Tiket sudah dibatalkan atau di-refund.
+
   /organizer/account/apply:
     post:
       tags: [Organizer account]
@@ -2315,6 +2387,25 @@ components:
               properties:
                 ticketId: { type: string }
                 qrUrl: { type: string }
+
+    TicketByCodeResponse:
+      allOf:
+        - $ref: '#/components/schemas/Envelope'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                ticket:
+                  allOf:
+                    - $ref: '#/components/schemas/Ticket'
+                    - type: object
+                      properties:
+                        orderCode: { type: string }
+                        event:
+                          type: object
+                          additionalProperties: true
+                        qrUrl: { type: string }
 
     PaymentSessionResponse:
       allOf:

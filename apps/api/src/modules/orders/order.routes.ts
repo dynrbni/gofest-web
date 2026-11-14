@@ -8,6 +8,7 @@ import { readPrivateFile } from '../../lib/storage';
 import {
   createOrder,
   createOrderPaymentSession,
+  getAccountOrder,
   getOrderStatus,
   getOrderTicketQr,
   getOrderTickets,
@@ -82,4 +83,9 @@ accountOrderRouter.get('/', validate(paginationSchema, 'query'), async (req, res
   const query = req.query as unknown as { page: number; limit: number };
   const result = await listAccountOrders(req.auth!.userId, query);
   return ok(res, result.data, result.meta);
+});
+
+accountOrderRouter.get('/:idOrCode', async (req, res) => {
+  const result = await getAccountOrder(req.auth!.userId, req.params.idOrCode!);
+  return ok(res, result);
 });

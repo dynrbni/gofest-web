@@ -11,6 +11,7 @@ import { orderRouter, accountOrderRouter } from '../../modules/orders/order.rout
 import { webhookRouter } from '../../modules/payments/webhook.routes';
 import { checkInRouter, staffRouter } from '../../modules/check-in/check-in.routes';
 import { adminRouter } from '../../modules/admin/admin.routes';
+import { ticketRouter } from '../../modules/tickets/ticket.routes';
 
 export const v1Router = Router();
 
@@ -30,6 +31,7 @@ v1Router.use('/organizer/account', organizerRouter);
 v1Router.use('/organizer', organizerWorkspaceRouter);
 v1Router.use('/uploads', uploadRouter);
 v1Router.use('/orders', orderRouter);
+v1Router.use('/tickets', ticketRouter);
 v1Router.use('/account/orders', accountOrderRouter);
 v1Router.use('/webhooks', webhookRouter);
 v1Router.use('/staff', staffRouter);
