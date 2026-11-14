@@ -10,6 +10,7 @@ import { errorHandler, notFoundHandler } from './middleware/error-handler';
 import { httpLogger } from './middleware/request-logger';
 import { originCheck } from './middleware/origin-check';
 import { v1Router } from './routes/v1';
+import { docsRouter } from './docs/docs.routes';
 
 export function createApp() {
   const app = express();
@@ -51,6 +52,7 @@ export function createApp() {
     }),
   );
 
+  app.use('/api/docs', docsRouter);
   app.use('/api/v1', v1Router);
 
   app.use(notFoundHandler);
