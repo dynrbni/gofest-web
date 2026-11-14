@@ -12,3 +12,5 @@ apps/web/.vite/
 playwright-report/
 test-results/
 *.tsbuildinfo
+.claude/
+agent/
