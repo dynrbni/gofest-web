@@ -1,5 +1,7 @@
 # Gofest
 
+[![CI](https://github.com/dynrbni/gofest-web/actions/workflows/ci.yml/badge.svg)](https://github.com/dynrbni/gofest-web/actions/workflows/ci.yml)
+
 Platform ticketing event multi-organizer untuk pasar Indonesia. Pembeli dapat menemukan event, checkout sebagai guest, dan menerima tiket digital dengan QR. Organizer mengelola event, tiket, promo, order, dan check-in. Admin memoderasi platform.
 
 > Status: sedang dibangun mengikuti PRD di `docs/PRD-Platform-Ticketing-Event.md`. Jangan menganggap fitur selesai sebelum laporan QA dan Delivery Gate tersedia.
