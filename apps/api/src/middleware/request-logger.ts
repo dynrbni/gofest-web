@@ -3,6 +3,15 @@ import type { NextFunction, Request, Response } from 'express';
 import pinoHttp from 'pino-http';
 import { logger } from '../lib/logger';
 
+function sanitizeUrl(url: string | undefined): string | undefined {
+  if (!url || !url.includes('?')) return url;
+  const [pathname, query] = url.split('?');
+  const params = new URLSearchParams(query);
+  params.delete('token');
+  const nextQuery = params.toString();
+  return nextQuery ? `${pathname}?${nextQuery}` : pathname;
+}
+
 export const httpLogger = pinoHttp({
   logger,
   genReqId: (req, res) => {
@@ -16,12 +25,12 @@ export const httpLogger = pinoHttp({
     if (res.statusCode >= 400) return 'warn';
     return 'info';
   },
-  customSuccessMessage: (req, res) => `${req.method} ${req.url} ${res.statusCode}`,
-  customErrorMessage: (req, res) => `${req.method} ${req.url} ${res.statusCode}`,
+  customSuccessMessage: (req, res) => `${req.method} ${sanitizeUrl(req.url)} ${res.statusCode}`,
+  customErrorMessage: (req, res) => `${req.method} ${sanitizeUrl(req.url)} ${res.statusCode}`,
   serializers: {
     req: (req) => ({
       method: req.method,
-      url: req.url,
+      url: sanitizeUrl(req.url),
       id: req.id,
     }),
     res: (res) => ({

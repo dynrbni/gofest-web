@@ -16,6 +16,11 @@ const optionalDateTime = z.preprocess(
   z.string().datetime({ offset: true }).optional(),
 );
 
+const optionalDateTimeOrNull = z.preprocess(
+  (value) => (value === '' ? null : value),
+  z.string().datetime({ offset: true }).nullable().optional(),
+);
+
 export const emailSchema = z
   .string()
   .trim()
@@ -88,6 +93,7 @@ export const organizerApplicationSchema = z.object({
 
 export const organizerUpdateSchema = organizerApplicationSchema.partial().extend({
   description: z.string().trim().max(3000).optional(),
+  logoKey: z.string().max(300).optional().nullable(),
 });
 
 export const organizerReviewSchema = z
@@ -105,81 +111,102 @@ export const organizerReviewSchema = z
     }
   });
 
-export const eventInputSchema = z
-  .object({
-    title: z.string().trim().min(4).max(140),
-    slug: slugSchema,
-    summary: z.string().trim().min(20).max(240),
-    description: z.string().trim().min(40).max(30000),
-    categoryId: z.string().min(1),
-    coverKey: z.string().max(500).optional().nullable(),
-    type: z.enum(EVENT_TYPES),
-    venueName: z.string().trim().max(160).optional().nullable(),
-    address: z.string().trim().max(300).optional().nullable(),
-    city: z.string().trim().max(80).optional().nullable(),
-    onlineAccessUrl: z
-      .string()
-      .trim()
-      .url('URL akses online tidak valid')
-      .max(1000)
-      .optional()
-      .nullable(),
-    onlineAccessNote: z.string().trim().max(500).optional().nullable(),
-    startsAt: z.string().datetime({ offset: true }),
-    endsAt: z.string().datetime({ offset: true }),
-    timezone: z.string().trim().min(1).max(64).default(DEFAULT_TIMEZONE),
-    salesStartAt: optionalDateTime,
-    salesEndAt: optionalDateTime,
-    rules: z.string().trim().max(10000).optional().nullable(),
-    refundPolicy: z.string().trim().max(10000).optional().nullable(),
-  })
-  .superRefine((value, ctx) => {
-    if (new Date(value.endsAt) <= new Date(value.startsAt)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['endsAt'],
-        message: 'Waktu selesai harus setelah waktu mulai',
-      });
-    }
-    if (value.salesStartAt && value.salesEndAt) {
-      if (new Date(value.salesEndAt) <= new Date(value.salesStartAt)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['salesEndAt'],
-          message: 'Akhir penjualan harus setelah mulai penjualan',
-        });
-      }
-    }
-    if (value.salesEndAt && new Date(value.salesEndAt) > new Date(value.startsAt)) {
+const eventBaseSchema = z.object({
+  title: z.string().trim().min(4).max(140),
+  slug: slugSchema,
+  summary: z.string().trim().min(20).max(240),
+  description: z.string().trim().min(40).max(30000),
+  categoryId: z.string().min(1),
+  coverKey: z.string().max(500).optional().nullable(),
+  type: z.enum(EVENT_TYPES),
+  venueName: z.string().trim().max(160).optional().nullable(),
+  address: z.string().trim().max(300).optional().nullable(),
+  city: z.string().trim().max(80).optional().nullable(),
+  onlineAccessUrl: z
+    .string()
+    .trim()
+    .url('URL akses online tidak valid')
+    .max(1000)
+    .optional()
+    .nullable(),
+  onlineAccessNote: z.string().trim().max(500).optional().nullable(),
+  startsAt: z.string().datetime({ offset: true }),
+  endsAt: z.string().datetime({ offset: true }),
+  timezone: z.string().trim().min(1).max(64).default(DEFAULT_TIMEZONE),
+  salesStartAt: optionalDateTime,
+  salesEndAt: optionalDateTime,
+  rules: z.string().trim().max(10000).optional().nullable(),
+  refundPolicy: z.string().trim().max(10000).optional().nullable(),
+});
+
+type EventInputBase = z.infer<typeof eventBaseSchema>;
+type EventWindowValue = Partial<Omit<EventInputBase, 'salesStartAt' | 'salesEndAt'>> & {
+  salesStartAt?: string | null;
+  salesEndAt?: string | null;
+};
+
+function refineEventWindow(
+  value: EventWindowValue,
+  ctx: z.RefinementCtx,
+  requireOfflineDetails: boolean,
+) {
+  if (value.startsAt && value.endsAt && new Date(value.endsAt) <= new Date(value.startsAt)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['endsAt'],
+      message: 'Waktu selesai harus setelah waktu mulai',
+    });
+  }
+  if (value.salesStartAt && value.salesEndAt) {
+    if (new Date(value.salesEndAt) <= new Date(value.salesStartAt)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['salesEndAt'],
-        message: 'Penjualan tiket tidak boleh melewati waktu mulai event',
+        message: 'Akhir penjualan harus setelah mulai penjualan',
       });
     }
-    if (value.type === 'OFFLINE') {
-      if (!value.venueName) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['venueName'],
-          message: 'Nama venue wajib diisi untuk event offline',
-        });
-      }
-      if (!value.address) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['address'],
-          message: 'Alamat wajib diisi untuk event offline',
-        });
-      }
-      if (!value.city) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['city'],
-          message: 'Kota wajib diisi untuk event offline',
-        });
-      }
+  }
+  if (value.salesEndAt && value.startsAt && new Date(value.salesEndAt) > new Date(value.startsAt)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['salesEndAt'],
+      message: 'Penjualan tiket tidak boleh melewati waktu mulai event',
+    });
+  }
+  if (value.type === 'OFFLINE' && requireOfflineDetails) {
+    if (!value.venueName) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['venueName'],
+        message: 'Nama venue wajib diisi untuk event offline',
+      });
     }
+    if (!value.address) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['address'],
+        message: 'Alamat wajib diisi untuk event offline',
+      });
+    }
+    if (!value.city) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['city'],
+        message: 'Kota wajib diisi untuk event offline',
+      });
+    }
+  }
+}
+
+export const eventInputSchema = eventBaseSchema.superRefine((value, ctx) => {
+  refineEventWindow(value, ctx, true);
+});
+
+export const eventUpdateSchema = eventBaseSchema
+  .partial()
+  .extend({ salesStartAt: optionalDateTimeOrNull, salesEndAt: optionalDateTimeOrNull })
+  .superRefine((value, ctx) => {
+    refineEventWindow(value, ctx, false);
   });
 
 export const eventReviewSchema = z
@@ -201,20 +228,27 @@ export const eventCancelSchema = z.object({
   reason: z.string().trim().min(10).max(1000),
 });
 
-export const ticketTypeInputSchema = z
-  .object({
-    name: z.string().trim().min(2).max(80),
-    description: z.string().trim().max(1000).optional().nullable(),
-    price: z.coerce.number().int().min(0).max(1_000_000_000),
-    quotaTotal: z.coerce.number().int().min(1).max(1_000_000),
-    salesStartAt: optionalDateTime,
-    salesEndAt: optionalDateTime,
-    minPerOrder: z.coerce.number().int().min(1).max(20).default(1),
-    maxPerOrder: z.coerce.number().int().min(1).max(50).default(10),
-    isActive: z.boolean().default(true),
-    sortOrder: z.coerce.number().int().min(0).max(1000).default(0),
-  })
-  .superRefine((value, ctx) => {
+const ticketTypeBaseSchema = z.object({
+  name: z.string().trim().min(2).max(80),
+  description: z.string().trim().max(1000).optional().nullable(),
+  price: z.coerce.number().int().min(0).max(1_000_000_000),
+  quotaTotal: z.coerce.number().int().min(1).max(1_000_000),
+  salesStartAt: optionalDateTime,
+  salesEndAt: optionalDateTime,
+  minPerOrder: z.coerce.number().int().min(1).max(20).default(1),
+  maxPerOrder: z.coerce.number().int().min(1).max(50).default(10),
+  isActive: z.boolean().default(true),
+  sortOrder: z.coerce.number().int().min(0).max(1000).default(0),
+});
+
+type TicketTypeBase = z.infer<typeof ticketTypeBaseSchema>;
+type TicketTypeWindowValue = Partial<Omit<TicketTypeBase, 'salesStartAt' | 'salesEndAt'>> & {
+  salesStartAt?: string | null;
+  salesEndAt?: string | null;
+};
+
+function refineTicketType(value: TicketTypeWindowValue, ctx: z.RefinementCtx) {
+  if (value.minPerOrder !== undefined && value.maxPerOrder !== undefined) {
     if (value.minPerOrder > value.maxPerOrder) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -222,54 +256,73 @@ export const ticketTypeInputSchema = z
         message: 'Maksimal per order harus lebih besar atau sama dengan minimal',
       });
     }
-    if (value.salesStartAt && value.salesEndAt) {
-      if (new Date(value.salesEndAt) <= new Date(value.salesStartAt)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['salesEndAt'],
-          message: 'Akhir penjualan harus setelah mulai penjualan',
-        });
-      }
-    }
-  });
-
-export const couponInputSchema = z
-  .object({
-    code: z
-      .string()
-      .trim()
-      .toUpperCase()
-      .min(3)
-      .max(24)
-      .regex(/^[A-Z0-9_-]+$/, 'Kode hanya boleh huruf, angka, tanda hubung, dan garis bawah'),
-    discountType: z.enum(DISCOUNT_TYPES),
-    discountValue: z.coerce.number().int().min(1),
-    maxDiscount: z.coerce.number().int().min(1).optional().nullable(),
-    minimumPurchase: z.coerce.number().int().min(0).default(0),
-    maxRedemptions: z.coerce.number().int().min(1).optional().nullable(),
-    maxPerUser: z.coerce.number().int().min(1).optional().nullable(),
-    validFrom: optionalDateTime,
-    validUntil: optionalDateTime,
-    isActive: z.boolean().default(true),
-  })
-  .superRefine((value, ctx) => {
-    if (value.discountType === 'PERCENTAGE' && value.discountValue > 100) {
+  }
+  if (value.salesStartAt && value.salesEndAt) {
+    if (new Date(value.salesEndAt) <= new Date(value.salesStartAt)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        path: ['discountValue'],
-        message: 'Diskon persentase maksimal 100',
+        path: ['salesEndAt'],
+        message: 'Akhir penjualan harus setelah mulai penjualan',
       });
     }
-    if (value.validFrom && value.validUntil) {
-      if (new Date(value.validUntil) <= new Date(value.validFrom)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['validUntil'],
-          message: 'Akhir masa berlaku harus setelah awal masa berlaku',
-        });
-      }
+  }
+}
+
+export const ticketTypeInputSchema = ticketTypeBaseSchema.superRefine(refineTicketType);
+export const ticketTypeUpdateSchema = ticketTypeBaseSchema
+  .partial()
+  .extend({ salesStartAt: optionalDateTimeOrNull, salesEndAt: optionalDateTimeOrNull })
+  .superRefine(refineTicketType);
+
+const couponBaseSchema = z.object({
+  code: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .min(3)
+    .max(24)
+    .regex(/^[A-Z0-9_-]+$/, 'Kode hanya boleh huruf, angka, tanda hubung, dan garis bawah'),
+  discountType: z.enum(DISCOUNT_TYPES),
+  discountValue: z.coerce.number().int().min(1),
+  maxDiscount: z.coerce.number().int().min(1).optional().nullable(),
+  minimumPurchase: z.coerce.number().int().min(0).default(0),
+  maxRedemptions: z.coerce.number().int().min(1).optional().nullable(),
+  maxPerUser: z.coerce.number().int().min(1).optional().nullable(),
+  validFrom: optionalDateTime,
+  validUntil: optionalDateTime,
+  isActive: z.boolean().default(true),
+});
+
+type CouponBase = z.infer<typeof couponBaseSchema>;
+type CouponValidityValue = Partial<Omit<CouponBase, 'validFrom' | 'validUntil'>> & {
+  validFrom?: string | null;
+  validUntil?: string | null;
+};
+
+function refineCoupon(value: CouponValidityValue, ctx: z.RefinementCtx) {
+  if (value.discountType === 'PERCENTAGE' && value.discountValue && value.discountValue > 100) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['discountValue'],
+      message: 'Diskon persentase maksimal 100',
+    });
+  }
+  if (value.validFrom && value.validUntil) {
+    if (new Date(value.validUntil) <= new Date(value.validFrom)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['validUntil'],
+        message: 'Akhir masa berlaku harus setelah awal masa berlaku',
+      });
     }
-  });
+  }
+}
+
+export const couponInputSchema = couponBaseSchema.superRefine(refineCoupon);
+export const couponUpdateSchema = couponBaseSchema
+  .partial()
+  .extend({ validFrom: optionalDateTimeOrNull, validUntil: optionalDateTimeOrNull })
+  .superRefine(refineCoupon);
 
 export const createOrderSchema = z.object({
   eventId: z.string().min(1),
@@ -310,6 +363,14 @@ export const eventListQuerySchema = paginationSchema.extend({
   availability: z.enum(['all', 'available', 'sold_out']).default('all'),
   sort: z.enum(['starts_soon', 'published_newest']).default('starts_soon'),
 });
+
+export const eventManageQuerySchema = paginationSchema.extend({
+  status: z.enum(EVENT_STATUSES).optional(),
+  q: z.string().trim().max(120).optional(),
+});
+
+export type EventListQuery = z.infer<typeof eventListQuerySchema>;
+export type EventManageQuery = z.infer<typeof eventManageQuerySchema>;
 
 export const scanTicketSchema = z
   .object({
