@@ -30,6 +30,8 @@ import { EventOrderManagementPage } from '@/pages/organizer/events/order-managem
 import { EventStaffManagementPage } from '@/pages/organizer/events/staff-management';
 import { EventCheckInSummaryPage } from '@/pages/organizer/events/checkin-summary';
 import { OrganizerSettingsPage } from '@/pages/organizer/settings';
+import { StaffEventsPage } from '@/pages/staff/events';
+import { StaffCheckInScannerPage } from '@/pages/staff/check-in';
 
 function RootLayout() {
   return (
@@ -130,6 +132,18 @@ export const router = createBrowserRouter([
             ],
           },
           { path: 'settings', element: <OrganizerSettingsPage /> },
+        ],
+      },
+      {
+        path: '/staff',
+        element: (
+          <RequireAuth roles={['STAFF', 'ORGANIZER', 'ADMIN']}>
+            <PublicLayout />
+          </RequireAuth>
+        ),
+        children: [
+          { path: 'events', element: <StaffEventsPage /> },
+          { path: 'events/:id/check-in', element: <StaffCheckInScannerPage /> },
         ],
       },
     ],
