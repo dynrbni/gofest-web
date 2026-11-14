@@ -1,5 +1,5 @@
 import { Outlet, ScrollRestoration, createBrowserRouter } from 'react-router-dom';
-import { AuthProvider } from '@/lib/auth';
+import { AuthProvider, RequireAuth } from '@/lib/auth';
 import { PublicLayout } from '@/components/layout/public-layout';
 import { HomePage } from '@/pages/public/home';
 import { EventsPage } from '@/pages/public/events';
@@ -13,6 +13,11 @@ import { LoginPage } from '@/pages/auth/login';
 import { RegisterPage } from '@/pages/auth/register';
 import { ForgotPasswordPage } from '@/pages/auth/forgot-password';
 import { ResetPasswordPage } from '@/pages/auth/reset-password';
+import { AccountLayout } from '@/pages/account/account-layout';
+import { AccountOverviewPage } from '@/pages/account/overview';
+import { AccountOrdersPage } from '@/pages/account/orders';
+import { AccountOrderDetailPage } from '@/pages/account/order-detail';
+import { AccountProfilePage } from '@/pages/account/profile';
 
 function RootLayout() {
   return (
@@ -62,6 +67,20 @@ export const router = createBrowserRouter([
           { path: '/register', element: <RegisterPage /> },
           { path: '/forgot-password', element: <ForgotPasswordPage /> },
           { path: '/reset-password', element: <ResetPasswordPage /> },
+          {
+            path: '/account',
+            element: (
+              <RequireAuth>
+                <AccountLayout />
+              </RequireAuth>
+            ),
+            children: [
+              { index: true, element: <AccountOverviewPage /> },
+              { path: 'orders', element: <AccountOrdersPage /> },
+              { path: 'orders/:id', element: <AccountOrderDetailPage /> },
+              { path: 'profile', element: <AccountProfilePage /> },
+            ],
+          },
           { path: '*', element: <NotFoundPage /> },
         ],
       },
