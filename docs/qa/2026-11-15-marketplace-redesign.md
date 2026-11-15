@@ -62,3 +62,7 @@ Follow-up validation:
 Current development checks use the existing localhost:5173/4000 services. The final production preview uses 127.0.0.1:5181 with a separate API on 4181 configured with the matching WEB_URL and API_PROXY_TARGET. A first preview attempt against the development API correctly rejected checkout quote requests from the unmatched origin; the correctly configured repeat passes without relaxing origin protection.
 
 Language switching translates navigation, home, catalog, event cards, and login/register. Admin-authored content keeps its stored text; event detail, transactions, legal, and workspaces remain Indonesian. No real payment provider or production deployment has been added.
+
+## GitHub publication and CI
+
+Backend commit `4a68b65` and web commit `80de2d4` were pushed to `origin/main`, and the remote SHA was verified. [GitHub Actions run 43677648363](https://github.com/dynrbni/gofest-web/actions/runs/43677648363) did not start its verification job. Its failure annotation states: “The job was not started because your account is locked due to a billing issue.” There are no executed CI steps or test logs for that run. Account billing must be resolved before hosted CI can execute; the local checks documented above passed.

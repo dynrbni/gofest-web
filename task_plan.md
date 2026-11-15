@@ -10,7 +10,7 @@ Redesign the existing ticketing application around Loket-style event discovery, 
 2. Create visual reference and implement shared design and motion — complete.
 3. Redesign discovery, event detail, checkout, authentication, account, and workspaces — complete.
 4. Verify lint, types, API tests, production build, desktop/mobile UI and purchasing — complete, including the screenshot follow-up and production preview.
-5. Commit and push verified changes; record limitations — in progress.
+5. Commit and push verified changes; record limitations — complete. Backend and web commits are on origin/main; GitHub Actions cannot start because the account is locked for billing.
 
 ## Decisions
 

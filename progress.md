@@ -22,4 +22,5 @@
 - Built horizontal catalog categories and location/date/price/status filters, including date-range validation and timezone conversion. Fixed a rapid-navigation filter race.
 - Added generated 3D city landmark assets and raised hover/focus cards, honoring reduced motion.
 - Added admin category editing; verified a real edit reaches the public menu and restored the original data.
-- Latest check: 45 API tests across seven files, zero lint warnings/errors, typecheck and both builds pass. Public 24, admin 16 and organizer 26 current browser route checks pass. Interaction suite passes. Final production preview/staff checks and GitHub push remain.
+- Latest check: 45 API tests across seven files, zero lint warnings/errors, typecheck and both builds pass. Public 24, admin 16, organizer 26, staff two, and production public 24 current route checks pass (92 total). Interaction suite passes on development and production preview.
+- Pushed backend commit `4a68b65` and web commit `80de2d4` to origin/main and verified the remote SHA. GitHub Actions run 43677648363 did not start its job: GitHub reports the account is locked due to a billing issue. Local verification remains green; no CI test execution is claimed.
