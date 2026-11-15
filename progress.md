@@ -1,5 +1,12 @@
 # Progress
 
+## Separate event detail and staged checkout, 2026-11-15
+
+- Followed the supplied Artatix screenshots with Gofest branding: white two-column detail, organizer and descriptive tabs on the left, proportional poster/schedule/location and a direct Pesan Sekarang link on the right. Removed ticket selection from detail.
+- Moved checkout and order routes into a minimal logo/language layout without public navigation/footer. Added the four-stage purchase indicator; category/quantity selection precedes buyer details, then the existing payment provider flow.
+- Added separate ticket cards with availability, per-category limits and remove/increment controls. Preserved server quotes, coupons, terms, idempotent order creation, guest access tokens and mock payment/ticket issuance. Navigation between form stages preserves input; continuing does not submit the form.
+- Verification: lint, TypeScript, 69 API tests and both builds pass. Public smoke checks cover 24 routes/sizes. Updated event-detail E2E covers five widths (320–1440px), distinct routes/stages, mixed-category totals, removal and restored selections/buyer data, guest mock payment and issued tickets, zero automated accessibility violations and zero browser runtime errors. Existing carousel navigation assertions remain.
+
 ## Form header and three-step registration, 2026-11-15
 
 - Followed the new reference: original logo plus flag/ID/EN language selector at the top of the form, left-aligned headings and one white form surface. Desktop mascot trio is retained; language control is shared with public navigation.

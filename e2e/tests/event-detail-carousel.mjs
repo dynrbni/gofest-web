@@ -84,6 +84,7 @@ try {
   for (const item of events) {
     const result = await fetch(new URL(`/api/v1/events/${item.slug}`, base)).then((r) => r.json());
     if (
+      result.data?.event?.isDemo &&
       result.data?.event?.ticketTypes.filter((ticket) => ticket.isOnSale && ticket.available > 0)
         .length >= 2
     ) {
@@ -114,47 +115,159 @@ try {
       assert.ok(layout.summaryLeft > layout.headingRight, 'Poster is beside event details');
     else
       assert.ok(layout.summaryTop >= layout.headingBottom, 'Poster stacks below details on mobile');
-    browser('click', '.event-summary-card button');
-    browser('wait', 'input[name="ticket-category"]');
     assert.equal(
-      evaluate('document.querySelector("[role=tab][aria-selected=true]").textContent'),
-      'Tiket',
+      evaluate('document.querySelectorAll("input[name=ticket-category]").length'),
+      0,
+      'Detail has no ticket selector',
     );
-    const chosen = event.ticketTypes.filter((ticket) => ticket.isOnSale && ticket.available > 0)[1];
-    browser('check', `input[value="${chosen.id}"]`);
+    assert.equal(
+      evaluate(
+        '[...document.querySelectorAll("[role=tab]")].some(tab => tab.textContent === "Tiket")',
+      ),
+      false,
+    );
+    browser(
+      'click',
+      width >= 1024 ? '.event-summary-card a[href^="/checkout/"]' : '.mobile-booking a',
+    );
+    browser('wait', '#tickets-heading');
+    assert.equal(evaluate('location.pathname'), `/checkout/${event.slug}`);
+    assert.equal(
+      evaluate('document.querySelector("#checkout-name")'),
+      null,
+      'Buyer form is a separate stage',
+    );
+    assert.equal(
+      evaluate('document.querySelector("button[type=submit]")'),
+      null,
+      'Cannot order before choosing tickets',
+    );
+    assert.equal(
+      evaluate('document.querySelector("footer")'),
+      null,
+      'Checkout uses a minimal layout',
+    );
+    assert.equal(
+      evaluate('document.documentElement.scrollWidth > innerWidth + 1'),
+      false,
+      `Checkout fits ${width}px`,
+    );
+    assert.equal(browser('a11y').counts.violations, 0, `Category accessibility at ${width}px`);
+    const chosen = event.ticketTypes.filter(
+      (ticket) => ticket.isOnSale && ticket.available >= ticket.minPerOrder,
+    )[1];
+    click(`Pilih tiket ${chosen.name}`);
+    wait('!document.querySelector("aside button").disabled');
+    const quantitySelector = `output[aria-label="Jumlah tiket ${chosen.name}"]`;
+    assert.equal(
+      evaluate(`document.querySelector(${JSON.stringify(quantitySelector)}).value`),
+      String(chosen.minPerOrder),
+    );
+    click(`Kurangi tiket ${chosen.name}`);
+    assert.equal(
+      evaluate(`document.querySelector(${JSON.stringify(quantitySelector)})`),
+      null,
+      'Minimum quantity can be removed',
+    );
+    assert.equal(evaluate('document.querySelector("aside button").disabled'), true);
+    click(`Pilih tiket ${chosen.name}`);
+    wait('!document.querySelector("aside button").disabled');
+    const other = event.ticketTypes.filter(
+      (ticket) => ticket.isOnSale && ticket.available >= ticket.minPerOrder,
+    )[0];
+    click(`Pilih tiket ${other.name}`);
+    wait('!document.querySelector("aside button").disabled');
+    const expectedSubtotal = chosen.price * chosen.minPerOrder + other.price * other.minPerOrder;
     assert.ok(
-      evaluate('document.querySelector(".event-detail-summary").textContent').includes(
+      evaluate('document.querySelector("aside").textContent').includes(
         new Intl.NumberFormat('id-ID', {
           style: 'currency',
           currency: 'IDR',
           maximumFractionDigits: 0,
-        }).format(chosen.price),
+        }).format(expectedSubtotal),
       ),
+      'Mixed category subtotal matches',
     );
-    const checkout = evaluate(
-      `document.querySelector('.event-detail-summary a[href^="/checkout/"]').getAttribute('href')`,
-    );
+    click(`Kurangi tiket ${other.name}`);
+    wait('!document.querySelector("aside button").disabled');
+    click('Lanjutkan');
+    browser('wait', '#checkout-name');
     assert.equal(
-      new URL(checkout, base).searchParams.get('ticket'),
-      chosen.id,
-      'Selected category reaches checkout',
-    );
-    assert.equal(
-      browser('a11y').counts.violations,
+      evaluate(
+        'document.querySelectorAll("[role=alert], #checkout-name-error, #checkout-email-error").length',
+      ),
       0,
-      `Ticket selection accessibility at ${width}px`,
+      'Moving to buyer details does not submit the form',
     );
-    if (width === 1440) {
-      browser('click', '.event-detail-summary a[href^="/checkout/"]');
-      browser('wait', 'main h1');
-      wait(`new URLSearchParams(location.search).get('ticket') === ${JSON.stringify(chosen.id)}`);
-      browser('wait', '#checkout-name');
-      assert.equal(evaluate('location.pathname'), `/checkout/${event.slug}`);
+    assert.equal(
+      evaluate(
+        'document.querySelector("[aria-current=step]").textContent.includes("Detail Pesanan")',
+      ),
+      true,
+    );
+    assert.equal(evaluate('document.querySelector("#tickets-heading")'), null);
+    browser('fill', '#checkout-name', 'Checkout QA');
+    click('Ubah pilihan tiket');
+    browser('wait', '#tickets-heading');
+    assert.equal(
+      evaluate(`document.querySelector(${JSON.stringify(quantitySelector)}).value`),
+      String(chosen.minPerOrder),
+      'Back preserves tickets',
+    );
+    click('Lanjutkan');
+    browser('wait', '#checkout-name');
+    assert.equal(
+      evaluate('document.querySelector("#checkout-name").value'),
+      'Checkout QA',
+      'Back preserves buyer details',
+    );
+    assert.equal(
+      evaluate('document.documentElement.scrollWidth > innerWidth + 1'),
+      false,
+      `Order details fit ${width}px`,
+    );
+    assert.equal(browser('a11y').counts.violations, 0, `Buyer accessibility at ${width}px`);
+    if (width === 1440 && event.isDemo) {
+      browser('fill', '#checkout-email', `checkout-qa-${Date.now()}@example.com`);
+      browser('check', 'input[type=checkbox]');
+      wait('!document.querySelector("button[type=submit]").disabled');
+      click('Lanjut ke Pembayaran');
+      wait('location.pathname.startsWith("/order/")');
+      browser('wait', '#payment-heading');
+      assert.equal(
+        evaluate('Boolean(new URLSearchParams(location.search).get("token"))'),
+        true,
+        'Guest order access token is retained',
+      );
+      assert.equal(
+        evaluate(
+          'document.querySelector("[aria-current=step]").textContent.includes("Metode Pembayaran")',
+        ),
+        true,
+      );
+      click('Lanjut ke Pembayaran');
+      wait('document.body.textContent.includes("Simulasikan Pembayaran Berhasil")');
+      assert.equal(
+        evaluate(
+          'document.querySelector("[aria-current=step]").textContent.includes("4Pembayaran")',
+        ),
+        true,
+      );
+      click('Simulasikan Pembayaran Berhasil');
+      wait('document.body.textContent.includes("Pembayaran Berhasil & Terkonfirmasi!")');
+      assert.ok(
+        evaluate(
+          '[...document.querySelectorAll("a")].filter(link => link.getAttribute("href")?.startsWith("/ticket/")).length',
+        ) > 0,
+        'Mock payment issues tickets',
+      );
+      wait('!document.querySelector("[data-sonner-toast]")');
+      assert.deepEqual(browser('a11y').violations, [], 'Order accessibility');
     }
   }
   assert.deepEqual(browser('errors').errors, [], 'No browser runtime errors');
   process.stdout.write(
-    'PASS banner links, directional transitions, wraparound, no stop button, responsive detail and ticket selection at five widths, selected ticket checkout, accessibility and zero browser errors.\n',
+    'PASS banner links, directional transitions, wraparound, no stop button, separate detail and checkout, ticket quantity removal, staged buyer form with preserved data at five widths, guest mock purchase, accessibility and zero browser errors.\n',
   );
 } finally {
   browser('close');

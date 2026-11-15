@@ -12,8 +12,8 @@ Referensi visual yang diimplementasikan ada di `docs/design/marketplace-referenc
 - Screenshot LOKET dari pengguna menjadi referensi koreksi home: menu kategori lebar dan terpusat di bawah header utama, poster acara tanpa bingkai luar, kota/organizer di atas separator harga, serta lima kartu kota dalam satu baris desktop. GoFest tetap memakai merek dan konten API sendiri.
 - Design Read: ENERGY 2 / RHYTHM 2 / MOTION 1. Banner foto menjadi fokus utama, baris poster membantu pemilihan acara, dan landmark mengenali destinasi. Biru mengidentifikasi tindakan; ikon megafon/pin menjelaskan kelompok konten; panah menunjukkan navigasi. Motion hanya pergantian slide dan feedback hover/fokus dengan reduced-motion serta kontrol jeda.
 - Kartu acara 16:9 menampilkan tanggal, judul, lokasi, harga, dan organizer. Status gratis, online, dan habis hanya tampil jika sesuai data.
-- Detail acara mengikuti screenshot pengguna: judul, lokasi, waktu dan kategori di kiri atas pada latar warna poster yang diburamkan; poster proporsional, ringkasan harga, tombol beli dan organizer berada di kolom kanan. Di mobile, ringkasan turun setelah informasi utama. Tab Deskripsi/Tiket/Syarat/Lokasi berada di bawah informasi utama. Tombol beli membuka tab Tiket; pilihan diteruskan melalui parameter `ticket` dan divalidasi kembali di checkout. Kebijakan pengembalian dana berada di tab syarat.
-- Panel transaksi memakai garis biru di atas untuk membedakan tindakan beli dari informasi acara. Harga dan kuota tetap dihitung oleh backend.
+- Detail acara mengikuti susunan Artatix pada screenshot: kanvas putih, judul/kategori/penyelenggara dan tab informasi di kiri; poster proporsional, tanggal, jam, lokasi serta harga awal di kanan. CTA **Pesan Sekarang** langsung menuju `/checkout/:eventSlug`; tidak ada pemilihan kategori tiket di halaman detail. Mobile menumpuk informasi dan memakai CTA bawah.
+- Checkout terpisah dari navigasi publik dan footer: header hanya logo asli Gofest dan bahasa. Bilah biru menunjukkan Pilih Kategori → Detail Pesanan → Metode Pembayaran → Pembayaran. Kategori/jumlah dipilih sebelum data pemesan; ringkasan kanan memakai harga dan promo dari server. Kembali antar tahap mempertahankan input. Pembayaran mengikuti provider yang tersedia tanpa logo/metode bank rekaan.
 - Akun dan workspace memakai kanvas slate, panel putih, tab bergaris, serta sidebar dengan indikator biru. Tabel dapat digulir dan difokuskan lewat keyboard.
 - Motion: perpindahan halaman 240ms, pergantian banner horizontal 720ms dengan slide masuk dan keluar mengikuti arah navigasi, feedback kartu 200ms, dan panel mobile 200ms. Semua gerak mengikuti `prefers-reduced-motion`.
 - Sesuai permintaan pengguna, carousel tidak menampilkan tombol stop/jeda. Rotasi 6.5 detik berhenti saat hover, fokus keyboard, tab browser tidak aktif atau reduced motion. Slide keluar memakai `inert` dan `aria-hidden` sehingga hanya banner aktif dapat diklik atau difokuskan.
@@ -99,7 +99,7 @@ Gofest dirancang untuk kecepatan navigasi dan konversi pembelian tiket, dengan h
 
 ### Event Detail
 
-- Large cover visual dengan ambient blur.
-- Tab navigasi internal: Deskripsi, Tiket, Syarat & Ketentuan, Lokasi.
-- Sticky ticket booking panel di desktop dan fixed bottom action bar di mobile.
-- Counter kuota tiket real-time dan validasi status penjualan.
+- Dua kolom putih: informasi/penyelenggara/deskripsi di kiri; poster, jadwal, lokasi, dan CTA pemesanan di kanan.
+- Tab informasi: Deskripsi, Syarat & Ketentuan, Lokasi. Kategori tiket dipilih hanya di checkout.
+- Ringkasan acara sticky di desktop dan CTA bawah di mobile.
+- Checkout bertahap dengan kuota dan harga divalidasi oleh server.
