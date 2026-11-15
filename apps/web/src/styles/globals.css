@@ -497,52 +497,39 @@
     box-shadow: 0 4px 20px rgb(16 36 71 / 4%);
   }
   .event-detail-page {
-    @apply relative isolate bg-white pb-28 lg:pb-12;
-  }
-  .event-detail-backdrop {
-    @apply absolute inset-x-0 top-0 -z-10 h-[360px] overflow-hidden bg-blue-950 lg:h-[320px];
-  }
-  .event-detail-backdrop-image {
-    @apply absolute -inset-10 bg-cover bg-center;
-    filter: blur(40px);
-    opacity: 0.35;
+    @apply bg-white pb-28 pt-7 sm:pt-10 lg:pb-16 lg:pt-12;
   }
   .event-detail-grid {
-    @apply grid items-start gap-x-9 gap-y-6;
+    @apply grid items-start gap-x-12 gap-y-7;
     grid-template-areas: 'heading' 'summary' 'content';
   }
   .event-detail-heading {
-    @apply min-w-0 pb-2 pt-7 lg:min-h-[320px] lg:pb-8 lg:pt-8;
+    @apply min-w-0;
     grid-area: heading;
   }
   .event-detail-summary {
-    @apply min-w-0 lg:sticky lg:top-36 lg:mt-10;
+    @apply min-w-0 lg:sticky lg:top-28;
     grid-area: summary;
-  }
-  .event-summary-card {
-    @apply overflow-hidden rounded-xl bg-white;
-    box-shadow: 0 4px 24px rgb(16 36 71 / 8%);
   }
   .event-detail-content {
     @apply min-w-0;
     grid-area: content;
-    scroll-margin-top: 10rem;
   }
   @media (min-width: 1024px) {
     .event-detail-grid {
-      grid-template-columns: minmax(0, 1fr) 35%;
+      grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
       grid-template-areas: 'heading summary' 'content summary';
-      row-gap: 0;
+      row-gap: 2.5rem;
     }
   }
-  .ticket-option {
-    @apply block cursor-pointer rounded-xl border border-slate-200 p-4 transition-colors hover:border-blue-400;
+  .purchase-progress {
+    @apply bg-blue-800 text-white;
   }
-  .ticket-option-selected {
-    @apply border-blue-600 bg-blue-50/60 ring-1 ring-blue-600;
+  .checkout-ticket {
+    @apply rounded-2xl bg-blue-50 p-3 sm:p-4;
   }
-  .ticket-option-disabled {
-    @apply cursor-not-allowed bg-slate-50 hover:border-slate-200;
+  .checkout-ticket-body {
+    @apply rounded-xl bg-white p-4 sm:p-5;
   }
   .detail-tabs {
     @apply flex h-auto w-full justify-start gap-3 overflow-x-auto rounded-none border-b border-slate-200 bg-transparent p-0;
@@ -571,18 +558,6 @@
   }
   .mobile-booking {
     @apply fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-3 border-t border-slate-200 bg-white px-5 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 lg:hidden;
-  }
-  .checkout-step {
-    @apply flex items-center gap-2 text-xs font-semibold text-slate-500;
-  }
-  .checkout-step span {
-    @apply flex size-7 items-center justify-center rounded-full bg-slate-100 text-xs font-medium;
-  }
-  .checkout-step-active {
-    @apply text-blue-700;
-  }
-  .checkout-step-active span {
-    @apply bg-blue-600 text-white;
   }
 }
 

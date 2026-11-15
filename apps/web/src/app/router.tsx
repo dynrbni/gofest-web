@@ -3,6 +3,7 @@ import { lazy, Suspense, type ComponentType } from 'react';
 import { PageLoading } from '@/components/common/states';
 import { BrandLogo } from '@/components/common/brand-logo';
 import { AuthProvider, RequireAuth } from '@/lib/auth';
+import { CheckoutLayout } from '@/components/layout/checkout-layout';
 import { PublicLayout } from '@/components/layout/public-layout';
 import { AccountLayout } from '@/pages/account/account-layout';
 import { OrganizerShell } from '@/pages/organizer/organizer-shell';
@@ -166,6 +167,13 @@ export const router = createBrowserRouter([
     element: <RootLayout />,
     errorElement: <RouteErrorPage />,
     children: [
+      {
+        element: <CheckoutLayout />,
+        children: [
+          { path: '/checkout/:eventSlug', element: <CheckoutPage /> },
+          { path: '/order/:orderCode', element: <OrderPage /> },
+        ],
+      },
       { path: '/login', element: <LoginPage /> },
       { path: '/register', element: <RegisterPage /> },
       { path: '/forgot-password', element: <ForgotPasswordPage /> },
@@ -177,8 +185,6 @@ export const router = createBrowserRouter([
           { path: '/events', element: <EventsPage /> },
           { path: '/events/:slug', element: <EventDetailPage /> },
           { path: '/organizers/:slug', element: <OrganizerPublicPage /> },
-          { path: '/checkout/:eventSlug', element: <CheckoutPage /> },
-          { path: '/order/:orderCode', element: <OrderPage /> },
           { path: '/ticket/:ticketCode', element: <TicketPage /> },
           { path: '/terms', element: <TermsPage /> },
           { path: '/privacy', element: <PrivacyPage /> },
