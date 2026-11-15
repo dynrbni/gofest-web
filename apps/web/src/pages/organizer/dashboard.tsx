@@ -56,7 +56,9 @@ export function OrganizerDashboardPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-md border border-warm-border bg-card p-5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-[0.12em] text-olive">Gross Sales</span>
+            <span className="text-xs font-semibold uppercase tracking-[0.12em] text-olive">
+              Gross Sales
+            </span>
             <DollarSign className="h-4 w-4 text-muted-foreground" aria-hidden />
           </div>
           <p className="mt-3 text-2xl font-bold tabular-nums text-ink">
@@ -67,7 +69,9 @@ export function OrganizerDashboardPage() {
 
         <div className="rounded-md border border-warm-border bg-card p-5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-[0.12em] text-olive">Tiket Terjual</span>
+            <span className="text-xs font-semibold uppercase tracking-[0.12em] text-olive">
+              Tiket Terjual
+            </span>
             <Ticket className="h-4 w-4 text-muted-foreground" aria-hidden />
           </div>
           <p className="mt-3 text-2xl font-bold tabular-nums text-ink">
@@ -78,18 +82,24 @@ export function OrganizerDashboardPage() {
 
         <div className="rounded-md border border-warm-border bg-card p-5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-[0.12em] text-olive">Acara Terbit</span>
+            <span className="text-xs font-semibold uppercase tracking-[0.12em] text-olive">
+              Acara Terbit
+            </span>
             <Calendar className="h-4 w-4 text-muted-foreground" aria-hidden />
           </div>
           <p className="mt-3 text-2xl font-bold tabular-nums text-ink">
             {summary.publishedEvents ?? 0}
           </p>
-          <p className="mt-1 text-xs text-muted-foreground">Dari total {summary.totalEvents ?? 0} acara dibuat</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Dari total {summary.totalEvents ?? 0} acara dibuat
+          </p>
         </div>
 
         <div className="rounded-md border border-warm-border bg-card p-5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-[0.12em] text-olive">Kehadiran</span>
+            <span className="text-xs font-semibold uppercase tracking-[0.12em] text-olive">
+              Kehadiran
+            </span>
             <Users className="h-4 w-4 text-muted-foreground" aria-hidden />
           </div>
           <p className="mt-3 text-2xl font-bold tabular-nums text-ink">
@@ -128,7 +138,12 @@ export function OrganizerDashboardPage() {
             }
           />
         ) : (
-          <div className="overflow-x-auto rounded-md border border-warm-border bg-card">
+          <div
+            tabIndex={0}
+            role="region"
+            aria-label="Pesanan terbaru"
+            className="overflow-x-auto rounded-md border border-warm-border bg-card"
+          >
             <table className="w-full text-left text-xs">
               <thead className="border-b border-warm-border bg-warm-muted/40 font-semibold text-ink">
                 <tr>

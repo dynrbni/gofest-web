@@ -7,7 +7,7 @@
     "node": ">=20.19.0"
   },
   "scripts": {
-    "dev": "concurrently -n api,web,worker -c blue,green,magenta \"pnpm --filter @gofest/api dev\" \"pnpm --filter @gofest/web dev\" \"pnpm --filter @gofest/api dev:worker\"",
+    "dev": "pnpm db:check && concurrently -n api,web,worker -c blue,green,magenta \"pnpm --filter @gofest/api dev\" \"pnpm --filter @gofest/web dev\" \"pnpm --filter @gofest/api dev:worker\"",
     "dev:web": "pnpm --filter @gofest/web dev",
     "dev:api": "pnpm --filter @gofest/api dev",
     "dev:worker": "pnpm --filter @gofest/api dev:worker",
@@ -17,7 +17,10 @@
     "format:check": "prettier --check .",
     "typecheck": "pnpm --filter @gofest/shared typecheck && pnpm --filter @gofest/api typecheck && pnpm --filter @gofest/web typecheck",
     "test": "pnpm --filter @gofest/api test",
+    "test:browser": "node e2e/tests/marketplace-smoke.mjs",
+    "test:discovery": "node e2e/tests/discovery-interactions.mjs",
     "db:generate": "pnpm --filter @gofest/api db:generate",
+    "db:check": "pnpm --filter @gofest/api db:check",
     "db:migrate": "pnpm --filter @gofest/api db:migrate",
     "db:seed": "pnpm --filter @gofest/api db:seed",
     "db:reset": "pnpm --filter @gofest/api db:reset",

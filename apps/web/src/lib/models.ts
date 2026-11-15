@@ -124,7 +124,7 @@ export interface OrganizerProfile {
   createdAt: string;
   _count?: { events: number };
   user?: { id: string; name: string; email: string; phone: string | null; status: UserStatus };
-  events?: EventSummary[];
+  events?: Array<Omit<EventSummary, 'organizer'>>;
 }
 
 export interface Coupon {

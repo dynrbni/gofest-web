@@ -59,7 +59,9 @@ export function OrganizerEventListPage() {
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 border-b border-warm-border pb-6 sm:flex-row sm:items-center">
         <div>
-          <h1 className="font-display text-3xl font-bold tracking-tightest sm:text-4xl">Acara Saya</h1>
+          <h1 className="font-display text-3xl font-bold tracking-tightest sm:text-4xl">
+            Acara Saya
+          </h1>
           <p className="mt-1 text-xs text-muted-foreground">
             Kelola jadwal, tiket, kupon diskon, dan petugas untuk seluruh acaramu
           </p>
@@ -97,8 +99,12 @@ export function OrganizerEventListPage() {
         </div>
 
         <div className="relative w-full sm:max-w-xs">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden
+          />
           <input
+            aria-label="Cari judul acara"
             type="search"
             value={search}
             onChange={(e) => {
@@ -154,14 +160,14 @@ export function OrganizerEventListPage() {
                       {event.category?.name ?? 'Umum'}
                     </span>
                   </div>
-                  <h3 className="text-lg font-bold text-ink">
+                  <h2 className="text-lg font-bold text-ink">
                     <Link
                       to={`/organizer/events/${event.id}/edit`}
                       className="hover:underline hover:underline-offset-4"
                     >
                       {event.title}
                     </Link>
-                  </h3>
+                  </h2>
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1.5">
                       <Calendar className="h-3.5 w-3.5" aria-hidden />

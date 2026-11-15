@@ -17,7 +17,10 @@ export function LoadingState({
     <div className={cn('space-y-4', className)} role="status" aria-live="polite">
       <span className="sr-only">{label}</span>
       {Array.from({ length: rows }).map((_, index) => (
-        <div key={index} className="flex items-center gap-4 rounded-xl border border-slate-100 bg-white p-4 shadow-2xs">
+        <div
+          key={index}
+          className="flex items-center gap-4 rounded-xl border border-slate-100 bg-white p-4 shadow-2xs"
+        >
           <Skeleton className="h-20 w-24 shrink-0 rounded-lg bg-slate-100" />
           <div className="w-full space-y-2.5">
             <Skeleton className="h-3.5 w-28 bg-slate-100" />
@@ -33,7 +36,7 @@ export function LoadingState({
 export function PageLoading({ label = 'Memuat halaman' }: { label?: string }) {
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4" role="status">
-      <div className="h-10 w-10 animate-spin rounded-full border-3 border-slate-200 border-t-blue-600" />
+      <div className="h-10 w-10 animate-spin rounded-full border-[3px] border-slate-200 border-t-blue-600" />
       <p className="text-sm font-semibold text-slate-500">{label}</p>
     </div>
   );
@@ -95,9 +98,7 @@ export function EmptyState({
       )}
     >
       <h2 className="text-xl font-bold tracking-tight text-slate-900">{title}</h2>
-      <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-slate-500">
-        {description}
-      </p>
+      <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-slate-500">{description}</p>
       {action ? <div className="mt-6 flex justify-center">{action}</div> : null}
     </div>
   );
@@ -131,7 +132,7 @@ export function Field({
 }) {
   return (
     <div className={cn('space-y-1.5', className)}>
-      <label htmlFor={htmlFor} className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+      <label htmlFor={htmlFor} className="block text-sm font-semibold text-slate-700">
         {label}
         {required ? <span className="text-rose-600"> *</span> : null}
       </label>

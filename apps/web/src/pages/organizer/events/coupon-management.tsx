@@ -6,7 +6,13 @@ import { Plus, Power } from 'lucide-react';
 import { api, fieldErrors, ApiError, errorMessage } from '@/lib/api';
 import { formatIDR } from '@/lib/format';
 import type { Coupon } from '@/lib/models';
-import { EmptyState, ErrorState, Field, InlineError, LoadingState } from '@/components/common/states';
+import {
+  EmptyState,
+  ErrorState,
+  Field,
+  InlineError,
+  LoadingState,
+} from '@/components/common/states';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -126,7 +132,12 @@ export function EventCouponManagementPage() {
           }
         />
       ) : (
-        <div className="overflow-x-auto rounded-md border border-warm-border bg-card">
+        <div
+          tabIndex={0}
+          role="region"
+          aria-label="Daftar kode promo"
+          className="overflow-x-auto rounded-md border border-warm-border bg-card"
+        >
           <table className="w-full text-left text-xs">
             <thead className="border-b border-warm-border bg-warm-muted/40 font-semibold text-ink">
               <tr>

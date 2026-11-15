@@ -29,7 +29,7 @@ interface RequestOptions extends Omit<RequestInit, 'body'> {
   skipRefresh?: boolean;
 }
 
-const API_BASE = '/api/v1';
+const API_BASE = (import.meta.env.VITE_API_URL?.trim() || '/api/v1').replace(/\/+$/, '');
 
 let refreshPromise: Promise<boolean> | null = null;
 

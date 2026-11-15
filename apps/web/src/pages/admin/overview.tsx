@@ -1,11 +1,5 @@
 import { Link } from 'react-router-dom';
-import {
-  DollarSign,
-  Calendar,
-  Users,
-  Building2,
-  AlertCircle,
-} from 'lucide-react';
+import { DollarSign, Calendar, Users, Building2, AlertCircle } from 'lucide-react';
 import { useAdminDashboard } from '@/lib/queries';
 import { useDocumentTitle } from '@/lib/hooks';
 import { formatDateTime, formatIDR } from '@/lib/format';
@@ -75,7 +69,9 @@ export function AdminOverviewPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-md border border-warm-border bg-card p-5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-[0.12em] text-olive">Gross Revenue</span>
+            <span className="text-xs font-semibold uppercase tracking-[0.12em] text-olive">
+              Gross Revenue
+            </span>
             <DollarSign className="h-4 w-4 text-muted-foreground" aria-hidden />
           </div>
           <p className="mt-3 text-2xl font-bold tabular-nums text-ink">
@@ -88,12 +84,12 @@ export function AdminOverviewPage() {
 
         <div className="rounded-md border border-warm-border bg-card p-5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-[0.12em] text-olive">Acara Terbit</span>
+            <span className="text-xs font-semibold uppercase tracking-[0.12em] text-olive">
+              Acara Terbit
+            </span>
             <Calendar className="h-4 w-4 text-muted-foreground" aria-hidden />
           </div>
-          <p className="mt-3 text-2xl font-bold tabular-nums text-ink">
-            {events.published ?? 0}
-          </p>
+          <p className="mt-3 text-2xl font-bold tabular-nums text-ink">{events.published ?? 0}</p>
           <p className="mt-1 text-xs text-muted-foreground">
             Total {events.total ?? 0} acara di sistem
           </p>
@@ -101,12 +97,12 @@ export function AdminOverviewPage() {
 
         <div className="rounded-md border border-warm-border bg-card p-5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-[0.12em] text-olive">Organizer Aktif</span>
+            <span className="text-xs font-semibold uppercase tracking-[0.12em] text-olive">
+              Organizer Aktif
+            </span>
             <Building2 className="h-4 w-4 text-muted-foreground" aria-hidden />
           </div>
-          <p className="mt-3 text-2xl font-bold tabular-nums text-ink">
-            {organizers.active ?? 0}
-          </p>
+          <p className="mt-3 text-2xl font-bold tabular-nums text-ink">{organizers.active ?? 0}</p>
           <p className="mt-1 text-xs text-muted-foreground">
             Total {organizers.total ?? 0} terdaftar
           </p>
@@ -114,12 +110,12 @@ export function AdminOverviewPage() {
 
         <div className="rounded-md border border-warm-border bg-card p-5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-[0.12em] text-olive">Pengguna Terdaftar</span>
+            <span className="text-xs font-semibold uppercase tracking-[0.12em] text-olive">
+              Pengguna Terdaftar
+            </span>
             <Users className="h-4 w-4 text-muted-foreground" aria-hidden />
           </div>
-          <p className="mt-3 text-2xl font-bold tabular-nums text-ink">
-            {users.total ?? 0}
-          </p>
+          <p className="mt-3 text-2xl font-bold tabular-nums text-ink">{users.total ?? 0}</p>
           <p className="mt-1 text-xs text-muted-foreground">
             {users.active ?? 0} aktif · {users.suspended ?? 0} disuspend
           </p>
@@ -138,7 +134,12 @@ export function AdminOverviewPage() {
           </Link>
         </div>
 
-        <div className="overflow-x-auto rounded-md border border-warm-border bg-card">
+        <div
+          tabIndex={0}
+          role="region"
+          aria-label="Transaksi terbaru"
+          className="overflow-x-auto rounded-md border border-warm-border bg-card"
+        >
           <table className="w-full text-left text-xs">
             <thead className="border-b border-warm-border bg-warm-muted/40 font-semibold text-ink">
               <tr>

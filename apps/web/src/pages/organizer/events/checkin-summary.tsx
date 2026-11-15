@@ -37,36 +37,51 @@ export function EventCheckInSummaryPage() {
   return (
     <div className="space-y-6">
       <div className="border-b border-warm-border pb-4">
-        <h2 className="text-xl font-bold tracking-tight text-ink">Ringkasan Kehadiran & Check-In</h2>
+        <h2 className="text-xl font-bold tracking-tight text-ink">
+          Ringkasan Kehadiran & Check-In
+        </h2>
         <p className="mt-0.5 text-xs text-muted-foreground">
-          Pantau validasi tiket di pintu masuk secara real-time (diperbarui otomatis setiap 15 detik)
+          Pantau validasi tiket di pintu masuk secara real-time (diperbarui otomatis setiap 15
+          detik)
         </p>
       </div>
 
       {/* Progress & Stat Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-md border border-warm-border bg-card p-5">
-          <p className="text-xs font-semibold uppercase tracking-wider text-olive">Tingkat Kehadiran</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-olive">
+            Tingkat Kehadiran
+          </p>
           <p className="mt-2 text-3xl font-bold tabular-nums text-ink">{percent}%</p>
           <div className="mt-3">
-            <Progress value={percent} className="h-2 bg-warm-muted" />
+            <Progress
+              value={percent}
+              className="h-2 bg-warm-muted"
+              aria-label="Persentase peserta yang sudah check-in"
+            />
           </div>
         </div>
 
         <div className="rounded-md border border-warm-border bg-card p-5">
-          <p className="text-xs font-semibold uppercase tracking-wider text-olive">Sudah Masuk / Hadir</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-olive">
+            Sudah Masuk / Hadir
+          </p>
           <p className="mt-2 text-3xl font-bold tabular-nums text-ink">{counts.checkedIn}</p>
           <p className="mt-1 text-xs text-muted-foreground">Dari {issued} tiket diterbitkan</p>
         </div>
 
         <div className="rounded-md border border-warm-border bg-card p-5">
-          <p className="text-xs font-semibold uppercase tracking-wider text-olive">Belum Check-In</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-olive">
+            Belum Check-In
+          </p>
           <p className="mt-2 text-3xl font-bold tabular-nums text-ink">{counts.valid}</p>
           <p className="mt-1 text-xs text-muted-foreground">Tiket aktif belum dipindai</p>
         </div>
 
         <div className="rounded-md border border-warm-border bg-card p-5">
-          <p className="text-xs font-semibold uppercase tracking-wider text-olive">Aktivitas Terakhir</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-olive">
+            Aktivitas Terakhir
+          </p>
           <p className="mt-2 text-sm font-semibold text-ink">
             {lastScanAt ? formatDateTime(lastScanAt) : 'Belum ada scan'}
           </p>
@@ -84,7 +99,12 @@ export function EventCheckInSummaryPage() {
             description="Petugas pintu belum melakukan scan tiket QR untuk acara ini."
           />
         ) : (
-          <div className="overflow-x-auto rounded-md border border-warm-border bg-card">
+          <div
+            tabIndex={0}
+            role="region"
+            aria-label="Riwayat check-in"
+            className="overflow-x-auto rounded-md border border-warm-border bg-card"
+          >
             <table className="w-full text-left text-xs">
               <thead className="border-b border-warm-border bg-warm-muted/40 font-semibold text-ink">
                 <tr>
@@ -102,14 +122,16 @@ export function EventCheckInSummaryPage() {
                           scan.result === 'VALID'
                             ? 'bg-olive/15 text-olive'
                             : scan.result === 'ALREADY_USED'
-                            ? 'bg-amber-100 text-amber-800'
-                            : 'bg-red-100 text-red-800'
+                              ? 'bg-amber-100 text-amber-800'
+                              : 'bg-red-100 text-red-800'
                         }`}
                       >
                         {scan.result}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground">{scan.gate ?? 'Pintu Utama'}</td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {scan.gate ?? 'Pintu Utama'}
+                    </td>
                     <td className="px-4 py-3 text-right text-muted-foreground">
                       {formatDateTime(scan.scannedAt)}
                     </td>

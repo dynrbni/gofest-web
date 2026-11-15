@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
-import { CheckCircle2, ShieldCheck, Ticket } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { ArrowLeft, ArrowUpRight, Ticket } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { useLanguage } from '@/lib/language';
 
 export function AuthShell({
   title,
@@ -13,53 +14,80 @@ export function AuthShell({
   children: ReactNode;
   footer?: ReactNode;
 }) {
+  const { t } = useLanguage();
+  const location = useLocation();
   return (
-    <main className="container grid min-h-[calc(100vh-4rem)] items-center gap-10 py-10 lg:grid-cols-[1fr_440px] lg:gap-16 lg:py-16">
-      {/* Left Column (Brand Value Props) */}
-      <div className="hidden lg:block">
-        <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3.5 py-1 text-xs font-bold text-blue-600">
-          <Ticket className="h-3.5 w-3.5" />
-          Platform Resmi Event & Konser Indonesia
-        </div>
-        <h1 className="mt-4 max-w-lg text-4xl font-black leading-tight tracking-tight text-slate-900 sm:text-5xl">
-          Satu Akun Untuk Semua Tiket Event Favoritmu.
-        </h1>
-        <p className="mt-4 max-w-md text-base leading-relaxed text-slate-500">
-          Simpan riwayat tiket secara aman, check-in lebih praktis lewat barcode digital di HP, dan
-          nikmati promo eksklusif konser musik & festival.
-        </p>
-
-        <div className="mt-8 max-w-md space-y-3.5 border-t border-slate-200 pt-6 text-sm text-slate-600">
-          <div className="flex items-center gap-2.5">
-            <ShieldCheck className="h-4 w-4 text-emerald-600" />
-            <span className="font-medium">100% Tiket Terverifikasi & Bebas Calo</span>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <CheckCircle2 className="h-4 w-4 text-blue-600" />
-            <span className="font-medium">Barcode Dinamis Anti Duplikasi untuk Check-in Cepat</span>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <CheckCircle2 className="h-4 w-4 text-blue-600" />
-            <span className="font-medium">Dukungan Pembayaran QRIS, Bank Transfer & E-Wallet</span>
-          </div>
-        </div>
-
+    <main className="auth-page">
+      <div className="auth-container">
         <Link
           to="/events"
-          className="mt-8 inline-block text-sm font-bold text-blue-600 hover:underline"
+          className="mb-6 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-blue-700 hover:underline"
         >
-          Lihat Acara yang Sedang Dijual →
+          <ArrowLeft className="size-4" aria-hidden />
+          {t('Kembali ke acara', 'Back to events')}
         </Link>
-      </div>
-
-      {/* Right Column (Auth Form Card) */}
-      <div className="w-full max-w-md justify-self-center lg:justify-self-end">
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xl sm:p-8">
-          <h2 className="text-2xl font-black tracking-tight text-slate-900">{title}</h2>
-          <p className="mt-2 text-xs leading-relaxed text-slate-500">{lede}</p>
-          <div className="mt-6">{children}</div>
+        <div className="auth-grid">
+          <section
+            className="auth-visual"
+            aria-label={t('Pengalaman GoFest', 'The GoFest experience')}
+          >
+            <img
+              src="/images/concert-crowd.webp"
+              alt=""
+              className="absolute inset-0 size-full object-cover"
+              width={720}
+              height={800}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-blue-950 via-blue-950/20 to-transparent" />
+            <div className="relative mt-auto p-8">
+              <span className="mb-5 flex size-11 items-center justify-center rounded-xl bg-white/15 text-white">
+                <Ticket className="size-5" aria-hidden />
+              </span>
+              <h2 className="max-w-xs text-3xl font-extrabold leading-tight text-white">
+                {t('Satu akun, banyak cerita.', 'One account. So many stories.')}
+              </h2>
+              <p className="mt-4 max-w-xs text-sm leading-6 text-blue-100">
+                {t(
+                  'Dari konser pertama sampai acara favorit berikutnya. Simpan semua tiketmu di sini.',
+                  'From your first concert to your next favourite event. Keep every ticket here.',
+                )}
+              </p>
+              <Link
+                to="/events"
+                className="mt-5 inline-flex min-h-11 items-center gap-2 text-sm font-bold text-white hover:underline"
+              >
+                {t('Temukan acaramu', 'Find your next event')}
+                <ArrowUpRight className="size-4" aria-hidden />
+              </Link>
+            </div>
+          </section>
+          <section className="auth-form-panel" aria-labelledby="auth-heading">
+            <nav aria-label={t('Akun', 'Account')} className="mb-7 flex border-b border-slate-200">
+              <Link
+                to="/login"
+                aria-current={location.pathname === '/login' ? 'page' : undefined}
+                className="auth-tab"
+              >
+                {t('Masuk', 'Log in')}
+              </Link>
+              <Link
+                to="/register"
+                aria-current={location.pathname === '/register' ? 'page' : undefined}
+                className="auth-tab"
+              >
+                {t('Daftar', 'Sign up')}
+              </Link>
+            </nav>
+            <h1 id="auth-heading" className="text-2xl font-extrabold tracking-tight sm:text-3xl">
+              {title}
+            </h1>
+            <p className="mt-3 text-sm leading-6 text-slate-600">{lede}</p>
+            <div className="mt-6">{children}</div>
+            {footer ? (
+              <div className="mt-6 text-center text-sm text-slate-600">{footer}</div>
+            ) : null}
+          </section>
         </div>
-        {footer ? <div className="mt-4 text-center text-xs text-slate-500">{footer}</div> : null}
       </div>
     </main>
   );

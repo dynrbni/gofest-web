@@ -1,4 +1,19 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
+
+const motionQuery = '(prefers-reduced-motion: reduce)';
+function subscribeToMotion(callback: () => void) {
+  const media = window.matchMedia(motionQuery);
+  media.addEventListener('change', callback);
+  return () => media.removeEventListener('change', callback);
+}
+
+export function useReducedMotion() {
+  return useSyncExternalStore(
+    subscribeToMotion,
+    () => window.matchMedia(motionQuery).matches,
+    () => true,
+  );
+}
 
 export function useDebouncedValue<T>(value: T, delay = 350): T {
   const [debounced, setDebounced] = useState(value);

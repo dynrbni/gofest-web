@@ -63,7 +63,10 @@ export function AdminUsersPage() {
         </div>
 
         <div className="relative w-full max-w-xs">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden
+          />
           <input
             type="search"
             value={search}
@@ -96,7 +99,12 @@ export function AdminUsersPage() {
         />
       ) : (
         <div className="space-y-4">
-          <div className="overflow-x-auto rounded-md border border-warm-border bg-card">
+          <div
+            tabIndex={0}
+            role="region"
+            aria-label="Daftar pengguna"
+            className="overflow-x-auto rounded-md border border-warm-border bg-card"
+          >
             <table className="w-full text-left text-xs">
               <thead className="border-b border-warm-border bg-warm-muted/40 font-semibold text-ink">
                 <tr>

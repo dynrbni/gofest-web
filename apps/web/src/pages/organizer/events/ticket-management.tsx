@@ -6,7 +6,13 @@ import { Plus, Power } from 'lucide-react';
 import { api, fieldErrors, ApiError, errorMessage } from '@/lib/api';
 import { formatIDR } from '@/lib/format';
 import type { TicketType } from '@/lib/models';
-import { EmptyState, ErrorState, Field, InlineError, LoadingState } from '@/components/common/states';
+import {
+  EmptyState,
+  ErrorState,
+  Field,
+  InlineError,
+  LoadingState,
+} from '@/components/common/states';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -112,7 +118,8 @@ export function EventTicketManagementPage() {
         <div>
           <h2 className="text-xl font-bold tracking-tight text-ink">Jenis Tiket & Kuota</h2>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Tentukan kategori tiket (misal Presale, Early Bird, VIP), harga dalam Rupiah, dan batas kuota
+            Tentukan kategori tiket (misal Presale, Early Bird, VIP), harga dalam Rupiah, dan batas
+            kuota
           </p>
         </div>
 
@@ -138,7 +145,12 @@ export function EventTicketManagementPage() {
           }
         />
       ) : (
-        <div className="overflow-x-auto rounded-md border border-warm-border bg-card">
+        <div
+          tabIndex={0}
+          role="region"
+          aria-label="Jenis tiket dan kuota"
+          className="overflow-x-auto rounded-md border border-warm-border bg-card"
+        >
           <table className="w-full text-left text-xs">
             <thead className="border-b border-warm-border bg-warm-muted/40 font-semibold text-ink">
               <tr>
@@ -169,7 +181,9 @@ export function EventTicketManagementPage() {
                     <td className="px-4 py-3 font-medium tabular-nums">
                       {ticket.price === 0 ? 'Gratis' : formatIDR(ticket.price)}
                     </td>
-                    <td className="px-4 py-3 text-center font-mono tabular-nums">{ticket.quotaTotal}</td>
+                    <td className="px-4 py-3 text-center font-mono tabular-nums">
+                      {ticket.quotaTotal}
+                    </td>
                     <td className="px-4 py-3 text-center font-mono tabular-nums text-olive">
                       {ticket.quantitySold}
                     </td>
@@ -232,7 +246,11 @@ export function EventTicketManagementPage() {
               />
             </Field>
 
-            <Field label="Deskripsi Tiket" htmlFor="ticketDesc" hint="Fasilitas atau keuntungan tiket">
+            <Field
+              label="Deskripsi Tiket"
+              htmlFor="ticketDesc"
+              hint="Fasilitas atau keuntungan tiket"
+            >
               <Textarea
                 id="ticketDesc"
                 value={description}
@@ -256,7 +274,12 @@ export function EventTicketManagementPage() {
                 />
               </Field>
 
-              <Field label="Total Kuota Tiket" htmlFor="quotaTotal" required error={errors.quotaTotal}>
+              <Field
+                label="Total Kuota Tiket"
+                htmlFor="quotaTotal"
+                required
+                error={errors.quotaTotal}
+              >
                 <Input
                   id="quotaTotal"
                   type="number"

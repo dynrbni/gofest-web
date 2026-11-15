@@ -188,18 +188,23 @@ export function OrganizerEventFormPage({ isNew = false }: { isNew?: boolean }) {
             <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
             Kembali ke daftar acara
           </Link>
-          <h1 className="mt-3 font-display text-3xl font-bold tracking-tightest">Buat Acara Baru</h1>
+          <h1 className="mt-3 font-display text-3xl font-bold tracking-tightest">
+            Buat Acara Baru
+          </h1>
           <p className="mt-1 text-xs text-muted-foreground">
             Lengkapi informasi awal acara. Kamu dapat menambahkan jenis tiket dan kupon setelahnya.
           </p>
         </div>
       ) : null}
 
-      <form onSubmit={onSubmit} className="space-y-6 rounded-md border border-warm-border bg-card p-6 sm:p-8">
+      <form
+        onSubmit={onSubmit}
+        className="space-y-6 rounded-md border border-warm-border bg-card p-6 sm:p-8"
+      >
         <InlineError error={generalError} />
 
         <div className="space-y-4">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-olive">1. Informasi Utama</h3>
+          <h2 className="text-base font-bold text-ink">1. Informasi utama</h2>
 
           <Field label="Judul Acara" htmlFor="title" required error={errors.title}>
             <Input
@@ -279,7 +284,7 @@ export function OrganizerEventFormPage({ isNew = false }: { isNew?: boolean }) {
         </div>
 
         <div className="space-y-4 border-t border-warm-border pt-6">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-olive">2. Format & Lokasi Acara</h3>
+          <h2 className="text-base font-bold text-ink">2. Format & lokasi acara</h2>
 
           <div className="flex gap-4">
             <label className="flex items-center gap-2 text-sm font-medium">
@@ -367,7 +372,7 @@ export function OrganizerEventFormPage({ isNew = false }: { isNew?: boolean }) {
         </div>
 
         <div className="space-y-4 border-t border-warm-border pt-6">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-olive">3. Jadwal Acara</h3>
+          <h2 className="text-base font-bold text-ink">3. Jadwal acara</h2>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Waktu Mulai Acara" htmlFor="startsAt" required error={errors.startsAt}>
@@ -393,7 +398,7 @@ export function OrganizerEventFormPage({ isNew = false }: { isNew?: boolean }) {
         </div>
 
         <div className="space-y-4 border-t border-warm-border pt-6">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-olive">4. Ketentuan & Aturan</h3>
+          <h2 className="text-base font-bold text-ink">4. Ketentuan & aturan</h2>
 
           <Field
             label="Aturan Masuk / Catatan Pengunjung"

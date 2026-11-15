@@ -1,16 +1,8 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import QrScanner from 'qr-scanner';
-import {
-  ArrowLeft,
-  Camera,
-  CheckCircle2,
-  XCircle,
-  Volume2,
-  VolumeX,
-  Keyboard,
-} from 'lucide-react';
+import { ArrowLeft, Camera, CheckCircle2, XCircle, Volume2, VolumeX, Keyboard } from 'lucide-react';
 import { api, errorMessage } from '@/lib/api';
 import { formatDateTime, formatEventWhen } from '@/lib/format';
 import { useDocumentTitle } from '@/lib/hooks';
@@ -22,13 +14,18 @@ import { Input } from '@/components/ui/input';
 // Audio feedback using Web Audio API
 function playSound(type: 'success' | 'error') {
   try {
-    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    const AudioCtx =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     if (!AudioCtx) return;
     const ctx = new AudioCtx();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.connect(gain);
     gain.connect(ctx.destination);
+    osc.onended = () => {
+      void ctx.close();
+    };
 
     if (type === 'success') {
       osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
@@ -56,6 +53,7 @@ export function StaffCheckInScannerPage() {
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const scannerRef = useRef<QrScanner | null>(null);
+  const scanningRef = useRef(false);
 
   const [gate, setGate] = useState('Pintu Utama');
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -74,77 +72,90 @@ export function StaffCheckInScannerPage() {
   });
 
   const event = summaryQuery.data?.event;
+  const refetchSummary = summaryQuery.refetch;
 
   // Process ticket scan via backend
-  async function submitScan(payload: { token?: string; ticketCode?: string }) {
-    if (scanning) return;
-    setScanning(true);
-    setCameraError(null);
+  const submitScan = useCallback(
+    async (payload: { token?: string; ticketCode?: string }) => {
+      if (scanningRef.current) return;
+      scanningRef.current = true;
+      setScanning(true);
+      setCameraError(null);
 
-    try {
-      const data = await api<ScanResult>('/check-in/scan', {
-        method: 'POST',
-        body: {
-          eventId,
-          gate: gate.trim() || undefined,
-          idempotencyKey: `scan_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-          ...payload,
-        },
-      });
+      try {
+        const data = await api<ScanResult>('/check-in/scan', {
+          method: 'POST',
+          body: {
+            eventId,
+            gate: gate.trim() || undefined,
+            idempotencyKey: `scan_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+            ...payload,
+          },
+        });
 
-      setLastResult(data);
-      if (data.accepted) {
-        if (soundEnabled) playSound('success');
-        setSessionCount((prev) => prev + 1);
-        void summaryQuery.refetch();
-      } else {
+        setLastResult(data);
+        if (data.accepted) {
+          if (soundEnabled) playSound('success');
+          setSessionCount((prev) => prev + 1);
+          void refetchSummary();
+        } else {
+          if (soundEnabled) playSound('error');
+        }
+      } catch (err) {
         if (soundEnabled) playSound('error');
+        setLastResult({
+          result: 'INVALID',
+          accepted: false,
+          message: errorMessage(err),
+          scannedAt: new Date().toISOString(),
+          replayed: false,
+          ticket: null,
+        });
+      } finally {
+        scanningRef.current = false;
+        setScanning(false);
       }
-    } catch (err) {
-      if (soundEnabled) playSound('error');
-      setLastResult({
-        result: 'INVALID',
-        accepted: false,
-        message: errorMessage(err),
-        scannedAt: new Date().toISOString(),
-        replayed: false,
-        ticket: null,
-      });
-    } finally {
-      setScanning(false);
-    }
-  }
+    },
+    [eventId, gate, soundEnabled, refetchSummary],
+  );
 
   // Handle QR code read from camera
-  function onQrDecoded(result: QrScanner.ScanResult) {
-    if (scanning) return;
-    const raw = result.data.trim();
-    if (!raw) return;
+  const onQrDecoded = useCallback(
+    (result: QrScanner.ScanResult) => {
+      const raw = result.data.trim();
+      if (!raw) return;
 
-    // The QR data can be a full URL (/ticket/:code?token=xxx) or raw token string
-    try {
-      if (raw.includes('token=')) {
-        const url = new URL(raw, window.location.origin);
-        const token = url.searchParams.get('token');
-        if (token) {
-          void submitScan({ token });
-          return;
+      // The QR data can be a full URL (/ticket/:code?token=xxx) or raw token string
+      try {
+        if (raw.includes('token=')) {
+          const url = new URL(raw, window.location.origin);
+          const token = url.searchParams.get('token');
+          if (token) {
+            void submitScan({ token });
+            return;
+          }
         }
+      } catch {
+        // not a url
       }
-    } catch {
-      // not a url
-    }
 
-    // Default to token payload
-    void submitScan({ token: raw });
-  }
+      // Default to token payload
+      void submitScan({ token: raw });
+    },
+    [submitScan],
+  );
 
-  // Camera start/stop
+  const decodedCallback = useRef(onQrDecoded);
+  useEffect(() => {
+    decodedCallback.current = onQrDecoded;
+  }, [onQrDecoded]);
+
+  // Keep the camera alive when gate, sound, or request state changes.
   useEffect(() => {
     let active = true;
 
     if (cameraActive && videoRef.current) {
-      const scanner = new QrScanner(videoRef.current, onQrDecoded, {
+      const scanner = new QrScanner(videoRef.current, (result) => decodedCallback.current(result), {
         returnDetailedScanResult: true,
         highlightScanRegion: true,
         highlightCodeOutline: true,
@@ -218,7 +229,8 @@ export function StaffCheckInScannerPage() {
             {event.title}
           </h1>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            {formatEventWhen(event.startsAt, event.endsAt, event.timezone)} · {event.venueName ?? event.city}
+            {formatEventWhen(event.startsAt, event.endsAt, event.timezone)} ·{' '}
+            {event.venueName ?? event.city}
           </p>
         </div>
 
@@ -268,8 +280,8 @@ export function StaffCheckInScannerPage() {
             lastResult.accepted
               ? 'border-olive bg-olive/10 text-ink'
               : lastResult.result === 'ALREADY_USED'
-              ? 'border-amber-400 bg-amber-50 text-amber-950'
-              : 'border-red-400 bg-red-50 text-red-950'
+                ? 'border-amber-400 bg-amber-50 text-amber-950'
+                : 'border-red-400 bg-red-50 text-red-950'
           }`}
         >
           <div className="flex items-start gap-4">
@@ -286,15 +298,15 @@ export function StaffCheckInScannerPage() {
                     lastResult.accepted
                       ? 'bg-olive text-paper'
                       : lastResult.result === 'ALREADY_USED'
-                      ? 'bg-amber-600 text-paper'
-                      : 'bg-brick text-paper'
+                        ? 'bg-amber-600 text-paper'
+                        : 'bg-brick text-paper'
                   }`}
                 >
                   {lastResult.result === 'VALID'
                     ? 'VALID — BERHASIL MASUK'
                     : lastResult.result === 'ALREADY_USED'
-                    ? 'TIKET SUDAH DIGUNAKAN'
-                    : lastResult.result}
+                      ? 'TIKET SUDAH DIGUNAKAN'
+                      : lastResult.result}
                 </span>
                 <span className="text-xs text-muted-foreground">
                   {formatDateTime(lastResult.scannedAt)}
@@ -342,9 +354,10 @@ export function StaffCheckInScannerPage() {
           ) : (
             <div className="flex flex-col items-center justify-center py-16 px-4 text-center text-paper">
               <Camera className="h-10 w-10 text-warm-muted/60" aria-hidden />
-              <h2 className="mt-3 text-lg font-bold">Kamera Belum Aktif</h2>
+              <h2 className="mt-3 text-lg font-bold text-white">Kamera Belum Aktif</h2>
               <p className="mt-1 max-w-sm text-xs text-warm-muted/80">
-                Tekan tombol di bawah untuk meminta izin kamera browser dan mulai memindai QR tiket pengunjung.
+                Tekan tombol di bawah untuk meminta izin kamera browser dan mulai memindai QR tiket
+                pengunjung.
               </p>
               {cameraError ? (
                 <p className="mt-3 max-w-sm text-xs font-semibold text-brick bg-paper px-3 py-1.5 rounded">
@@ -391,6 +404,7 @@ export function StaffCheckInScannerPage() {
 
         <form onSubmit={handleManualSubmit} className="flex gap-2">
           <Input
+            aria-label="Kode tiket untuk check-in manual"
             value={manualCode}
             onChange={(e) => setManualCode(e.target.value.toUpperCase())}
             placeholder="Contoh: TIK-89AB12"

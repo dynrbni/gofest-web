@@ -92,7 +92,10 @@ export function AdminOrdersPage() {
         </div>
 
         <div className="relative w-full max-w-xs">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden
+          />
           <input
             type="search"
             value={search}
@@ -125,7 +128,12 @@ export function AdminOrdersPage() {
         />
       ) : (
         <div className="space-y-4">
-          <div className="overflow-x-auto rounded-md border border-warm-border bg-card">
+          <div
+            tabIndex={0}
+            role="region"
+            aria-label="Daftar transaksi"
+            className="overflow-x-auto rounded-md border border-warm-border bg-card"
+          >
             <table className="w-full text-left text-xs">
               <thead className="border-b border-warm-border bg-warm-muted/40 font-semibold text-ink">
                 <tr>
@@ -216,7 +224,11 @@ export function AdminOrdersPage() {
           </DialogHeader>
 
           <div className="space-y-4 pt-2">
-            <Field label="Catatan Rekonsiliasi" htmlFor="resolveNote" hint="Dicatat dalam audit trail">
+            <Field
+              label="Catatan Rekonsiliasi"
+              htmlFor="resolveNote"
+              hint="Dicatat dalam audit trail"
+            >
               <Input
                 id="resolveNote"
                 value={note}

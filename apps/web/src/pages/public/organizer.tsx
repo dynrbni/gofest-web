@@ -1,143 +1,102 @@
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, CalendarDays, Ticket } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
-import { EventPoster } from '@/components/common/event-presentation';
+import { EventCard } from '@/components/common/event-presentation';
 import { EmptyState, ErrorState, LoadingState } from '@/components/common/states';
 import { assetUrl } from '@/lib/assets';
-import { formatDateLong, formatIDR } from '@/lib/format';
 import { useDocumentTitle } from '@/lib/hooks';
 import { usePublicOrganizer } from '@/lib/queries';
 
 export function OrganizerPublicPage() {
   const { slug } = useParams();
-  const organizerQuery = usePublicOrganizer(slug);
-  const organizer = organizerQuery.data?.organizer;
-  useDocumentTitle(organizer?.organizationName ?? 'Organizer');
-
-  if (organizerQuery.isLoading) {
+  const query = usePublicOrganizer(slug);
+  const organizer = query.data?.organizer;
+  useDocumentTitle(organizer?.organizationName ?? 'Profil organizer');
+  if (query.isLoading)
     return (
       <main className="container py-10">
         <LoadingState rows={4} label="Memuat profil organizer" />
       </main>
     );
-  }
-
-  if (organizerQuery.isError || !organizer) {
+  if (query.isError || !organizer)
     return (
       <main className="container max-w-3xl py-14">
-        <Link to="/events" className="inline-flex items-center gap-2 text-sm font-semibold text-olive">
-          <ArrowLeft className="h-4 w-4" aria-hidden />
-          Kembali ke jelajah acara
+        <Link to="/events" className="text-link">
+          <ArrowLeft className="size-4" aria-hidden />
+          Kembali ke acara
         </Link>
         <ErrorState
-          className="mt-6"
-          error={organizerQuery.error}
-          onRetry={() => void organizerQuery.refetch()}
+          className="mt-5"
+          error={query.error}
+          onRetry={() => void query.refetch()}
           title="Profil organizer tidak dapat dibuka"
         />
       </main>
     );
-  }
-
   const logo = assetUrl(organizer.logoKey);
   const events = organizer.events ?? [];
-
+  const eventOrganizer = {
+    id: organizer.id,
+    organizationName: organizer.organizationName,
+    slug: organizer.slug,
+    logoKey: organizer.logoKey,
+    status: organizer.status,
+  };
   return (
-    <main className="container py-8 sm:py-12">
-      <Link to="/events" className="inline-flex items-center gap-2 text-sm font-bold text-blue-600 hover:underline">
-        <ArrowLeft className="h-4 w-4" aria-hidden />
-        Jelajah Acara
+    <main className="container py-8 sm:py-10">
+      <Link to="/events" className="text-link">
+        <ArrowLeft className="size-4" aria-hidden />
+        Jelajah acara
       </Link>
-
-      <header className="mt-6 flex flex-col gap-6 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs sm:flex-row sm:items-start sm:p-8">
-        {logo ? (
-          <img
-            src={logo}
-            alt={`Logo ${organizer.organizationName}`}
-            width={112}
-            height={112}
-            className="h-24 w-24 shrink-0 rounded-2xl border border-slate-200 object-cover shadow-2xs"
-          />
-        ) : (
-          <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-sm">
-            <span className="text-3xl font-black">
-              {organizer.organizationName.charAt(0)}
-            </span>
+      <header className="relative mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+        <div className="h-24 bg-blue-950 sm:h-32">
+          <div className="flex h-full items-center justify-end px-8">
+            <Ticket className="size-16 -rotate-12 text-blue-300/30" aria-hidden />
           </div>
-        )}
-        <div className="min-w-0">
-          <p className="text-xs font-bold uppercase tracking-wider text-blue-600">Penyelenggara Resmi</p>
-          <h1 className="mt-1 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
-            {organizer.organizationName}
-          </h1>
-          {organizer.description ? (
-            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600">
-              {organizer.description}
+        </div>
+        <div className="relative flex flex-col gap-5 px-6 pb-7 sm:flex-row sm:items-end sm:px-8">
+          <div className="-mt-10 flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-4 border-white bg-blue-600 text-3xl font-extrabold text-white">
+            {logo ? (
+              <img src={logo} alt="" className="h-full w-full object-cover" />
+            ) : (
+              organizer.organizationName.charAt(0)
+            )}
+          </div>
+          <div className="min-w-0 pt-3">
+            <p className="text-xs font-semibold text-blue-700">Organizer GoFest</p>
+            <h1 className="mt-2 text-2xl font-extrabold sm:text-3xl">
+              {organizer.organizationName}
+            </h1>
+            {organizer.description ? (
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
+                {organizer.description}
+              </p>
+            ) : null}
+            <p className="mt-4 flex items-center gap-2 text-xs text-slate-500">
+              <CalendarDays className="size-4" aria-hidden />
+              {events.length} acara tersedia
             </p>
-          ) : (
-            <p className="mt-3 text-xs text-slate-400">
-              Organizer ini belum menuliskan deskripsi profil.
-            </p>
-          )}
-          <p className="mt-3 text-xs font-bold text-slate-700">
-            {events.length} acara publik {events.length > 0 ? 'akan datang' : 'saat ini'}
-          </p>
+          </div>
         </div>
       </header>
-
       <section className="mt-10">
-        <h2 className="text-xl font-bold text-slate-900">Acara dari Organizer Ini</h2>
-        {events.length === 0 ? (
+        <h2 className="section-title">Acara dari {organizer.organizationName}</h2>
+        {events.length ? (
+          <div className="event-grid mt-6 grid gap-5 min-[480px]:grid-cols-2 lg:grid-cols-4">
+            {events.map((event) => (
+              <EventCard event={{ ...event, organizer: eventOrganizer }} key={event.id} />
+            ))}
+          </div>
+        ) : (
           <EmptyState
-            className="mt-4 rounded-2xl border border-slate-200 bg-white p-10 text-center"
+            className="mt-6"
             title="Belum ada acara publik"
-            description="Organizer ini belum memiliki acara tayang yang bisa dibeli. Coba kembali nanti atau jelajahi acara lain."
+            description="Acara terbaru akan muncul di sini setelah diterbitkan oleh organizer."
             action={
-              <Link to="/events" className="rounded-xl bg-blue-600 px-5 py-2 text-xs font-bold text-white hover:bg-blue-700">
-                Lihat Acara Lain
+              <Link to="/events" className="primary-action">
+                Lihat acara lainnya
               </Link>
             }
           />
-        ) : (
-          <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {events.map((event) => (
-              <Link
-                key={event.id}
-                to={`/events/${event.slug}`}
-                className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs transition-all duration-200 hover:-translate-y-1 hover:border-blue-300 hover:shadow-lg"
-              >
-                <EventPoster
-                  title={event.title}
-                  coverKey={event.coverKey}
-                  category={event.category.name}
-                  startsAt={event.startsAt}
-                  city={event.city}
-                  timezone={event.timezone}
-                  className="rounded-t-2xl rounded-b-none"
-                  sizes="(min-width: 1024px) 380px, (min-width: 640px) 45vw, 90vw"
-                />
-                <div className="flex flex-1 flex-col justify-between p-4">
-                  <div>
-                    <p className="text-xs font-bold text-blue-600">
-                      {formatDateLong(event.startsAt, event.timezone)}
-                    </p>
-                    <h3 className="mt-1.5 line-clamp-2 text-base font-bold text-slate-900 group-hover:text-blue-600">
-                      {event.title}
-                    </h3>
-                  </div>
-                  <div className="mt-4 border-t border-slate-100 pt-3 flex items-center justify-between text-xs">
-                    <span className="text-slate-500 truncate">{event.city ?? 'Online'}</span>
-                    <span className="font-extrabold text-blue-600 tabular-nums">
-                      {event.priceFrom === 0
-                        ? 'Gratis'
-                        : event.priceFrom !== null
-                          ? formatIDR(event.priceFrom)
-                          : 'Harga menyusul'}
-                    </span>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
         )}
       </section>
     </main>

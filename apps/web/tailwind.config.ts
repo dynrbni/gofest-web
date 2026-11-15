@@ -18,6 +18,9 @@ export default {
     },
     extend: {
       colors: {
+        blue: { 600: '#0052CC', 700: '#0043A6', 800: '#003380', 950: '#102447' },
+        slate: { 400: '#64748B' },
+        emerald: { 600: '#047857' },
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
@@ -52,10 +55,10 @@ export default {
           foreground: 'hsl(var(--card-foreground))',
         },
         paper: '#FFFFFF',
-        ink: '#0F172A',
+        ink: '#17284D',
         vermilion: '#0052CC',
         brick: '#0052CC',
-        olive: '#64748B',
+        olive: '#475569',
         'warm-border': '#E2E8F0',
         'warm-muted': '#F8FAFC',
         brand: {

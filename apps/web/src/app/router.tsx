@@ -1,64 +1,154 @@
 import { Outlet, ScrollRestoration, createBrowserRouter } from 'react-router-dom';
+import { lazy, Suspense, type ComponentType } from 'react';
+import { PageLoading } from '@/components/common/states';
 import { AuthProvider, RequireAuth } from '@/lib/auth';
 import { PublicLayout } from '@/components/layout/public-layout';
-import { HomePage } from '@/pages/public/home';
-import { EventsPage } from '@/pages/public/events';
-import { EventDetailPage } from '@/pages/public/event-detail';
-import { OrganizerPublicPage } from '@/pages/public/organizer';
-import { CheckoutPage } from '@/pages/public/checkout';
-import { OrderPage } from '@/pages/public/order';
-import { TicketPage } from '@/pages/public/ticket';
-import { TermsPage, PrivacyPage } from '@/pages/public/legal';
-import { LoginPage } from '@/pages/auth/login';
-import { RegisterPage } from '@/pages/auth/register';
-import { ForgotPasswordPage } from '@/pages/auth/forgot-password';
-import { ResetPasswordPage } from '@/pages/auth/reset-password';
 import { AccountLayout } from '@/pages/account/account-layout';
-import { AccountOverviewPage } from '@/pages/account/overview';
-import { AccountOrdersPage } from '@/pages/account/orders';
-import { AccountOrderDetailPage } from '@/pages/account/order-detail';
-import { AccountProfilePage } from '@/pages/account/profile';
-import { OrganizerApplyPage } from '@/pages/organizer/apply';
 import { OrganizerShell } from '@/pages/organizer/organizer-shell';
-import { OrganizerDashboardPage } from '@/pages/organizer/dashboard';
-import { OrganizerEventListPage } from '@/pages/organizer/events/event-list';
-import { OrganizerEventFormPage } from '@/pages/organizer/events/event-form';
-import { EventWorkspaceLayout } from '@/pages/organizer/events/event-workspace';
-import { EventTicketManagementPage } from '@/pages/organizer/events/ticket-management';
-import { EventCouponManagementPage } from '@/pages/organizer/events/coupon-management';
-import { EventOrderManagementPage } from '@/pages/organizer/events/order-management';
-import { EventStaffManagementPage } from '@/pages/organizer/events/staff-management';
-import { EventCheckInSummaryPage } from '@/pages/organizer/events/checkin-summary';
-import { OrganizerSettingsPage } from '@/pages/organizer/settings';
-import { StaffEventsPage } from '@/pages/staff/events';
-import { StaffCheckInScannerPage } from '@/pages/staff/check-in';
 import { AdminShell } from '@/pages/admin/admin-shell';
-import { AdminOverviewPage } from '@/pages/admin/overview';
-import { AdminUsersPage } from '@/pages/admin/users';
-import { AdminOrganizersPage } from '@/pages/admin/organizers';
-import { AdminEventsPage } from '@/pages/admin/events';
-import { AdminOrdersPage } from '@/pages/admin/orders';
-import { AdminCategoriesPage } from '@/pages/admin/categories';
-import { AdminSettingsPage } from '@/pages/admin/settings';
-import { AdminAuditLogsPage } from '@/pages/admin/audit-logs';
+
+function lazyPage<Props extends object>(load: () => Promise<ComponentType<Props>>) {
+  return lazy(async () => ({ default: await load() }));
+}
+
+const HomePage = lazyPage(() => import('@/pages/public/home').then((m) => m.HomePage));
+const EventsPage = lazyPage(() => import('@/pages/public/events').then((m) => m.EventsPage));
+const EventDetailPage = lazyPage(() =>
+  import('@/pages/public/event-detail').then((m) => m.EventDetailPage),
+);
+const OrganizerPublicPage = lazyPage(() =>
+  import('@/pages/public/organizer').then((m) => m.OrganizerPublicPage),
+);
+const CheckoutPage = lazyPage(() => import('@/pages/public/checkout').then((m) => m.CheckoutPage));
+const OrderPage = lazyPage(() => import('@/pages/public/order').then((m) => m.OrderPage));
+const TicketPage = lazyPage(() => import('@/pages/public/ticket').then((m) => m.TicketPage));
+const TermsPage = lazyPage(() => import('@/pages/public/legal').then((m) => m.TermsPage));
+const PrivacyPage = lazyPage(() => import('@/pages/public/legal').then((m) => m.PrivacyPage));
+const LoginPage = lazyPage(() => import('@/pages/auth/login').then((m) => m.LoginPage));
+const RegisterPage = lazyPage(() => import('@/pages/auth/register').then((m) => m.RegisterPage));
+const ForgotPasswordPage = lazyPage(() =>
+  import('@/pages/auth/forgot-password').then((m) => m.ForgotPasswordPage),
+);
+const ResetPasswordPage = lazyPage(() =>
+  import('@/pages/auth/reset-password').then((m) => m.ResetPasswordPage),
+);
+const AccountOverviewPage = lazyPage(() =>
+  import('@/pages/account/overview').then((m) => m.AccountOverviewPage),
+);
+const AccountOrdersPage = lazyPage(() =>
+  import('@/pages/account/orders').then((m) => m.AccountOrdersPage),
+);
+const AccountOrderDetailPage = lazyPage(() =>
+  import('@/pages/account/order-detail').then((m) => m.AccountOrderDetailPage),
+);
+const AccountProfilePage = lazyPage(() =>
+  import('@/pages/account/profile').then((m) => m.AccountProfilePage),
+);
+const OrganizerApplyPage = lazyPage(() =>
+  import('@/pages/organizer/apply').then((m) => m.OrganizerApplyPage),
+);
+const OrganizerDashboardPage = lazyPage(() =>
+  import('@/pages/organizer/dashboard').then((m) => m.OrganizerDashboardPage),
+);
+const OrganizerEventListPage = lazyPage(() =>
+  import('@/pages/organizer/events/event-list').then((m) => m.OrganizerEventListPage),
+);
+const OrganizerEventFormPage = lazyPage(() =>
+  import('@/pages/organizer/events/event-form').then((m) => m.OrganizerEventFormPage),
+);
+const EventWorkspaceLayout = lazyPage(() =>
+  import('@/pages/organizer/events/event-workspace').then((m) => m.EventWorkspaceLayout),
+);
+const EventTicketManagementPage = lazyPage(() =>
+  import('@/pages/organizer/events/ticket-management').then((m) => m.EventTicketManagementPage),
+);
+const EventCouponManagementPage = lazyPage(() =>
+  import('@/pages/organizer/events/coupon-management').then((m) => m.EventCouponManagementPage),
+);
+const EventOrderManagementPage = lazyPage(() =>
+  import('@/pages/organizer/events/order-management').then((m) => m.EventOrderManagementPage),
+);
+const EventStaffManagementPage = lazyPage(() =>
+  import('@/pages/organizer/events/staff-management').then((m) => m.EventStaffManagementPage),
+);
+const EventCheckInSummaryPage = lazyPage(() =>
+  import('@/pages/organizer/events/checkin-summary').then((m) => m.EventCheckInSummaryPage),
+);
+const OrganizerSettingsPage = lazyPage(() =>
+  import('@/pages/organizer/settings').then((m) => m.OrganizerSettingsPage),
+);
+const StaffEventsPage = lazyPage(() =>
+  import('@/pages/staff/events').then((m) => m.StaffEventsPage),
+);
+const StaffCheckInScannerPage = lazyPage(() =>
+  import('@/pages/staff/check-in').then((m) => m.StaffCheckInScannerPage),
+);
+const AdminOverviewPage = lazyPage(() =>
+  import('@/pages/admin/overview').then((m) => m.AdminOverviewPage),
+);
+const AdminUsersPage = lazyPage(() => import('@/pages/admin/users').then((m) => m.AdminUsersPage));
+const AdminOrganizersPage = lazyPage(() =>
+  import('@/pages/admin/organizers').then((m) => m.AdminOrganizersPage),
+);
+const AdminEventsPage = lazyPage(() =>
+  import('@/pages/admin/events').then((m) => m.AdminEventsPage),
+);
+const AdminOrdersPage = lazyPage(() =>
+  import('@/pages/admin/orders').then((m) => m.AdminOrdersPage),
+);
+const AdminCategoriesPage = lazyPage(() =>
+  import('@/pages/admin/categories').then((m) => m.AdminCategoriesPage),
+);
+const AdminSettingsPage = lazyPage(() =>
+  import('@/pages/admin/settings').then((m) => m.AdminSettingsPage),
+);
+const AdminAuditLogsPage = lazyPage(() =>
+  import('@/pages/admin/audit-logs').then((m) => m.AdminAuditLogsPage),
+);
 
 function RootLayout() {
   return (
     <AuthProvider>
       <ScrollRestoration />
-      <Outlet />
+      <Suspense fallback={<PageLoading />}>
+        <Outlet />
+      </Suspense>
     </AuthProvider>
+  );
+}
+
+function RouteErrorPage() {
+  return (
+    <main className="container flex min-h-screen max-w-xl flex-col items-start justify-center py-12">
+      <p className="text-sm font-semibold text-blue-700">GoFest</p>
+      <h1 className="mt-3 text-3xl font-extrabold">Halaman belum bisa ditampilkan.</h1>
+      <p className="mt-4 text-sm leading-7 text-slate-600">
+        Muat ulang halaman untuk mencoba lagi. Jika masalah berlanjut, kembali ke daftar acara.
+      </p>
+      <div className="mt-6 flex flex-wrap gap-3">
+        <button type="button" onClick={() => window.location.reload()} className="primary-action">
+          Muat ulang
+        </button>
+        <a href="/events" className="text-link">
+          Lihat acara
+        </a>
+      </div>
+    </main>
   );
 }
 
 function NotFoundPage() {
   return (
     <main className="container flex min-h-[60vh] max-w-lg flex-col items-center justify-center py-16 text-center">
-      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-olive">404 · Halaman tidak ditemukan</p>
-      <h1 className="mt-4 font-display text-5xl leading-none tracking-tightest">Acara atau halaman ini tidak ada.</h1>
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-olive">
+        404 · Halaman tidak ditemukan
+      </p>
+      <h1 className="mt-4 font-display text-5xl leading-none tracking-tightest">
+        Acara atau halaman ini tidak ada.
+      </h1>
       <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-        Tautan mungkin sudah berubah, acara dibatalkan, atau alamat diketik keliru. Kembali ke daftar acara untuk
-        melihat jadwal yang tersedia.
+        Tautan mungkin sudah berubah, acara dibatalkan, atau alamat diketik keliru. Kembali ke
+        daftar acara untuk melihat jadwal yang tersedia.
       </p>
       <a
         href="/events"
@@ -73,6 +163,7 @@ function NotFoundPage() {
 export const router = createBrowserRouter([
   {
     element: <RootLayout />,
+    errorElement: <RouteErrorPage />,
     children: [
       {
         element: <PublicLayout />,

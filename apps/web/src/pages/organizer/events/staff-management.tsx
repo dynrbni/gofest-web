@@ -6,7 +6,13 @@ import { UserPlus, Trash2 } from 'lucide-react';
 import { api, errorMessage } from '@/lib/api';
 import { formatDateTime } from '@/lib/format';
 import type { StaffAssignment } from '@/lib/models';
-import { EmptyState, ErrorState, Field, InlineError, LoadingState } from '@/components/common/states';
+import {
+  EmptyState,
+  ErrorState,
+  Field,
+  InlineError,
+  LoadingState,
+} from '@/components/common/states';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
@@ -66,14 +72,20 @@ export function EventStaffManagementPage() {
   return (
     <div className="space-y-6">
       <div className="border-b border-warm-border pb-4">
-        <h2 className="text-xl font-bold tracking-tight text-ink">Petugas Check-In (Event Staff)</h2>
+        <h2 className="text-xl font-bold tracking-tight text-ink">
+          Petugas Check-In (Event Staff)
+        </h2>
         <p className="mt-0.5 text-xs text-muted-foreground">
-          Beri akses terbatas kepada petugas tiket di lapangan untuk memindai QR code tiket saat hari acara
+          Beri akses terbatas kepada petugas tiket di lapangan untuk memindai QR code tiket saat
+          hari acara
         </p>
       </div>
 
       {/* Form Add Staff */}
-      <form onSubmit={handleAddStaff} className="rounded-md border border-warm-border bg-card p-5 space-y-4 max-w-xl">
+      <form
+        onSubmit={handleAddStaff}
+        className="rounded-md border border-warm-border bg-card p-5 space-y-4 max-w-xl"
+      >
         <h3 className="text-sm font-bold text-ink flex items-center gap-2">
           <UserPlus className="h-4 w-4" aria-hidden />
           Tugaskan Petugas Baru
@@ -81,7 +93,11 @@ export function EventStaffManagementPage() {
         <InlineError error={error} />
 
         <div className="grid sm:grid-cols-[1fr_140px] gap-3">
-          <Field label="Alamat Email Petugas" htmlFor="staffEmail" hint="Petugas harus memiliki akun di Gofest">
+          <Field
+            label="Alamat Email Petugas"
+            htmlFor="staffEmail"
+            hint="Petugas harus memiliki akun di Gofest"
+          >
             <Input
               id="staffEmail"
               type="email"
@@ -121,7 +137,12 @@ export function EventStaffManagementPage() {
           description="Tambahkan email anggota tim kamu untuk bertindak sebagai petugas check-in di pintu masuk acara."
         />
       ) : (
-        <div className="overflow-x-auto rounded-md border border-warm-border bg-card">
+        <div
+          tabIndex={0}
+          role="region"
+          aria-label="Daftar petugas acara"
+          className="overflow-x-auto rounded-md border border-warm-border bg-card"
+        >
           <table className="w-full text-left text-xs">
             <thead className="border-b border-warm-border bg-warm-muted/40 font-semibold text-ink">
               <tr>

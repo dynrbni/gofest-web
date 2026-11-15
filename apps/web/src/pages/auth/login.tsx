@@ -9,6 +9,7 @@ import { useDocumentTitle } from '@/lib/hooks';
 import { fieldErrors } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { AuthShell } from './auth-shell';
+import { useLanguage } from '@/lib/language';
 
 function safeNext(value: string | null) {
   if (value && value.startsWith('/') && !value.startsWith('//')) return value;
@@ -16,7 +17,8 @@ function safeNext(value: string | null) {
 }
 
 export function LoginPage() {
-  useDocumentTitle('Masuk');
+  const { t } = useLanguage();
+  useDocumentTitle(t('Masuk', 'Log in'));
   const { login } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -31,15 +33,15 @@ export function LoginPage() {
     event.preventDefault();
     setError(null);
     const nextErrors: Record<string, string> = {};
-    if (!email.trim()) nextErrors.email = 'Email wajib diisi';
-    if (!password) nextErrors.password = 'Password wajib diisi';
+    if (!email.trim()) nextErrors.email = t('Email wajib diisi', 'Enter your email');
+    if (!password) nextErrors.password = t('Password wajib diisi', 'Enter your password');
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
 
     setSubmitting(true);
     try {
       const user = await login({ email: email.trim(), password });
-      toast.success(`Selamat datang, ${user.name.split(' ')[0]}`);
+      toast.success(`${t('Selamat datang', 'Welcome')}, ${user.name.split(' ')[0]}`);
       const next = safeNext(searchParams.get('next'));
       if (next) {
         navigate(next, { replace: true });
@@ -62,13 +64,16 @@ export function LoginPage() {
 
   return (
     <AuthShell
-      title="Masuk"
-      lede="Gunakan email dan password akun Gofest. Kamu bisa membeli tiket tanpa akun, tetapi akun memudahkan akses ulang."
+      title={t('Senang bertemu lagi.', 'Good to see you again.')}
+      lede={t(
+        'Masuk untuk membuka tiket dan melanjutkan rencana serumu.',
+        'Log in to access your tickets and pick up where you left off.',
+      )}
       footer={
         <>
-          Belum punya akun?{' '}
+          {t('Belum punya akun?', 'New to GoFest?')}{' '}
           <Link to="/register" className="font-semibold text-ink underline underline-offset-4">
-            Daftar
+            {t('Daftar sekarang', 'Create an account')}
           </Link>
         </>
       }
@@ -79,6 +84,7 @@ export function LoginPage() {
             id="login-email"
             type="email"
             autoComplete="email"
+            placeholder={t('Masukkan email kamu', 'Enter your email')}
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             aria-invalid={Boolean(errors.email)}
@@ -93,6 +99,7 @@ export function LoginPage() {
               id="login-password"
               type={showPassword ? 'text' : 'password'}
               autoComplete="current-password"
+              placeholder={t('Masukkan password kamu', 'Enter your password')}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               aria-invalid={Boolean(errors.password)}
@@ -103,16 +110,24 @@ export function LoginPage() {
               type="button"
               onClick={() => setShowPassword((value) => !value)}
               className="absolute right-1 top-1 flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 hover:text-slate-800"
-              aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
+              aria-label={
+                showPassword
+                  ? t('Sembunyikan password', 'Hide password')
+                  : t('Tampilkan password', 'Show password')
+              }
             >
-              {showPassword ? <EyeOff className="h-4 w-4" aria-hidden /> : <Eye className="h-4 w-4" aria-hidden />}
+              {showPassword ? (
+                <EyeOff className="h-4 w-4" aria-hidden />
+              ) : (
+                <Eye className="h-4 w-4" aria-hidden />
+              )}
             </button>
           </div>
         </Field>
 
         <div className="flex justify-end">
           <Link to="/forgot-password" className="text-xs font-bold text-blue-600 hover:underline">
-            Lupa password?
+            {t('Lupa password?', 'Forgot password?')}
           </Link>
         </div>
 
@@ -123,7 +138,7 @@ export function LoginPage() {
           disabled={submitting}
           className="h-12 w-full rounded-xl bg-blue-600 font-bold text-white shadow-md transition-all hover:bg-blue-700 active:scale-95"
         >
-          {submitting ? 'Memeriksa akun...' : 'Masuk Sekarang'}
+          {submitting ? t('Memeriksa akun...', 'Logging in...') : t('Masuk', 'Log in')}
         </Button>
       </form>
     </AuthShell>

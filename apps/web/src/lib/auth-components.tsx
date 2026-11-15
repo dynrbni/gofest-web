@@ -1,25 +1,9 @@
 import type { AuthUser } from '@gofest/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createContext, useContext, useMemo, type ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { api, ApiError } from './api';
-
-interface AuthContextValue {
-  user: AuthUser | null;
-  isLoading: boolean;
-  isAuthenticated: boolean;
-  login: (input: { email: string; password: string; rememberMe?: boolean }) => Promise<AuthUser>;
-  register: (input: {
-    name: string;
-    email: string;
-    phone?: string;
-    password: string;
-  }) => Promise<AuthUser>;
-  logout: () => Promise<void>;
-  refreshMe: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextValue | null>(null);
+import { AuthContext, useAuth, type AuthContextValue } from './auth-context';
 
 async function loadMe(): Promise<AuthUser | null> {
   try {
@@ -80,6 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       queryClient.clear();
     },
   });
+  const logoutAsync = logoutMutation.mutateAsync;
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -89,32 +74,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login: loginMutation.mutateAsync,
       register: registerMutation.mutateAsync,
       logout: async () => {
-        await logoutMutation.mutateAsync();
+        await logoutAsync();
       },
       refreshMe: async () => {
         await queryClient.invalidateQueries({ queryKey: ['me'] });
       },
     }),
-    [meQuery.data, meQuery.isLoading, loginMutation.mutateAsync, registerMutation.mutateAsync, logoutMutation.mutateAsync, queryClient],
+    [
+      meQuery.data,
+      meQuery.isLoading,
+      loginMutation.mutateAsync,
+      registerMutation.mutateAsync,
+      logoutAsync,
+      queryClient,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth harus dipakai di dalam AuthProvider');
-  return context;
-}
-
-export function useRequireAuth() {
-  const { user, isLoading } = useAuth();
-  const location = useLocation();
-  return {
-    user,
-    isLoading,
-    redirect: <Navigate to={`/login?next=${encodeURIComponent(location.pathname + location.search)}`} replace />,
-  };
 }
 
 export function RequireAuth({
@@ -146,10 +122,12 @@ export function RequireAuth({
     return (
       <main className="container flex min-h-[70vh] max-w-2xl flex-col items-start justify-center py-16">
         <p className="text-xs font-semibold tracking-[0.14em] text-olive">Akses terbatas</p>
-        <h1 className="mt-3 font-display text-4xl tracking-tightest">Halaman ini bukan untuk akunmu.</h1>
+        <h1 className="mt-3 font-display text-4xl tracking-tightest">
+          Halaman ini bukan untuk akunmu.
+        </h1>
         <p className="mt-4 max-w-lg text-muted-foreground">
-          Akun {user.email} tidak memiliki izin membuka area ini. Kembali ke beranda atau masuk dengan akun
-          yang sesuai.
+          Akun {user.email} tidak memiliki izin membuka area ini. Kembali ke beranda atau masuk
+          dengan akun yang sesuai.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
           <button

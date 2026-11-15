@@ -1,6 +1,6 @@
-import { ArrowLeft, Minus, Plus } from 'lucide-react';
+import { ArrowLeft, Check, Minus, Plus, Ticket } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ErrorState, Field, InlineError, LoadingState } from '@/components/common/states';
 import { Button } from '@/components/ui/button';
@@ -21,11 +21,19 @@ interface QuoteResult {
   couponCode: string | null;
   reservationMinutes: number;
   expiresAt: string;
-  lines: Array<{ ticketTypeId: string; name: string; quantity: number; unitPrice: number; lineTotal: number }>;
+  lines: Array<{
+    ticketTypeId: string;
+    name: string;
+    quantity: number;
+    unitPrice: number;
+    lineTotal: number;
+  }>;
 }
 
 export function CheckoutPage() {
   const { eventSlug } = useParams();
+  const [searchParams] = useSearchParams();
+  const preferredTicketId = searchParams.get('ticket');
   const navigate = useNavigate();
   const { user } = useAuth();
   const eventQuery = usePublicEvent(eventSlug);
@@ -70,12 +78,12 @@ export function CheckoutPage() {
   useEffect(() => {
     if (!event || initialized) return;
     const onSale = event.ticketTypes.filter((ticket) => ticket.isOnSale);
-    const first = onSale[0];
+    const first = onSale.find((ticket) => ticket.id === preferredTicketId) ?? onSale[0];
     if (first) {
       setQuantities({ [first.id]: first.minPerOrder });
     }
     setInitialized(true);
-  }, [event, initialized]);
+  }, [event, initialized, preferredTicketId]);
 
   const quoteQueryKey = useMemo(
     () => ({
@@ -128,7 +136,10 @@ export function CheckoutPage() {
 
   function setQuantity(id: string, value: number, max: number, min: number) {
     const bounded = Math.max(0, Math.min(max, value));
-    setQuantities((current) => ({ ...current, [id]: bounded < min && bounded !== 0 ? min : bounded }));
+    setQuantities((current) => ({
+      ...current,
+      [id]: bounded < min && bounded !== 0 ? min : bounded,
+    }));
   }
 
   function applyCoupon(event: FormEvent) {
@@ -148,7 +159,8 @@ export function CheckoutPage() {
     setError(null);
     const next: Record<string, string> = {};
     if (buyer.name.trim().length < 2) next.buyerName = 'Nama minimal 2 karakter';
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyer.email.trim())) next.buyerEmail = 'Format email tidak valid';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyer.email.trim()))
+      next.buyerEmail = 'Format email tidak valid';
     if (
       buyer.phone.trim() &&
       !/^(\+62|62|0)8[1-9][0-9]{6,12}$/.test(buyer.phone.replace(/[\s-]/g, ''))
@@ -205,7 +217,10 @@ export function CheckoutPage() {
   if (eventQuery.isError || !event) {
     return (
       <main className="container max-w-3xl py-14">
-        <Link to="/events" className="inline-flex items-center gap-2 text-sm font-bold text-blue-600 hover:underline">
+        <Link
+          to="/events"
+          className="inline-flex items-center gap-2 text-sm font-bold text-blue-600 hover:underline"
+        >
           <ArrowLeft className="h-4 w-4" aria-hidden />
           Kembali ke acara
         </Link>
@@ -222,7 +237,7 @@ export function CheckoutPage() {
   const sellable = ticketTypes.filter((ticket) => ticket.isOnSale);
 
   return (
-    <main className="container py-8 sm:py-12">
+    <main className="container max-w-6xl py-8 sm:py-10">
       <Link
         to={`/events/${event.slug}`}
         className="inline-flex items-center gap-2 text-sm font-bold text-blue-600 hover:underline"
@@ -231,27 +246,67 @@ export function CheckoutPage() {
         Kembali ke detail acara
       </Link>
 
-      <div className="mt-5 border-b border-slate-200 pb-5">
-        <p className="text-xs font-bold uppercase tracking-wider text-blue-600">Checkout Tiket</p>
-        <h1 className="mt-1 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
+      <ol
+        className="mt-6 flex flex-wrap items-center gap-3 border-b border-slate-200 pb-5 sm:gap-7"
+        aria-label="Tahapan pembelian"
+      >
+        <li className="checkout-step">
+          <span>
+            <Check className="size-4" aria-hidden />
+          </span>
+          Pilih acara
+        </li>
+        <li className="checkout-step checkout-step-active" aria-current="step">
+          <span>2</span>Tiket & data pembeli
+        </li>
+        <li className="checkout-step">
+          <span>3</span>Pembayaran
+        </li>
+        <li className="checkout-step">
+          <span>
+            <Ticket className="size-4" aria-hidden />
+          </span>
+          E-tiket
+        </li>
+      </ol>
+      <div className="mt-6 border-b border-slate-200 pb-5">
+        <p className="text-xs font-semibold text-blue-700">Selesaikan pesananmu</p>
+        <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
           {event.title}
         </h1>
         <p className="mt-2 text-sm text-slate-500">
-          {formatDateLong(event.startsAt, event.timezone)} · {formatTime(event.startsAt, event.timezone)} ·{' '}
-          {event.type === 'ONLINE' ? 'Online' : `${event.venueName ?? 'Venue'}${event.city ? `, ${event.city}` : ''}`}
+          {formatDateLong(event.startsAt, event.timezone)} ·{' '}
+          {formatTime(event.startsAt, event.timezone)} ·{' '}
+          {event.type === 'ONLINE'
+            ? 'Online'
+            : `${event.venueName ?? 'Venue'}${event.city ? `, ${event.city}` : ''}`}
         </p>
       </div>
 
-      <form onSubmit={onSubmit} className="mt-8 grid gap-10 lg:grid-cols-[1fr_380px] lg:gap-12" noValidate>
+      <form
+        onSubmit={onSubmit}
+        className="mt-8 grid gap-10 lg:grid-cols-[1fr_380px] lg:gap-12"
+        noValidate
+      >
         <div className="space-y-8">
-          <section aria-labelledby="tickets-heading" className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
+          {event.isDemo ? (
+            <p className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-relaxed text-amber-900">
+              Ini acara demo. Pembayaran berupa simulasi dan tidak memerlukan transfer uang.
+            </p>
+          ) : null}
+          <section
+            aria-labelledby="tickets-heading"
+            className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs"
+          >
             <div className="flex items-end justify-between gap-3 border-b border-slate-100 pb-3">
               <h2 id="tickets-heading" className="text-base font-bold text-slate-900">
                 1. Pilih Jumlah Tiket
               </h2>
               <p className="text-xs text-slate-400">Maksimal 10 tiket per pesanan</p>
             </div>
-            {errors.items ? <p className="mt-2 text-xs font-semibold text-rose-600">{errors.items}</p> : null}
+            {errors.items ? (
+              <p className="mt-2 text-xs font-semibold text-rose-600">{errors.items}</p>
+            ) : null}
             <div className="mt-2 divide-y divide-slate-100">
               {sellable.length === 0 ? (
                 <p className="py-5 text-sm text-slate-500">
@@ -273,7 +328,8 @@ export function CheckoutPage() {
                             </p>
                           ) : null}
                           <p className="mt-1 text-xs text-slate-400">
-                            {ticket.available ?? 0} tersisa · min. {ticket.minPerOrder}, maks. {ticket.maxPerOrder} per order
+                            {ticket.available ?? 0} tersisa · min. {ticket.minPerOrder}, maks.{' '}
+                            {ticket.maxPerOrder} per order
                           </p>
                         </div>
                         <div className="flex items-center gap-3">
@@ -283,19 +339,26 @@ export function CheckoutPage() {
                           <div className="flex items-center rounded-xl border border-slate-200 bg-slate-50">
                             <button
                               type="button"
-                              onClick={() => setQuantity(ticket.id, quantity - 1, max, ticket.minPerOrder)}
+                              onClick={() =>
+                                setQuantity(ticket.id, quantity - 1, max, ticket.minPerOrder)
+                              }
                               disabled={quantity <= 0}
                               className="flex h-9 w-9 items-center justify-center text-slate-600 transition-colors hover:bg-slate-200 disabled:opacity-30 rounded-l-xl"
                               aria-label={`Kurangi tiket ${ticket.name}`}
                             >
                               <Minus className="h-4 w-4" aria-hidden />
                             </button>
-                            <span className="w-8 text-center text-sm font-bold text-slate-900 tabular-nums" aria-live="polite">
+                            <span
+                              className="w-8 text-center text-sm font-bold text-slate-900 tabular-nums"
+                              aria-live="polite"
+                            >
                               {quantity}
                             </span>
                             <button
                               type="button"
-                              onClick={() => setQuantity(ticket.id, quantity + 1, max, ticket.minPerOrder)}
+                              onClick={() =>
+                                setQuantity(ticket.id, quantity + 1, max, ticket.minPerOrder)
+                              }
                               disabled={quantity >= max}
                               className="flex h-9 w-9 items-center justify-center text-slate-600 transition-colors hover:bg-slate-200 disabled:opacity-30 rounded-r-xl"
                               aria-label={`Tambah tiket ${ticket.name}`}
@@ -312,12 +375,19 @@ export function CheckoutPage() {
             </div>
           </section>
 
-          <section aria-labelledby="buyer-heading" className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
-            <h2 id="buyer-heading" className="border-b border-slate-100 pb-3 text-base font-bold text-slate-900">
+          <section
+            aria-labelledby="buyer-heading"
+            className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs"
+          >
+            <h2
+              id="buyer-heading"
+              className="border-b border-slate-100 pb-3 text-base font-bold text-slate-900"
+            >
               2. Data Informasi Pembeli
             </h2>
             <p className="mt-2 text-xs text-slate-500">
-              Tiket dan konfirmasi pesanan dikirim ke email ini. Nama pada tiket mengikuti data pembeli.
+              Tiket dan konfirmasi pesanan dikirim ke email ini. Nama pada tiket mengikuti data
+              pembeli.
             </p>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <Field label="Nama lengkap" htmlFor="checkout-name" error={errors.buyerName} required>
@@ -346,7 +416,7 @@ export function CheckoutPage() {
               <Field
                 label="Nomor WhatsApp / HP"
                 htmlFor="checkout-phone"
-                hint="Opsional. Untuk notifikasi WhatsApp tiket resmi."
+                hint="Opsional. Nomor yang dapat dihubungi terkait pesanan."
                 error={errors.buyerPhone}
               >
                 <Input
@@ -372,8 +442,14 @@ export function CheckoutPage() {
             ) : null}
           </section>
 
-          <section aria-labelledby="coupon-heading" className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
-            <h2 id="coupon-heading" className="border-b border-slate-100 pb-3 text-base font-bold text-slate-900">
+          <section
+            aria-labelledby="coupon-heading"
+            className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs"
+          >
+            <h2
+              id="coupon-heading"
+              className="border-b border-slate-100 pb-3 text-base font-bold text-slate-900"
+            >
               3. Kode Promo & Voucher Diskon
             </h2>
             <div className="mt-4 flex max-w-md gap-2">
@@ -387,18 +463,30 @@ export function CheckoutPage() {
                 placeholder="Contoh: GOFEST10"
                 className="h-11 rounded-xl border-slate-200 bg-slate-50 uppercase focus:bg-white"
               />
-              <Button type="button" variant="outline" onClick={applyCoupon} className="h-11 rounded-xl border-slate-200 font-bold text-slate-700 hover:bg-slate-100">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={applyCoupon}
+                className="h-11 rounded-xl border-slate-200 font-bold text-slate-700 hover:bg-slate-100"
+              >
                 Terapkan
               </Button>
               {couponCode ? (
-                <Button type="button" variant="ghost" onClick={resetCoupon} className="h-11 rounded-xl text-rose-600 hover:bg-rose-50 font-bold">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={resetCoupon}
+                  className="h-11 rounded-xl text-rose-600 hover:bg-rose-50 font-bold"
+                >
                   Hapus
                 </Button>
               ) : null}
             </div>
             {quoteError ? (
               <p className="mt-2 max-w-md text-xs font-semibold text-rose-600" role="alert">
-                {quoteError instanceof ApiError ? quoteError.message : 'Kode promo tidak valid atau kuota habis.'}
+                {quoteError instanceof ApiError
+                  ? quoteError.message
+                  : 'Kode promo tidak valid atau kuota habis.'}
               </p>
             ) : couponCode && quote?.couponCode ? (
               <p className="mt-2 text-xs font-semibold text-emerald-600">
@@ -407,7 +495,10 @@ export function CheckoutPage() {
             ) : null}
           </section>
 
-          <section aria-labelledby="terms-heading" className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
+          <section
+            aria-labelledby="terms-heading"
+            className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs"
+          >
             <h2 id="terms-heading" className="sr-only">
               Persetujuan
             </h2>
@@ -426,16 +517,18 @@ export function CheckoutPage() {
                 . Tiket berlaku sah sesuai aturan organizer.
               </span>
             </label>
-            {errors.terms ? <p className="mt-2 text-xs font-semibold text-rose-600">{errors.terms}</p> : null}
+            {errors.terms ? (
+              <p className="mt-2 text-xs font-semibold text-rose-600">{errors.terms}</p>
+            ) : null}
           </section>
         </div>
 
-        <aside className="lg:sticky lg:top-24 lg:h-fit">
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-lg">
+        <aside className="lg:sticky lg:top-36 lg:h-fit">
+          <div className="booking-panel">
             <div className="border-b border-slate-100 pb-4">
               <h2 className="text-base font-bold text-slate-900">Ringkasan Pembayaran</h2>
               <p className="mt-0.5 text-xs text-slate-400">
-                Perhitungan resmi dari server
+                Cek tiket dan total sebelum melanjutkan.
               </p>
             </div>
             <div className="space-y-3 pt-4 text-sm">
@@ -446,11 +539,16 @@ export function CheckoutPage() {
                   const ticket = ticketTypes.find((entry) => entry.id === item.ticketTypeId);
                   if (!ticket) return null;
                   return (
-                    <div key={item.ticketTypeId} className="flex justify-between gap-3 text-xs text-slate-700">
+                    <div
+                      key={item.ticketTypeId}
+                      className="flex justify-between gap-3 text-xs text-slate-700"
+                    >
                       <span>
                         {ticket.name} × {item.quantity}
                       </span>
-                      <span className="font-bold tabular-nums">{formatIDR(ticket.price * item.quantity)}</span>
+                      <span className="font-bold tabular-nums">
+                        {formatIDR(ticket.price * item.quantity)}
+                      </span>
                     </div>
                   );
                 })
@@ -458,7 +556,9 @@ export function CheckoutPage() {
               <div className="my-2 border-t border-dashed border-slate-200" />
               <div className="flex justify-between gap-3 text-xs text-slate-600">
                 <span>Subtotal</span>
-                <span className="font-bold tabular-nums">{formatIDR(quote?.subtotal ?? localSubtotal)}</span>
+                <span className="font-bold tabular-nums">
+                  {formatIDR(quote?.subtotal ?? localSubtotal)}
+                </span>
               </div>
               <div className="flex justify-between gap-3 text-xs text-emerald-600">
                 <span>Potongan Promo</span>

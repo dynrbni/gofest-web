@@ -53,14 +53,21 @@ export function EventOrderManagementPage() {
           </p>
         </div>
 
-        <Button onClick={handleExportCsv} variant="outline" className="inline-flex items-center gap-2">
+        <Button
+          onClick={handleExportCsv}
+          variant="outline"
+          className="inline-flex items-center gap-2"
+        >
           <Download className="h-4 w-4" aria-hidden />
           Ekspor CSV Peserta
         </Button>
       </div>
 
       <div className="relative w-full max-w-xs">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+        <Search
+          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+          aria-hidden
+        />
         <input
           type="search"
           value={search}
@@ -92,7 +99,12 @@ export function EventOrderManagementPage() {
         />
       ) : (
         <div className="space-y-4">
-          <div className="overflow-x-auto rounded-md border border-warm-border bg-card">
+          <div
+            tabIndex={0}
+            role="region"
+            aria-label="Pesanan dan peserta"
+            className="overflow-x-auto rounded-md border border-warm-border bg-card"
+          >
             <table className="w-full text-left text-xs">
               <thead className="border-b border-warm-border bg-warm-muted/40 font-semibold text-ink">
                 <tr>
@@ -122,7 +134,10 @@ export function EventOrderManagementPage() {
                       {order.tickets && order.tickets.length > 0 ? (
                         <div className="space-y-1">
                           {order.tickets.map((t) => (
-                            <div key={t.id} className="flex items-center gap-1.5 font-mono text-[11px]">
+                            <div
+                              key={t.id}
+                              className="flex items-center gap-1.5 font-mono text-[11px]"
+                            >
                               <span className="font-bold">{t.ticketCode}</span>
                               <span className="text-muted-foreground">({t.holderName})</span>
                             </div>

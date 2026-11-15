@@ -89,14 +89,19 @@ export function AdminOrganizersPage() {
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 border-b border-warm-border pb-6 sm:flex-row sm:items-center">
         <div>
-          <h1 className="font-display text-3xl font-bold tracking-tightest">Moderasi Penyelenggara (Organizer)</h1>
+          <h1 className="font-display text-3xl font-bold tracking-tightest">
+            Moderasi Penyelenggara (Organizer)
+          </h1>
           <p className="mt-1 text-xs text-muted-foreground">
             Verifikasi dan review profil organizer sebelum mereka dapat menerbitkan acara ke publik
           </p>
         </div>
 
         <div className="relative w-full max-w-xs">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden
+          />
           <input
             type="search"
             value={search}
@@ -129,7 +134,12 @@ export function AdminOrganizersPage() {
         />
       ) : (
         <div className="space-y-4">
-          <div className="overflow-x-auto rounded-md border border-warm-border bg-card">
+          <div
+            tabIndex={0}
+            role="region"
+            aria-label="Daftar organizer"
+            className="overflow-x-auto rounded-md border border-warm-border bg-card"
+          >
             <table className="w-full text-left text-xs">
               <thead className="border-b border-warm-border bg-warm-muted/40 font-semibold text-ink">
                 <tr>
@@ -146,7 +156,9 @@ export function AdminOrganizersPage() {
                   <tr key={org.id} className="hover:bg-warm-muted/20">
                     <td className="px-4 py-3">
                       <p className="font-bold text-ink">{org.organizationName}</p>
-                      <p className="text-[11px] text-muted-foreground font-mono">/organizers/{org.slug}</p>
+                      <p className="text-[11px] text-muted-foreground font-mono">
+                        /organizers/{org.slug}
+                      </p>
                     </td>
                     <td className="px-4 py-3">
                       <p className="font-medium">{org.user?.name ?? '-'}</p>
@@ -161,8 +173,8 @@ export function AdminOrganizersPage() {
                           org.status === 'ACTIVE'
                             ? 'bg-olive/15 text-olive'
                             : org.status === 'PENDING'
-                            ? 'bg-amber-100 text-amber-900'
-                            : 'bg-red-100 text-red-900'
+                              ? 'bg-amber-100 text-amber-900'
+                              : 'bg-red-100 text-red-900'
                         }`}
                       >
                         {org.status}
@@ -239,8 +251,8 @@ export function AdminOrganizersPage() {
               {reviewModal?.action === 'ACTIVE'
                 ? 'Setujui Organizer'
                 : reviewModal?.action === 'REJECTED'
-                ? 'Tolak Pengajuan Organizer'
-                : 'Suspend Akun Organizer'}
+                  ? 'Tolak Pengajuan Organizer'
+                  : 'Suspend Akun Organizer'}
             </DialogTitle>
             <DialogDescription>
               Organisasi: <strong>{reviewModal?.organizer.organizationName}</strong>

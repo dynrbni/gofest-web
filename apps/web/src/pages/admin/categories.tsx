@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Plus, Power } from 'lucide-react';
+import { Pencil, Plus, Power } from 'lucide-react';
 import { api, fieldErrors, ApiError, errorMessage } from '@/lib/api';
 import { useDocumentTitle } from '@/lib/hooks';
 import type { Category } from '@/lib/models';
@@ -21,6 +21,8 @@ export function AdminCategoriesPage() {
   const queryClient = useQueryClient();
 
   const [openModal, setOpenModal] = useState(false);
+  const [editing, setEditing] = useState<Category | null>(null);
+  const [toggling, setToggling] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [description, setDescription] = useState('');
@@ -44,9 +46,19 @@ export function AdminCategoriesPage() {
 
   function handleNameChange(val: string) {
     setName(val);
-    if (!slug || slug === autoSlug(name)) {
+    if (!editing && (!slug || slug === autoSlug(name))) {
       setSlug(autoSlug(val));
     }
+  }
+
+  function openEditor(category?: Category) {
+    setEditing(category ?? null);
+    setName(category?.name ?? '');
+    setSlug(category?.slug ?? '');
+    setDescription(category?.description ?? '');
+    setErrors({});
+    setModalError(null);
+    setOpenModal(true);
   }
 
   async function handleCreateCategory(e: FormEvent) {
@@ -61,18 +73,20 @@ export function AdminCategoriesPage() {
 
     setSubmitting(true);
     try {
-      await api('/admin/categories', {
-        method: 'POST',
+      await api(editing ? `/admin/categories/${editing.id}` : '/admin/categories', {
+        method: editing ? 'PATCH' : 'POST',
         body: {
           name: name.trim(),
           slug: slug.trim() || autoSlug(name),
-          description: description.trim() || undefined,
-          isActive: true,
+          description: description.trim(),
+          ...(editing ? {} : { isActive: true }),
         },
       });
       await queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
       await queryClient.invalidateQueries({ queryKey: ['categories'] });
-      toast.success('Kategori baru berhasil ditambahkan');
+      toast.success(
+        editing ? 'Kategori berhasil diperbarui' : 'Kategori baru berhasil ditambahkan',
+      );
       setOpenModal(false);
       setName('');
       setSlug('');
@@ -89,6 +103,7 @@ export function AdminCategoriesPage() {
   }
 
   async function handleToggleActive(cat: Category) {
+    setToggling(cat.id);
     try {
       await api(`/admin/categories/${cat.id}`, {
         method: 'PATCH',
@@ -99,6 +114,8 @@ export function AdminCategoriesPage() {
       toast.success(`Kategori ${cat.name} diperbarui`);
     } catch (err) {
       toast.error(errorMessage(err));
+    } finally {
+      setToggling(null);
     }
   }
 
@@ -108,11 +125,11 @@ export function AdminCategoriesPage() {
         <div>
           <h1 className="font-display text-3xl font-bold tracking-tightest">Kategori Acara</h1>
           <p className="mt-1 text-xs text-muted-foreground">
-            Kelola taksonomi kategori untuk penjelajahan acara publik dan form penyelenggara
+            Kategori aktif otomatis tampil di menu navbar, katalog, dan form acara.
           </p>
         </div>
 
-        <Button onClick={() => setOpenModal(true)} className="inline-flex items-center gap-2">
+        <Button onClick={() => openEditor()} className="inline-flex items-center gap-2">
           <Plus className="h-4 w-4" aria-hidden />
           Tambah Kategori
         </Button>
@@ -123,7 +140,12 @@ export function AdminCategoriesPage() {
       ) : categoriesQuery.isError ? (
         <ErrorState error={categoriesQuery.error} onRetry={() => void categoriesQuery.refetch()} />
       ) : (
-        <div className="overflow-x-auto rounded-md border border-warm-border bg-card">
+        <div
+          tabIndex={0}
+          role="region"
+          aria-label="Kategori acara"
+          className="overflow-x-auto rounded-md border border-warm-border bg-card"
+        >
           <table className="w-full text-left text-xs">
             <thead className="border-b border-warm-border bg-warm-muted/40 font-semibold text-ink">
               <tr>
@@ -143,7 +165,9 @@ export function AdminCategoriesPage() {
                   <td className="px-4 py-3 text-center">
                     <span
                       className={`inline-block rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                        cat.isActive ? 'bg-olive/15 text-olive' : 'bg-warm-muted text-muted-foreground'
+                        cat.isActive
+                          ? 'bg-olive/15 text-olive'
+                          : 'bg-warm-muted text-muted-foreground'
                       }`}
                     >
                       {cat.isActive ? 'Aktif' : 'Nonaktif'}
@@ -152,8 +176,18 @@ export function AdminCategoriesPage() {
                   <td className="px-4 py-3 text-right">
                     <button
                       type="button"
+                      onClick={() => openEditor(cat)}
+                      className="mr-3 inline-flex min-h-11 items-center gap-1 text-xs font-semibold text-blue-700 hover:underline"
+                      aria-label={`Edit kategori ${cat.name}`}
+                    >
+                      <Pencil className="size-3.5" aria-hidden />
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      disabled={toggling !== null}
                       onClick={() => handleToggleActive(cat)}
-                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-muted-foreground hover:text-ink"
+                      className="inline-flex min-h-11 items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-ink disabled:opacity-50"
                     >
                       <Power className="h-3.5 w-3.5" aria-hidden />
                       {cat.isActive ? 'Nonaktifkan' : 'Aktifkan'}
@@ -166,13 +200,12 @@ export function AdminCategoriesPage() {
         </div>
       )}
 
-      {/* Modal Dialog for Adding Category */}
       <Dialog open={openModal} onOpenChange={setOpenModal}>
         <DialogContent className="max-w-md bg-paper border-warm-border">
           <DialogHeader>
-            <DialogTitle>Tambah Kategori Acara</DialogTitle>
+            <DialogTitle>{editing ? 'Edit Kategori Acara' : 'Tambah Kategori Acara'}</DialogTitle>
             <DialogDescription>
-              Buat kategori baru untuk pengelompokan acara di katalog publik.
+              Kategori aktif tampil di menu penjelajahan acara publik.
             </DialogDescription>
           </DialogHeader>
 
@@ -213,7 +246,7 @@ export function AdminCategoriesPage() {
                 Batal
               </Button>
               <Button type="submit" disabled={submitting}>
-                {submitting ? 'Menyimpan...' : 'Tambah Kategori'}
+                {submitting ? 'Menyimpan...' : editing ? 'Simpan Perubahan' : 'Tambah Kategori'}
               </Button>
             </div>
           </form>
