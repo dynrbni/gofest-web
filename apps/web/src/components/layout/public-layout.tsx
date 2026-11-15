@@ -6,7 +6,7 @@ import {
   Check,
   LayoutDashboard,
   Menu,
-  PlusCircle,
+  Handshake,
   Search,
   Ticket,
   User,
@@ -72,9 +72,7 @@ function UserMenu() {
           <span className="flex size-7 items-center justify-center rounded-full bg-blue-50 text-xs font-medium text-blue-700">
             {initials}
           </span>
-          <span className="hidden max-w-24 truncate text-sm font-medium xl:block">
-            {user.name}
-          </span>
+          <span className="hidden max-w-24 truncate text-sm font-medium xl:block">{user.name}</span>
           <ChevronDown className="size-4" aria-hidden />
         </button>
       </DropdownMenuTrigger>
@@ -299,15 +297,8 @@ export function PublicLayout() {
               to={creatorLink}
               className="hidden items-center gap-1.5 whitespace-nowrap text-sm font-medium hover:text-blue-700 lg:flex"
             >
-              <PlusCircle className="size-4" aria-hidden />
-              {t('Buat acara', 'Create event')}
-            </Link>
-            <Link
-              to="/account/orders"
-              className="hidden items-center gap-1.5 whitespace-nowrap text-sm font-medium hover:text-blue-700 xl:flex"
-            >
-              <Ticket className="size-4" aria-hidden />
-              {t('Tiket saya', 'My tickets')}
+              <Handshake className="size-4" aria-hidden />
+              {t('Jadi Partner Kami', 'Partner with us')}
             </Link>
             <span className="hidden h-6 w-px bg-slate-200 lg:block" />
             <div className="hidden sm:block">
@@ -348,8 +339,7 @@ export function PublicLayout() {
               {t('Jelajah semua acara', 'Explore all events')}
             </Link>
             <Link to="/events?price=free">{t('Acara gratis', 'Free events')}</Link>
-            <Link to="/account/orders">{t('Tiket & pesanan saya', 'My tickets & orders')}</Link>
-            <Link to={creatorLink}>{t('Buat acara', 'Create event')}</Link>
+            <Link to={creatorLink}>{t('Jadi Partner Kami', 'Partner with us')}</Link>
             {user ? (
               <Link to={workspaceLink(user.roles).to}>{workspaceLink(user.roles).label}</Link>
             ) : null}
@@ -389,7 +379,7 @@ export function PublicLayout() {
                   </Link>
                 </li>
                 <li>
-                  <Link to={creatorLink}>{t('Buat acara sendiri', 'Create an event')}</Link>
+                  <Link to={creatorLink}>{t('Jadi Partner Kami', 'Partner with us')}</Link>
                 </li>
               </ul>
             </div>

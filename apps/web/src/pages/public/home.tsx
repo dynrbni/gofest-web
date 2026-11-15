@@ -99,7 +99,8 @@ export function HomePage() {
             </div>
           </div>
           <Link to="/organizer/apply" className="primary-action shrink-0">
-            {t('Buat acara', 'Create event')} <ArrowRight className="size-4" aria-hidden />
+            {t('Jadi Partner Kami', 'Partner with us')}{' '}
+            <ArrowRight className="size-4" aria-hidden />
           </Link>
         </section>
         <section className="py-10 sm:py-14" aria-labelledby="cities-heading">

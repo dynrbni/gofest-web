@@ -4,9 +4,9 @@
 
 Referensi visual yang diimplementasikan ada di `docs/design/marketplace-reference.webp` dan `docs/design/event-detail-reference.webp`. Referensi ini digunakan untuk komposisi dan hierarki; isi acara, harga, kuota, dan organizer tetap berasal dari API.
 
-- Header putih dengan pencarian utama, mega dropdown kategori dari API, pilihan bahasa ID/English, dan akses tiket/creator. Header bawah hanya memuat Jelajah acara dan Acara gratis dengan indikator aktif yang mengikuti query harga.
+- Header putih dengan pencarian utama, mega dropdown kategori dari API, pilihan bahasa ID/English, dan tautan Jadi Partner Kami. Tautan tiket langsung dan header bawah dihapus; pesanan tetap tersedia melalui menu akun.
 - Katalog memakai ribbon kategori, filter lokasi/tanggal/harga/status mendatar, reset, urutan hasil, dan grid empat kolom pada desktop. Filter disimpan pada URL dan dapat dikombinasikan.
-- Login/register memakai komposisi 940px, foto samping 510px pada desktop, tab akun, dan form tanpa panel bertumpuk. Foto disembunyikan pada mobile supaya form langsung terjangkau.
+- Login/register serta pemulihan password memakai form satu kolom maksimal 440px di tengah kanvas putih, tanpa foto promosi, navbar publik atau footer situs. Logo, tab akun dan tautan kembali tetap tersedia; form panjang dapat digulir pada layar kecil.
 - Kartu kota memakai diorama 3D Monas, Gedung Sate, Tugu, Sura dan Baya, serta pura Denpasar. Lima kartu sejajar pada desktop besar, menjadi tiga/dua/satu kolom mengikuti lebar layar. Sel sprite selalu 108 × 180px (rasio 3:5) agar landmark tidak melebar mengikuti kartu. Warna underlay membedakan destinasi; hover/fokus memperjelas pilihan.
 - Banner memenuhi lebar viewport tanpa sudut atau gutter; tinggi desktop mengikuti rasio 3.2:1 dengan batas 380–620px, mobile 400px. Saat data tersedia, setiap slide menampilkan event nyata dan seluruh permukaannya menjadi tautan ke detail event tersebut. Foto konser editorial hanya dipakai saat tidak ada data acara. Caption putih menjaga judul terbaca, panah berada di tengah sisi kiri/kanan, dan indikator halaman tetap di bawah.
 - Screenshot LOKET dari pengguna menjadi referensi koreksi home: menu kategori lebar dan terpusat di bawah header utama, poster acara tanpa bingkai luar, kota/organizer di atas separator harga, serta lima kartu kota dalam satu baris desktop. GoFest tetap memakai merek dan konten API sendiri.
@@ -78,7 +78,7 @@ Gofest dirancang untuk kecepatan navigasi dan konversi pembelian tiket, dengan h
 - Sticky navbar putih dengan border bawah halus dan backdrop blur.
 - Logo Gofest dari PNG transparan pengguna, tanpa badge tambahan atau rekonstruksi HTML.
 - Search input cepat dengan shortcut kota.
-- Link: Jelajah Event, Acara Gratis, Tiket Saya, dan tombol CTA "+ Buat Event".
+- Tautan utama: Jadi Partner Kami, Masuk dan Daftar. Jelajah acara tersedia melalui pencarian/kategori; tiket dan pesanan tersedia melalui menu akun.
 - Menu profil akun dengan dropdown responsif.
 
 ### Hero Banner Carousel

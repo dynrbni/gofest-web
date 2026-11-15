@@ -166,6 +166,10 @@ export const router = createBrowserRouter([
     element: <RootLayout />,
     errorElement: <RouteErrorPage />,
     children: [
+      { path: '/login', element: <LoginPage /> },
+      { path: '/register', element: <RegisterPage /> },
+      { path: '/forgot-password', element: <ForgotPasswordPage /> },
+      { path: '/reset-password', element: <ResetPasswordPage /> },
       {
         element: <PublicLayout />,
         children: [
@@ -178,10 +182,6 @@ export const router = createBrowserRouter([
           { path: '/ticket/:ticketCode', element: <TicketPage /> },
           { path: '/terms', element: <TermsPage /> },
           { path: '/privacy', element: <PrivacyPage /> },
-          { path: '/login', element: <LoginPage /> },
-          { path: '/register', element: <RegisterPage /> },
-          { path: '/forgot-password', element: <ForgotPasswordPage /> },
-          { path: '/reset-password', element: <ResetPasswordPage /> },
           {
             path: '/account',
             element: (

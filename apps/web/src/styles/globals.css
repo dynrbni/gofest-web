@@ -405,19 +405,13 @@
     @apply ml-auto flex items-center gap-1 pl-3;
   }
   .auth-page {
-    @apply bg-slate-50/60 px-5 py-7 sm:py-10;
+    @apply flex min-h-dvh items-center justify-center bg-white px-5 py-8 sm:py-12;
   }
   .auth-container {
-    @apply mx-auto max-w-[940px];
-  }
-  .auth-grid {
-    @apply grid items-start gap-10 md:grid-cols-[0.9fr_1fr] lg:gap-14;
-  }
-  .auth-visual {
-    @apply sticky top-40 hidden h-[510px] overflow-hidden rounded-2xl bg-blue-950 md:flex;
+    @apply mx-auto w-full max-w-[440px];
   }
   .auth-form-panel {
-    @apply min-w-0 pb-6;
+    @apply min-w-0;
   }
   .auth-tab {
     @apply flex min-h-12 items-center justify-center border-b-[3px] border-transparent px-7 text-sm font-semibold text-slate-600 hover:text-blue-700;

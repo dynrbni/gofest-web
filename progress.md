@@ -1,5 +1,11 @@
 # Progress
 
+## Authentication and public navigation, 2026-11-15
+
+- Removed the direct tickets link from desktop/mobile public navigation and renamed the creator action to Jadi Partner Kami, including the home CTA and footer partner link.
+- Moved login, register and password recovery outside PublicLayout. Shared auth shell now centers a single form up to 440px wide on white, without promotional photography, public navbar or site footer. Original PNG logo, account tabs, back link and form validation remain.
+- Verification: lint, package type checks, 45 API tests and both production builds pass. All 24 public route/viewport checks pass with zero automated accessibility violations; discovery interactions pass including auth validation, password visibility and language persistence. Desktop/mobile auth visually reviewed; partner link redirects guests to standalone login and returns a successfully authenticated demo account to /organizer/apply.
+
 ## Typography correction, 2026-11-15
 
 - User rejected the heavy Poppins styling and requested a new font while preserving the calmer pre-brand-update appearance. Replaced Poppins with self-hosted DM Sans variable; Manrope was not restored.
