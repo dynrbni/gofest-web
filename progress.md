@@ -1,5 +1,13 @@
 # Progress
 
+## Buyer identity, per-ticket holders and confirmation, 2026-11-15
+
+- Stage-two heading now uses the event title with schedule/timezone and location. Added separate buyer/per-ticket holder panels, searchable country phone selectors, identity fields and gender radio buttons with birth date before document fields.
+- Added shared web/API age and identity validation: age at purchase in Asia/Jakarta, exact seventeenth birthday boundary, only passport/student card below 17, and one unique holder per ordered ticket slot. Checkout phones normalize to E.164 while signup/account phone rules stay unchanged.
+- Buyer-copy mode preserves holder gender/DOB, follows buyer contact edits and stops on independent holder edits. Confirmation opens before order creation; editing and closing preserve values and restore keyboard focus appropriately.
+- Added nullable private JSONB order snapshot through an additive migration, applied to development/test databases. Issued tickets use each holder's name/email with legacy buyer fallback. Identity numbers/DOB are excluded from normal order/ticket responses and redacted from request logs.
+- Verification: 86 API tests, TypeScript and API/web builds pass; checkout-scoped ESLint has zero warnings. Public smoke covers 24 checks. Purchase E2E passes at five widths and customer/country/age/confirmation E2E at four widths including 320px, with zero browser runtime errors and zero automated accessibility violations. Concurrent unrelated account/register edits remain unstaged; root lint reports two unused-variable warnings from that register edit.
+
 ## Separate event detail and staged checkout, 2026-11-15
 
 - Followed the supplied Artatix screenshots with Gofest branding: white two-column detail, organizer and descriptive tabs on the left, proportional poster/schedule/location and a direct Pesan Sekarang link on the right. Removed ticket selection from detail.
