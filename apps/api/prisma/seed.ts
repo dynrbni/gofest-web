@@ -153,6 +153,25 @@ async function main() {
       slug: 'seni-pertunjukan',
       description: 'Teater, tari, dan pertunjukan lintas disiplin.',
     },
+    { name: 'Religi', slug: 'religi', description: 'Kajian, perayaan, dan pertemuan keagamaan.' },
+    {
+      name: 'Olahraga',
+      slug: 'olahraga',
+      description: 'Pertandingan, latihan, dan kegiatan olahraga.',
+    },
+    { name: 'Pameran', slug: 'pameran', description: 'Pameran seni, produk, dan karya kreatif.' },
+    {
+      name: 'Wisata',
+      slug: 'wisata',
+      description: 'Tur, perjalanan, dan pengalaman di destinasi wisata.',
+    },
+    { name: 'Talkshow', slug: 'talkshow', description: 'Diskusi dan bincang bersama narasumber.' },
+    { name: 'Kompetisi', slug: 'kompetisi', description: 'Lomba dan kompetisi lintas bidang.' },
+    {
+      name: 'Kuliner',
+      slug: 'kuliner',
+      description: 'Festival makanan, bazar, dan pengalaman kuliner.',
+    },
   ];
   const categories = new Map<string, string>();
   for (const category of categorySeeds) {

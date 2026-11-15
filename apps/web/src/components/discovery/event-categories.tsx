@@ -1,7 +1,7 @@
-import { ArrowRight, Compass } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { EmptyState, ErrorState, LoadingState } from '@/components/common/states';
+import { EmptyState, ErrorState } from '@/components/common/states';
 import { CategoryIcon } from '@/components/discovery/category-icon';
+import { Skeleton } from '@/components/ui/skeleton';
 import { categoryName } from '@/lib/categories';
 import { useLanguage } from '@/lib/language';
 import { useCategories } from '@/lib/queries';
@@ -13,13 +13,25 @@ export function EventCategories() {
 
   return (
     <section className="py-8 sm:py-10" aria-labelledby="categories-heading">
-      <h2 id="categories-heading" className="section-title flex items-center gap-3">
-        <Compass className="size-6 shrink-0 text-blue-950" aria-hidden />
-        {t('Kategori Event', 'Event categories')}
-      </h2>
-      <div className="mt-6" aria-busy={query.isFetching}>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 id="categories-heading" className="section-title">
+          {t('Kategori Event', 'Event categories')}
+        </h2>
+        <Link to="/events" className="text-link">
+          {t('Lihat semua', 'View all')}
+        </Link>
+      </div>
+      <div className="mt-6 sm:mt-8" aria-busy={query.isFetching}>
         {query.isLoading ? (
-          <LoadingState rows={3} label={t('Memuat kategori', 'Loading categories')} />
+          <div className="home-category-grid" role="status">
+            <span className="sr-only">{t('Memuat kategori', 'Loading categories')}</span>
+            {Array.from({ length: 12 }, (_, index) => (
+              <div key={index} className="flex flex-col items-center gap-3" aria-hidden>
+                <Skeleton className="size-16 rounded-full sm:size-20" />
+                <Skeleton className="h-11 w-20 rounded-full" />
+              </div>
+            ))}
+          </div>
         ) : query.isError ? (
           <ErrorState error={query.error} onRetry={() => void query.refetch()} />
         ) : categories.length === 0 ? (
@@ -31,35 +43,19 @@ export function EventCategories() {
             )}
           />
         ) : (
-          <nav
-            aria-label={t('Pilih kategori', 'Choose a category')}
-            className="grid gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-3"
-          >
+          <nav aria-label={t('Pilih kategori', 'Choose a category')} className="home-category-grid">
             {categories.map((category) => (
               <Link
                 key={category.id}
                 to={`/events?category=${encodeURIComponent(category.slug)}`}
-                className="mega-category-link group"
+                className="home-category-link group"
               >
                 <CategoryIcon slug={category.slug} />
-                <span className="min-w-0">
-                  <span className="block font-medium group-hover:text-blue-700">
-                    {categoryName(category, language)}
-                  </span>
-                  <span className="mt-1 block text-xs leading-5 text-slate-600">
-                    {category.description || t('Temukan acara pilihanmu', 'Find your next event')}
-                  </span>
-                </span>
+                <span className="home-category-label">{categoryName(category, language)}</span>
               </Link>
             ))}
           </nav>
         )}
-      </div>
-      <div className="mt-6 border-t border-slate-200 pt-5">
-        <Link to="/events" className="text-link">
-          {t('Jelajah semua acara', 'Explore all events')}{' '}
-          <ArrowRight className="size-4" aria-hidden />
-        </Link>
       </div>
     </section>
   );
