@@ -5,6 +5,15 @@ import { prisma } from './lib/prisma';
 
 const app = createApp();
 
+void prisma.$connect().then(
+  () => logger.info('Koneksi database siap'),
+  (err: unknown) =>
+    logger.error(
+      { err },
+      'Database belum tersedia. Periksa PostgreSQL dan DATABASE_URL; API akan pulih saat koneksi kembali.',
+    ),
+);
+
 const server = app.listen(env.PORT, () => {
   logger.info({ port: env.PORT, env: env.NODE_ENV }, 'Gofest API berjalan');
 });

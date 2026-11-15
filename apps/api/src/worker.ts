@@ -7,13 +7,21 @@ import { processEmailQueue } from './modules/notifications/email.service';
 
 const server = http.createServer((req, res) => {
   if (req.url === '/health') {
-    res.writeHead(200, { 'content-type': 'application/json' });
-    res.end(
-      JSON.stringify({
-        status: 'ok',
-        service: 'gofest-worker',
-        time: new Date().toISOString(),
-      }),
+    void prisma.$queryRaw`SELECT 1`.then(
+      () => {
+        res.writeHead(200, { 'content-type': 'application/json' });
+        res.end(
+          JSON.stringify({
+            status: 'ok',
+            service: 'gofest-worker',
+            time: new Date().toISOString(),
+          }),
+        );
+      },
+      () => {
+        res.writeHead(503, { 'content-type': 'application/json' });
+        res.end(JSON.stringify({ status: 'unavailable', service: 'gofest-worker' }));
+      },
     );
     return;
   }
@@ -31,15 +39,15 @@ async function tick() {
   if (running) return;
   running = true;
   try {
-    const [emails, expired] = await Promise.all([
-      processEmailQueue(20),
-      releaseExpiredOrders(50),
-    ]);
+    const [emails, expired] = await Promise.all([processEmailQueue(20), releaseExpiredOrders(50)]);
     if (emails > 0 || expired > 0) {
       logger.info({ emails, expiredOrders: expired }, 'Worker menyelesaikan antrean');
     }
   } catch (error) {
-    logger.error({ error }, 'Worker gagal memproses antrean');
+    logger.error(
+      { err: error },
+      'Worker gagal memproses antrean; periksa koneksi database. Akan dicoba lagi dalam 30 detik.',
+    );
   } finally {
     running = false;
   }
@@ -67,4 +75,3 @@ process.on('SIGTERM', () => void shutdown('SIGTERM'));
 process.on('unhandledRejection', (reason) => {
   logger.error({ reason }, 'Unhandled rejection');
 });
-

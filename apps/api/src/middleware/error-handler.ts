@@ -3,6 +3,7 @@ import { ZodError } from 'zod';
 import { Prisma } from '@prisma/client';
 import { AppError, zodIssuesToDetails } from '../lib/errors';
 import { logger } from '../lib/logger';
+import { isDatabaseUnavailable } from '../lib/database-errors';
 
 export function notFoundHandler(req: Request, res: Response) {
   res.status(404).json({
@@ -31,6 +32,21 @@ export function errorHandler(err: unknown, req: Request, res: Response, next: Ne
         code: 'VALIDATION_ERROR',
         message: 'Data yang dikirim tidak valid',
         details: zodIssuesToDetails(err.issues),
+        requestId: req.id,
+      },
+    });
+  }
+
+  if (isDatabaseUnavailable(err)) {
+    logger.error({ err, requestId: req.id }, 'Koneksi database tidak tersedia');
+    res.setHeader('Retry-After', '30');
+    return res.status(503).json({
+      success: false,
+      data: null,
+      meta: null,
+      error: {
+        code: 'SERVICE_UNAVAILABLE',
+        message: 'Layanan sedang tidak tersedia. Silakan coba lagi sebentar.',
         requestId: req.id,
       },
     });

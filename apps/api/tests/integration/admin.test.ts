@@ -162,9 +162,7 @@ describe('organizer moderation', () => {
       .send({ status: 'REJECTED' });
     expect(rejectedWithoutNote.status).toBe(422);
 
-    const audit = await admin.agent.get(
-      '/api/v1/admin/audit-logs?action=ORGANIZER_REVIEWED',
-    );
+    const audit = await admin.agent.get('/api/v1/admin/audit-logs?action=ORGANIZER_REVIEWED');
     expect(audit.status).toBe(200);
     expect(audit.body.data).toHaveLength(1);
     expect(audit.body.data[0].actor.id).toBe(admin.userId);
@@ -349,9 +347,24 @@ describe('user status and platform settings', () => {
       ),
     ).toBe(true);
 
-    const audit = await admin.agent.get(
-      '/api/v1/admin/audit-logs?resourceType=PLATFORM_SETTINGS',
-    );
+    const hidden = await admin.agent
+      .patch(`/api/v1/admin/categories/${categoryId}`)
+      .send({ isActive: false });
+    expect(hidden.status).toBe(200);
+    const activeCategories = await request(app).get('/api/v1/categories');
+    expect(
+      activeCategories.body.data.categories.some(
+        (category: { slug: string }) => category.slug === slug,
+      ),
+    ).toBe(false);
+    const adminCategories = await admin.agent.get('/api/v1/admin/categories');
+    expect(
+      adminCategories.body.data.categories.find(
+        (category: { id: string }) => category.id === categoryId,
+      ).isActive,
+    ).toBe(false);
+
+    const audit = await admin.agent.get('/api/v1/admin/audit-logs?resourceType=PLATFORM_SETTINGS');
     expect(audit.status).toBe(200);
     expect(audit.body.data.length).toBeGreaterThanOrEqual(1);
   });
