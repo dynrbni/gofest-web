@@ -157,6 +157,7 @@ model OrganizerProfile {
   slug             String          @unique
   description      String?         @db.Text
   logoKey          String?
+  bannerKey        String?
   status           OrganizerStatus @default(PENDING)
   reviewNote       String?         @db.Text
   reviewedByUserId String?

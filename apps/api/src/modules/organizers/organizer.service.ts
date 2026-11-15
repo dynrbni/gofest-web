@@ -1,3 +1,6 @@
+import type { Prisma } from '@prisma/client';
+import type { z } from 'zod';
+import type { publicOrganizerQuerySchema } from '@gofest/shared';
 import type { Request } from 'express';
 import { prisma } from '../../lib/prisma';
 import { ConflictError, ForbiddenError, NotFoundError } from '../../lib/errors';
@@ -9,6 +12,7 @@ const publicOrganizerSelect = {
   slug: true,
   description: true,
   logoKey: true,
+  bannerKey: true,
   status: true,
   createdAt: true,
 } as const;
@@ -71,7 +75,13 @@ export async function getOwnOrganizer(userId: string) {
 
 export async function updateOwnOrganizer(
   userId: string,
-  input: { organizationName?: string; slug?: string; description?: string; logoKey?: string | null },
+  input: {
+    organizationName?: string;
+    slug?: string;
+    description?: string;
+    logoKey?: string | null;
+    bannerKey?: string | null;
+  },
   req: Request,
 ) {
   const profile = await prisma.organizerProfile.findUnique({ where: { userId } });
@@ -99,6 +109,7 @@ export async function updateOwnOrganizer(
         ...(input.slug !== undefined ? { slug: input.slug } : {}),
         ...(input.description !== undefined ? { description: input.description } : {}),
         ...(input.logoKey !== undefined ? { logoKey: input.logoKey } : {}),
+        ...(input.bannerKey !== undefined ? { bannerKey: input.bannerKey } : {}),
       },
     });
     await writeAudit(
@@ -116,60 +127,89 @@ export async function updateOwnOrganizer(
   });
 }
 
-export async function getPublicOrganizer(slug: string) {
+export async function getPublicOrganizer(
+  slug: string,
+  query: z.infer<typeof publicOrganizerQuerySchema>,
+) {
+  const publicStatuses = ['PUBLISHED', 'COMPLETED'] as const;
   const profile = await prisma.organizerProfile.findUnique({
     where: { slug },
     select: {
       ...publicOrganizerSelect,
       events: {
-        where: { status: 'PUBLISHED', endsAt: { gt: new Date() } },
-        orderBy: { startsAt: 'asc' },
-        take: 24,
-        select: {
-          id: true,
-          title: true,
-          slug: true,
-          summary: true,
-          coverKey: true,
-          type: true,
-          venueName: true,
-          city: true,
-          startsAt: true,
-          endsAt: true,
-          timezone: true,
-          status: true,
-          isDemo: true,
-          category: { select: { id: true, name: true, slug: true } },
-          ticketTypes: {
-            where: { isActive: true },
-            select: {
-              price: true,
-              quotaTotal: true,
-              quantitySold: true,
-              quantityReserved: true,
-            },
-          },
-        },
+        where: { status: { in: [...publicStatuses] }, coverKey: { not: null } },
+        orderBy: [{ startsAt: 'desc' }, { id: 'asc' }],
+        take: 1,
+        select: { coverKey: true },
       },
     },
   });
-
-  if (!profile || profile.status !== 'ACTIVE') {
+  if (!profile || profile.status !== 'ACTIVE')
     throw new NotFoundError('Organizer tidak ditemukan', 'ORGANIZER_NOT_FOUND');
-  }
-
+  const now = new Date();
+  const activeWhere: Prisma.EventWhereInput = {
+    organizerId: profile.id,
+    status: 'PUBLISHED',
+    endsAt: { gt: now },
+  };
+  const pastWhere: Prisma.EventWhereInput = {
+    organizerId: profile.id,
+    OR: [{ status: 'COMPLETED' }, { status: 'PUBLISHED', endsAt: { lte: now } }],
+  };
+  const [active, past] = await prisma.$transaction([
+    prisma.event.count({ where: activeWhere }),
+    prisma.event.count({ where: pastWhere }),
+  ]);
+  const total = query.period === 'past' ? past : active;
+  const totalPages = Math.max(1, Math.ceil(total / query.limit));
+  const page = Math.min(query.page, totalPages);
+  const events = await prisma.event.findMany({
+    where: query.period === 'past' ? pastWhere : activeWhere,
+    orderBy: [{ startsAt: query.period === 'past' ? 'desc' : 'asc' }, { id: 'asc' }],
+    skip: (page - 1) * query.limit,
+    take: query.limit,
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      summary: true,
+      coverKey: true,
+      type: true,
+      venueName: true,
+      city: true,
+      startsAt: true,
+      endsAt: true,
+      timezone: true,
+      status: true,
+      isDemo: true,
+      category: { select: { id: true, name: true, slug: true } },
+      ticketTypes: {
+        where: { isActive: true },
+        select: { price: true, quotaTotal: true, quantitySold: true, quantityReserved: true },
+      },
+    },
+  });
+  const { events: bannerEvents, ...organizer } = profile;
   return {
-    ...profile,
-    events: profile.events.map((event) => {
-      const { ticketTypes, ...rest } = event;
-      const prices = ticketTypes.map((ticket) => ticket.price);
-      return {
-        ...rest,
-        priceFrom: prices.length > 0 ? Math.min(...prices) : null,
-        isSoldOut: ticketTypes.every(
+    ...organizer,
+    fallbackBannerKey: bannerEvents[0]?.coverKey ?? null,
+    eventCounts: { active, past, total: active + past },
+    eventsPagination: {
+      page,
+      limit: query.limit,
+      total,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1,
+    },
+    events: events.map(({ ticketTypes, ...event }) => ({
+      ...event,
+      priceFrom: ticketTypes.length ? Math.min(...ticketTypes.map((ticket) => ticket.price)) : null,
+      isSoldOut:
+        ticketTypes.length === 0 ||
+        ticketTypes.every(
           (ticket) => ticket.quantitySold + ticket.quantityReserved >= ticket.quotaTotal,
         ),
-      };
-    }),
+    })),
   };
 }

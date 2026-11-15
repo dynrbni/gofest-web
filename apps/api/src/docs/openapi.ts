@@ -424,9 +424,12 @@ paths:
       operationId: getPublicOrganizer
       parameters:
         - { name: slug, in: path, required: true, schema: { type: string } }
+        - { name: period, in: query, schema: { type: string, enum: [active, past], default: active } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 24, default: 12 } }
       responses:
         '200':
-          description: Profil organizer dan event publiknya.
+          description: Profil kreator, bannerKey/fallbackBannerKey, eventCounts (active/past/total), eventsPagination dan event publik sesuai period.
           content:
             application/json:
               schema:
@@ -781,6 +784,7 @@ paths:
                 contactPhone: { type: string, nullable: true }
                 websiteUrl: { type: string, format: uri, nullable: true }
                 logoKey: { type: string, nullable: true }
+                bannerKey: { type: string, nullable: true }
       responses:
         '200':
           description: Profil diperbarui.
@@ -2261,6 +2265,17 @@ components:
         contactPhone: { type: string, nullable: true }
         websiteUrl: { type: string, nullable: true }
         logoUrl: { type: string, nullable: true }
+        logoKey: { type: string, nullable: true }
+        bannerKey: { type: string, nullable: true }
+        fallbackBannerKey: { type: string, nullable: true, description: Cover event publik terbaru jika banner belum diunggah. }
+        createdAt: { type: string, format: date-time }
+        eventCounts:
+          type: object
+          properties:
+            active: { type: integer, minimum: 0 }
+            past: { type: integer, minimum: 0 }
+            total: { type: integer, minimum: 0 }
+        eventsPagination: { $ref: '#/components/schemas/PaginationMeta' }
         reviewNote: { type: string, nullable: true }
         events:
           type: array

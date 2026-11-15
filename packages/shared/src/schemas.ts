@@ -69,6 +69,11 @@ export const paginationSchema = z.object({
   limit: z.coerce.number().int().min(1).max(MAX_PAGE_SIZE).default(DEFAULT_PAGE_SIZE),
 });
 
+export const publicOrganizerQuerySchema = paginationSchema.extend({
+  period: z.enum(['active', 'past']).default('active'),
+  limit: z.coerce.number().int().min(1).max(24).default(12),
+});
+
 export const usernameSchema = z
   .string()
   .trim()
@@ -120,6 +125,7 @@ export const organizerApplicationSchema = z.object({
 export const organizerUpdateSchema = organizerApplicationSchema.partial().extend({
   description: z.string().trim().max(3000).optional(),
   logoKey: z.string().max(300).optional().nullable(),
+  bannerKey: z.string().max(300).optional().nullable(),
 });
 
 export const organizerReviewSchema = z
