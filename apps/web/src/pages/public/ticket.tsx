@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
+import { BrandLogo } from '@/components/common/brand-logo';
 import { TicketStatusBadge } from '@/components/common/status-badge';
 import { ErrorState, LoadingState } from '@/components/common/states';
 import { Button } from '@/components/ui/button';
@@ -67,10 +68,12 @@ export function TicketPage() {
     return (
       <main className="container max-w-lg py-14">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-olive">Akses tiket</p>
-        <h1 className="mt-2 font-display text-4xl tracking-tightest">Tiket ini terlindungi token.</h1>
+        <h1 className="mt-2 font-display text-4xl tracking-tightest">
+          Tiket ini terlindungi token.
+        </h1>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          Buka tiket melalui tautan dari halaman pesanan atau email konfirmasi. Token juga bisa ditempel
-          manual di bawah.
+          Buka tiket melalui tautan dari halaman pesanan atau email konfirmasi. Token juga bisa
+          ditempel manual di bawah.
         </p>
         <form
           className="mt-6 space-y-2"
@@ -101,7 +104,10 @@ export function TicketPage() {
   if (ticketQuery.isError || !ticket) {
     return (
       <main className="container max-w-3xl py-14">
-        <Link to="/events" className="inline-flex items-center gap-2 text-sm font-semibold text-olive">
+        <Link
+          to="/events"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-olive"
+        >
           <ArrowLeft className="h-4 w-4" aria-hidden />
           Kembali ke jelajah acara
         </Link>
@@ -127,7 +133,12 @@ export function TicketPage() {
           <ArrowLeft className="h-4 w-4" aria-hidden />
           Kembali ke pesanan
         </Link>
-        <Button type="button" variant="outline" onClick={() => window.print()} className="rounded-xl border-slate-200 font-bold text-xs">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => window.print()}
+          className="rounded-xl border-slate-200 font-bold text-xs"
+        >
           <Printer className="h-4 w-4 mr-1.5" aria-hidden />
           Cetak E-Tiket
         </Button>
@@ -137,7 +148,8 @@ export function TicketPage() {
         <header className="border-b border-slate-100 bg-slate-50/50 p-6 sm:p-8">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-blue-600">GOFEST · Tiket Digital Resmi</p>
+              <BrandLogo className="mb-3 h-8 sm:h-8" />
+              <p className="text-xs font-semibold text-blue-600">Tiket digital</p>
               <h1 className="mt-2 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
                 {ticket.event.title}
               </h1>
@@ -153,16 +165,26 @@ export function TicketPage() {
           <div>
             <dl className="space-y-4 text-xs">
               <div>
-                <dt className="font-bold uppercase tracking-wider text-slate-400">Pemegang Tiket</dt>
-                <dd className="mt-0.5 text-base font-extrabold text-slate-900">{ticket.holderName}</dd>
+                <dt className="font-bold uppercase tracking-wider text-slate-400">
+                  Pemegang Tiket
+                </dt>
+                <dd className="mt-0.5 text-base font-extrabold text-slate-900">
+                  {ticket.holderName}
+                </dd>
               </div>
               <div>
-                <dt className="font-bold uppercase tracking-wider text-slate-400">Kategori Tiket</dt>
+                <dt className="font-bold uppercase tracking-wider text-slate-400">
+                  Kategori Tiket
+                </dt>
                 <dd className="mt-0.5 font-bold text-slate-800">{ticket.ticketType.name}</dd>
               </div>
               <div>
-                <dt className="font-bold uppercase tracking-wider text-slate-400">Kode Tiket (Barcode Ref)</dt>
-                <dd className="mt-0.5 font-mono text-base font-black text-blue-600 tabular-nums tracking-wider">{ticket.ticketCode}</dd>
+                <dt className="font-bold uppercase tracking-wider text-slate-400">
+                  Kode Tiket (Barcode Ref)
+                </dt>
+                <dd className="mt-0.5 font-mono text-base font-black text-blue-600 tabular-nums tracking-wider">
+                  {ticket.ticketCode}
+                </dd>
               </div>
               <div className="flex gap-2.5">
                 {ticket.event.type === 'ONLINE' ? (
@@ -187,7 +209,9 @@ export function TicketPage() {
                   <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" aria-hidden />
                   <div>
                     <dt className="sr-only">Check-in</dt>
-                    <dd className="font-bold text-emerald-700">Check-in berhasil: {formatDateTime(ticket.checkedInAt, ticket.event.timezone)}</dd>
+                    <dd className="font-bold text-emerald-700">
+                      Check-in berhasil: {formatDateTime(ticket.checkedInAt, ticket.event.timezone)}
+                    </dd>
                   </div>
                 </div>
               ) : null}
@@ -195,7 +219,9 @@ export function TicketPage() {
 
             {ticket.event.onlineAccessUrl ? (
               <div className="mt-5 rounded-xl border border-blue-200 bg-blue-50/70 p-3.5">
-                <p className="text-xs font-bold uppercase tracking-wider text-blue-700">Tautan Streaming Online</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-blue-700">
+                  Tautan Streaming Online
+                </p>
                 <a
                   href={ticket.event.onlineAccessUrl}
                   target="_blank"
@@ -214,7 +240,8 @@ export function TicketPage() {
           <div className="flex flex-col items-center justify-center sm:border-l sm:border-dashed sm:border-slate-200 sm:pl-6">
             {invalid ? (
               <div className="flex h-44 w-full items-center justify-center rounded-xl border border-rose-200 bg-rose-50 p-4 text-center text-xs font-bold text-rose-700">
-                QR tidak berlaku karena tiket sudah {ticket.status === 'REFUNDED' ? 'di-refund' : 'dibatalkan'}.
+                QR tidak berlaku karena tiket sudah{' '}
+                {ticket.status === 'REFUNDED' ? 'di-refund' : 'dibatalkan'}.
               </div>
             ) : (
               <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-xs">
@@ -236,11 +263,12 @@ export function TicketPage() {
         <footer className="border-t border-slate-100 bg-slate-50/50 px-6 py-3.5 sm:px-8 text-xs text-slate-500">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p>
-              Nomor Pesanan: <span className="font-mono font-bold text-slate-800 tabular-nums">{ticket.orderCode}</span>
+              Nomor Pesanan:{' '}
+              <span className="font-mono font-bold text-slate-800 tabular-nums">
+                {ticket.orderCode}
+              </span>
             </p>
-            <p>
-              Diterbitkan: {formatDateTime(ticket.issuedAt, ticket.event.timezone)}
-            </p>
+            <p>Diterbitkan: {formatDateTime(ticket.issuedAt, ticket.event.timezone)}</p>
           </div>
         </footer>
       </article>
@@ -253,8 +281,16 @@ export function TicketPage() {
           </p>
           <ConfirmDialog
             trigger={
-              <Button type="button" variant="outline" className="rounded-xl border-slate-200 text-xs font-bold" disabled={regenerating}>
-                <RefreshCw className={regenerating ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} aria-hidden />
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-xl border-slate-200 text-xs font-bold"
+                disabled={regenerating}
+              >
+                <RefreshCw
+                  className={regenerating ? 'h-4 w-4 animate-spin' : 'h-4 w-4'}
+                  aria-hidden
+                />
                 Buat ulang QR
               </Button>
             }

@@ -71,7 +71,7 @@ export function LoginPage() {
       )}
       footer={
         <>
-          {t('Belum punya akun?', 'New to GoFest?')}{' '}
+          {t('Belum punya akun?', 'New to Gofest?')}{' '}
           <Link to="/register" className="font-semibold text-ink underline underline-offset-4">
             {t('Daftar sekarang', 'Create an account')}
           </Link>

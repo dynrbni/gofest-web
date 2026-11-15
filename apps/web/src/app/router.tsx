@@ -1,6 +1,7 @@
 import { Outlet, ScrollRestoration, createBrowserRouter } from 'react-router-dom';
 import { lazy, Suspense, type ComponentType } from 'react';
 import { PageLoading } from '@/components/common/states';
+import { BrandLogo } from '@/components/common/brand-logo';
 import { AuthProvider, RequireAuth } from '@/lib/auth';
 import { PublicLayout } from '@/components/layout/public-layout';
 import { AccountLayout } from '@/pages/account/account-layout';
@@ -120,7 +121,7 @@ function RootLayout() {
 function RouteErrorPage() {
   return (
     <main className="container flex min-h-screen max-w-xl flex-col items-start justify-center py-12">
-      <p className="text-sm font-semibold text-blue-700">GoFest</p>
+      <BrandLogo />
       <h1 className="mt-3 text-3xl font-extrabold">Halaman belum bisa ditampilkan.</h1>
       <p className="mt-4 text-sm leading-7 text-slate-600">
         Muat ulang halaman untuk mencoba lagi. Jika masalah berlanjut, kembali ke daftar acara.

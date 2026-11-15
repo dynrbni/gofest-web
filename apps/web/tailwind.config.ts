@@ -18,8 +18,15 @@ export default {
     },
     extend: {
       colors: {
-        blue: { 600: '#0052CC', 700: '#0043A6', 800: '#003380', 950: '#102447' },
-        slate: { 400: '#64748B' },
+        blue: {
+          50: '#F2F6FF',
+          500: '#2A73D6',
+          600: '#0052CC',
+          700: '#003D97',
+          800: '#003380',
+          950: '#102447',
+        },
+        slate: { 200: '#E8E6EF', 400: '#64748B', 900: '#111827' },
         emerald: { 600: '#047857' },
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
@@ -55,19 +62,19 @@ export default {
           foreground: 'hsl(var(--card-foreground))',
         },
         paper: '#FFFFFF',
-        ink: '#17284D',
+        ink: '#111827',
         vermilion: '#0052CC',
         brick: '#0052CC',
         olive: '#475569',
-        'warm-border': '#E2E8F0',
+        'warm-border': '#E8E6EF',
         'warm-muted': '#F8FAFC',
         brand: {
-          50: '#EFF6FF',
+          50: '#F2F6FF',
           100: '#DBEAFE',
           200: '#BFDBFE',
-          500: '#3B82F6',
+          500: '#2A73D6',
           600: '#0052CC',
-          700: '#0043A6',
+          700: '#003D97',
           800: '#003380',
         },
         coral: {
@@ -83,8 +90,8 @@ export default {
         sm: 'calc(var(--radius) - 4px)',
       },
       fontFamily: {
-        sans: ['Manrope Variable', 'Manrope', 'system-ui', 'sans-serif'],
-        display: ['Manrope Variable', 'Manrope', 'system-ui', 'sans-serif'],
+        sans: ['Poppins', 'system-ui', 'sans-serif'],
+        display: ['Poppins', 'system-ui', 'sans-serif'],
       },
       letterSpacing: {
         tightest: '-0.045em',

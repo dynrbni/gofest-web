@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import * as Popover from '@radix-ui/react-popover';
+import * as Dialog from '@radix-ui/react-dialog';
 import { CategoryIcon } from '@/components/discovery/category-icon';
 import { categoryName } from '@/lib/categories';
 import { useLanguage } from '@/lib/language';
@@ -30,24 +30,7 @@ import {
 import { useAuth } from '@/lib/auth';
 import { useCategories } from '@/lib/queries';
 import { cn } from '@/lib/utils';
-
-export function Logo({ className }: { className?: string }) {
-  const { t } = useLanguage();
-  return (
-    <Link
-      to="/"
-      className={cn('brand-logo group', className)}
-      aria-label={t('GoFest, ke beranda', 'GoFest home')}
-    >
-      <span className="brand-symbol">
-        <Ticket className="size-5" aria-hidden />
-      </span>
-      <span>
-        GOFEST<span className="text-blue-600">.</span>
-      </span>
-    </Link>
-  );
-}
+import { Logo } from '@/components/common/brand-logo';
 
 function workspaceLink(roles: string[]) {
   if (roles.includes('ADMIN')) return { to: '/admin', label: 'Dashboard admin' };
@@ -172,8 +155,8 @@ function CategoryMenu() {
   const location = useLocation();
   useEffect(() => setOpen(false), [location.key]);
   return (
-    <Popover.Root open={open} onOpenChange={setOpen} modal>
-      <Popover.Trigger asChild>
+    <Dialog.Root open={open} onOpenChange={setOpen}>
+      <Dialog.Trigger asChild>
         <button
           type="button"
           className="category-menu-trigger flex min-h-11 items-center gap-2 rounded-lg px-3 text-sm font-bold hover:bg-blue-50 data-[state=open]:bg-blue-50 data-[state=open]:text-blue-700"
@@ -182,25 +165,24 @@ function CategoryMenu() {
           {t('Kategori', 'Categories')}
           <ChevronDown className="size-3.5" aria-hidden />
         </button>
-      </Popover.Trigger>
-      {open ? <div className="category-backdrop" aria-hidden /> : null}
-      <Popover.Portal>
-        <Popover.Content
-          side="bottom"
-          align="start"
-          sideOffset={18}
-          collisionPadding={16}
+      </Dialog.Trigger>
+      <Dialog.Portal>
+        <Dialog.Overlay className="category-backdrop" />
+        <Dialog.Content
           className="category-mega-menu"
           aria-label={t('Kategori acara', 'Event categories')}
+          aria-describedby={undefined}
         >
           <div className="mb-5 flex items-center justify-between gap-4">
-            <h2 className="text-xl font-extrabold">{t('Kategori acara', 'Event categories')}</h2>
-            <Popover.Close
+            <Dialog.Title className="text-xl font-extrabold">
+              {t('Kategori acara', 'Event categories')}
+            </Dialog.Title>
+            <Dialog.Close
               className="flex size-11 items-center justify-center rounded-lg hover:bg-slate-100"
               aria-label={t('Tutup kategori', 'Close categories')}
             >
               <X className="size-5" aria-hidden />
-            </Popover.Close>
+            </Dialog.Close>
           </div>
           {categories.isLoading ? (
             <p role="status">{t('Memuat kategori...', 'Loading categories...')}</p>
@@ -246,9 +228,9 @@ function CategoryMenu() {
               <ArrowRight className="size-4" aria-hidden />
             </Link>
           </div>
-        </Popover.Content>
-      </Popover.Portal>
-    </Popover.Root>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
 
@@ -285,8 +267,6 @@ export function PublicLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
   const { t } = useLanguage();
-  const freeEvents =
-    location.pathname === '/events' && new URLSearchParams(location.search).get('price') === 'free';
   const { user } = useAuth();
   const creatorLink =
     user && user.roles.includes('ORGANIZER') ? '/organizer/events/new' : '/organizer/apply';
@@ -353,27 +333,7 @@ export function PublicLayout() {
         <div className="container pb-3 md:hidden">
           <HeaderSearch mobile />
         </div>
-        <div className="border-t border-slate-100">
-          <nav
-            aria-label={t('Navigasi acara', 'Event navigation')}
-            className="container flex min-h-11 items-center gap-6 overflow-x-auto whitespace-nowrap text-xs font-medium sm:text-sm"
-          >
-            <Link
-              to="/events"
-              className="secondary-nav-link"
-              aria-current={location.pathname === '/events' && !freeEvents ? 'page' : undefined}
-            >
-              {t('Jelajah acara', 'Explore events')}
-            </Link>
-            <Link
-              to="/events?price=free"
-              className="secondary-nav-link"
-              aria-current={freeEvents ? 'page' : undefined}
-            >
-              {t('Acara gratis', 'Free events')}
-            </Link>
-          </nav>
-        </div>
+
         {menuOpen ? (
           <nav
             id="mobile-navigation"
@@ -406,8 +366,8 @@ export function PublicLayout() {
               <Logo />
               <p className="mt-4 max-w-sm text-sm leading-7 text-slate-600">
                 {t(
-                  'Tempat menemukan acara, bertemu orang baru, dan membawa pulang cerita. Pilih pengalamanmu berikutnya di GoFest.',
-                  'Find events, meet new people, and take home a story. Discover your next experience on GoFest.',
+                  'Tempat menemukan acara, bertemu orang baru, dan membawa pulang cerita. Pilih pengalamanmu berikutnya di Gofest.',
+                  'Find events, meet new people, and take home a story. Discover your next experience on Gofest.',
                 )}
               </p>
               <Link to="/events" className="text-link mt-4">
@@ -415,7 +375,7 @@ export function PublicLayout() {
               </Link>
             </div>
             <div>
-              <h2 className="text-sm font-bold">{t('Jelajahi GoFest', 'Explore GoFest')}</h2>
+              <h2 className="text-sm font-bold">{t('Jelajahi Gofest', 'Explore Gofest')}</h2>
               <ul className="footer-links">
                 <li>
                   <Link to="/events">{t('Semua acara', 'All events')}</Link>
@@ -452,7 +412,7 @@ export function PublicLayout() {
             </div>
           </div>
           <div className="mt-9 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 text-xs text-slate-500">
-            <p>© {new Date().getFullYear()} GoFest Indonesia.</p>
+            <p>© {new Date().getFullYear()} Gofest Indonesia.</p>
             <p>{t('Setiap pertemuan punya cerita.', 'Every gathering has a story.')}</p>
           </div>
         </div>

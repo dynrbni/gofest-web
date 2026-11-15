@@ -93,7 +93,7 @@ export function EventCard({
   compact = false,
 }: {
   event: EventSummary;
-  layout?: 'grid' | 'row';
+  layout?: 'grid' | 'row' | 'discovery';
   compact?: boolean;
 }) {
   const { t } = useLanguage();
@@ -109,6 +109,7 @@ export function EventCard({
       className={cn(
         'event-card group',
         layout === 'row' && 'event-card-row',
+        layout === 'discovery' && 'event-card-discovery',
         compact && 'event-card-compact',
       )}
     >
@@ -135,46 +136,66 @@ export function EventCard({
             <span className="poster-label bg-white text-blue-800">Online</span>
           ) : null}
         </div>
-        <div className="flex min-w-0 flex-1 flex-col p-4">
-          <p className="flex items-center gap-1.5 text-xs font-medium text-slate-600">
-            <CalendarDays className="size-3.5 shrink-0" aria-hidden />
-            {date.day} {date.month} {date.year}
-          </p>
-          <h3 className="mt-2 line-clamp-2 min-h-[2.75rem] text-sm font-extrabold leading-snug transition-colors group-hover:text-blue-700">
-            {event.title}
-          </h3>
-          <p className="mt-2 flex min-w-0 items-center gap-1 text-xs text-slate-500">
-            <MapPin className="size-3.5 shrink-0" aria-hidden />
-            <span className="truncate">
+        {layout === 'discovery' ? (
+          <div className="flex min-w-0 flex-1 flex-col pt-3">
+            <p className="text-sm text-slate-600">
               {event.type === 'ONLINE'
                 ? t('Acara online', 'Online event')
-                : [event.venueName, event.city].filter(Boolean).join(', ') ||
-                  t('Lokasi menyusul', 'Location to be announced')}
-            </span>
-          </p>
-          <div className="mb-4 mt-4">
-            <span className="text-xs text-slate-500">
-              {event.priceFrom !== null && event.priceFrom > 0
-                ? t('Mulai dari', 'From')
-                : t('Tiket acara', 'Event tickets')}
-            </span>
-            <p className="mt-0.5 text-base font-extrabold tabular-nums text-slate-900">{price}</p>
+                : event.city || t('Lokasi menyusul', 'Location to be announced')}
+            </p>
+            <h3 className="mt-2 truncate text-base font-extrabold leading-6 group-hover:text-blue-700">
+              {event.title}
+            </h3>
+            <p className="mt-2 truncate text-sm text-slate-600">
+              {t('Oleh', 'By')} {event.organizer.organizationName}
+            </p>
+            <div className="mt-3 border-t border-dashed border-slate-200 pt-3">
+              <span className="text-xs text-slate-500">{t('Mulai dari', 'From')}</span>
+              <p className="mt-1 text-base font-extrabold tabular-nums text-slate-900">{price}</p>
+            </div>
           </div>
-          <div className="mt-auto flex items-center gap-2 border-t border-slate-100 pt-3">
-            <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[10px] font-bold text-slate-700">
-              {event.organizer.organizationName.charAt(0).toUpperCase()}
-            </span>
-            <span className="truncate text-xs text-slate-600">
-              {event.organizer.organizationName}
-            </span>
-            {event.organizer.status === 'ACTIVE' ? (
-              <CheckCircle2
-                className="ml-auto size-3.5 shrink-0 text-blue-700"
-                aria-label="Organizer aktif"
-              />
-            ) : null}
+        ) : (
+          <div className="flex min-w-0 flex-1 flex-col p-4">
+            <p className="flex items-center gap-1.5 text-xs font-medium text-slate-600">
+              <CalendarDays className="size-3.5 shrink-0" aria-hidden />
+              {date.day} {date.month} {date.year}
+            </p>
+            <h3 className="mt-2 line-clamp-2 min-h-[2.75rem] text-sm font-extrabold leading-snug transition-colors group-hover:text-blue-700">
+              {event.title}
+            </h3>
+            <p className="mt-2 flex min-w-0 items-center gap-1 text-xs text-slate-500">
+              <MapPin className="size-3.5 shrink-0" aria-hidden />
+              <span className="truncate">
+                {event.type === 'ONLINE'
+                  ? t('Acara online', 'Online event')
+                  : [event.venueName, event.city].filter(Boolean).join(', ') ||
+                    t('Lokasi menyusul', 'Location to be announced')}
+              </span>
+            </p>
+            <div className="mb-4 mt-4">
+              <span className="text-xs text-slate-500">
+                {event.priceFrom !== null && event.priceFrom > 0
+                  ? t('Mulai dari', 'From')
+                  : t('Tiket acara', 'Event tickets')}
+              </span>
+              <p className="mt-0.5 text-base font-extrabold tabular-nums text-slate-900">{price}</p>
+            </div>
+            <div className="mt-auto flex items-center gap-2 border-t border-slate-100 pt-3">
+              <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[10px] font-bold text-slate-700">
+                {event.organizer.organizationName.charAt(0).toUpperCase()}
+              </span>
+              <span className="truncate text-xs text-slate-600">
+                {event.organizer.organizationName}
+              </span>
+              {event.organizer.status === 'ACTIVE' ? (
+                <CheckCircle2
+                  className="ml-auto size-3.5 shrink-0 text-blue-700"
+                  aria-label="Organizer aktif"
+                />
+              ) : null}
+            </div>
           </div>
-        </div>
+        )}
       </Link>
     </article>
   );

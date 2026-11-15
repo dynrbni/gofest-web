@@ -7,17 +7,27 @@ Referensi visual yang diimplementasikan ada di `docs/design/marketplace-referenc
 - Header putih dengan pencarian utama, mega dropdown kategori dari API, pilihan bahasa ID/English, dan akses tiket/creator. Header bawah hanya memuat Jelajah acara dan Acara gratis dengan indikator aktif yang mengikuti query harga.
 - Katalog memakai ribbon kategori, filter lokasi/tanggal/harga/status mendatar, reset, urutan hasil, dan grid empat kolom pada desktop. Filter disimpan pada URL dan dapat dikombinasikan.
 - Login/register memakai komposisi 940px, foto samping 510px pada desktop, tab akun, dan form tanpa panel bertumpuk. Foto disembunyikan pada mobile supaya form langsung terjangkau.
-- Kartu kota memakai diorama 3D Monas, Gedung Sate, Tugu, Sura dan Baya, serta pura Denpasar. Hover dan fokus mengangkat kartu/landmark, memperjelas border biru, dan menambah bayangan; underlay turquoise tetap terlihat.
-- Banner berukuran 340px pada desktop supaya navigasi dan kategori tetap terjangkau di laptop. Foto konser editorial hanya dipakai untuk pengenalan GoFest; poster acara memakai aset milik masing-masing acara.
+- Kartu kota memakai diorama 3D Monas, Gedung Sate, Tugu, Sura dan Baya, serta pura Denpasar. Lima kartu sejajar pada desktop besar, menjadi tiga/dua/satu kolom mengikuti lebar layar. Sel sprite selalu 108 × 180px (rasio 3:5) agar landmark tidak melebar mengikuti kartu. Warna underlay membedakan destinasi; hover/fokus memperjelas pilihan.
+- Banner memenuhi lebar viewport tanpa sudut atau gutter; tinggi desktop mengikuti rasio 3.2:1 dengan batas 380–620px, mobile 400px. Saat data tersedia, setiap slide menampilkan event nyata dan seluruh permukaannya menjadi tautan ke detail event tersebut. Foto konser editorial hanya dipakai saat tidak ada data acara. Caption putih menjaga judul terbaca, panah berada di tengah sisi kiri/kanan, dan indikator halaman tetap di bawah.
+- Screenshot LOKET dari pengguna menjadi referensi koreksi home: menu kategori lebar dan terpusat di bawah header utama, poster acara tanpa bingkai luar, kota/organizer di atas separator harga, serta lima kartu kota dalam satu baris desktop. GoFest tetap memakai merek dan konten API sendiri.
+- Design Read: ENERGY 2 / RHYTHM 2 / MOTION 1. Banner foto menjadi fokus utama, baris poster membantu pemilihan acara, dan landmark mengenali destinasi. Biru mengidentifikasi tindakan; ikon megafon/pin menjelaskan kelompok konten; panah menunjukkan navigasi. Motion hanya pergantian slide dan feedback hover/fokus dengan reduced-motion serta kontrol jeda.
 - Kartu acara 16:9 menampilkan tanggal, judul, lokasi, harga, dan organizer. Status gratis, online, dan habis hanya tampil jika sesuai data.
-- Detail acara memakai panel pemilihan kategori tiket. Pilihan diteruskan melalui parameter `ticket` dan divalidasi kembali terhadap tiket yang dijual di checkout.
+- Detail acara mengikuti screenshot pengguna: judul, lokasi, waktu dan kategori di kiri atas pada latar warna poster yang diburamkan; poster proporsional, ringkasan harga, tombol beli dan organizer berada di kolom kanan. Di mobile, ringkasan turun setelah informasi utama. Tab Deskripsi/Tiket/Syarat/Lokasi berada di bawah informasi utama. Tombol beli membuka tab Tiket; pilihan diteruskan melalui parameter `ticket` dan divalidasi kembali di checkout. Kebijakan pengembalian dana berada di tab syarat.
 - Panel transaksi memakai garis biru di atas untuk membedakan tindakan beli dari informasi acara. Harga dan kuota tetap dihitung oleh backend.
 - Akun dan workspace memakai kanvas slate, panel putih, tab bergaris, serta sidebar dengan indikator biru. Tabel dapat digulir dan difokuskan lewat keyboard.
-- Motion: perpindahan halaman 240ms, pergantian sorotan 480ms, feedback kartu 200ms, dan panel mobile 200ms. Transform digunakan untuk menghindari penurunan kontras teks selama animasi. Semua gerak mengikuti `prefers-reduced-motion`.
-- Carousel otomatis berhenti saat hover, fokus keyboard, tab browser tidak aktif, reduced motion, atau pengguna menekan jeda.
+- Motion: perpindahan halaman 240ms, pergantian banner horizontal 720ms dengan slide masuk dan keluar mengikuti arah navigasi, feedback kartu 200ms, dan panel mobile 200ms. Semua gerak mengikuti `prefers-reduced-motion`.
+- Sesuai permintaan pengguna, carousel tidak menampilkan tombol stop/jeda. Rotasi 6.5 detik berhenti saat hover, fokus keyboard, tab browser tidak aktif atau reduced motion. Slide keluar memakai `inert` dan `aria-hidden` sehingga hanya banner aktif dapat diklik atau difokuskan.
 - Klaim pembayaran dan keamanan harus mencerminkan integrasi yang tersedia. Jangan menampilkan logo bank/wallet yang belum terhubung.
 
-Token utama: biru `#0052CC`, navy `#102447`, putih `#FFFFFF`, slate `#F8FAFC`, border `#E2E8F0`. Manrope tetap menjadi font utama. Radius 8px untuk kontrol, 12px untuk kartu dan panel, 16px untuk banner.
+Token utama: primary `#0052CC`, highlight `#2A73D6`, deep blue `#003D97`, teks navy `#111827`, putih `#FFFFFF`, border `#E8E6EF`, latar biru ringan `#F2F6FF`. Navy `#102447` tetap digunakan pada permukaan gelap yang sudah ada. Poppins menjadi font antarmuka; wordmark tetap bagian PNG asli. Radius 8px untuk kontrol, 12px untuk kartu dan panel, 16px untuk banner.
+
+## Brand identity terbaru
+
+- Gunakan `apps/web/public/assets/gofest-logo.png`, salinan byte-identik dari PNG transparan pengguna. Jangan menggambar ulang ikon atau wordmark, menambahkan teks merek di samping gambar, atau memberi gambar background/border/shadow/glow/transform dekoratif.
+- Komponen bersama `BrandLogo` menampilkan PNG dengan `object-fit: contain`, tinggi 44px desktop dan 36px mobile, width otomatis. `Logo` menambahkan tautan ke beranda; gambar tanpa tautan dipakai pada form akun, loading, error dan tiket cetak.
+- Navbar/footer publik, form autentikasi, sidebar admin/organizer, navigasi workspace mobile, halaman akun melalui layout publik, loading, error, tiket digital dan email memakai identitas yang sama.
+- Favicon ICO/PNG, Apple touch icon dan app icon 192/512 diambil dari piksel ikon G pada aset asli. Gradient asli dipertahankan; canvas ikon transparan.
+- Font Poppins di-host lokal dengan bobot 400/500 untuk teks, 600 untuk kontrol yang sudah ada, dan 700/800 untuk heading. Wordmark tidak direkonstruksi dengan font tersebut.
 
 Arah desain ini mengikat seluruh halaman Gofest. Mengadopsi standar komersial industri event ticketing Indonesia seperti **Artatix** dan **Loket.com**.
 
@@ -55,18 +65,18 @@ Gofest dirancang untuk kecepatan navigasi dan konversi pembelian tiket, dengan h
 
 ## 4. Tipografi
 
-- **Font Keluarga**: Pure modern sans-serif menggunakan **Manrope Variable** (dan system-ui sans-serif fallback).
+- **Font Keluarga**: Poppins yang di-host lokal (dan system-ui sans-serif fallback).
 - Tidak menggunakan font serif vintage/antik pada headline atau navigasi.
-- **Heading**: Manrope 700 / 800 bold dengan letter-spacing tight (`-0.025em`).
-- **Body**: Manrope 400 / 500 dengan line-height 1.6.
-- **Harga & Angka**: Manrope 700 / 800 dengan `tabular-nums`.
+- **Heading**: Poppins 700 / 800 bold dengan letter-spacing tight (`-0.025em`).
+- **Body**: Poppins 400 / 500 dengan line-height 1.6.
+- **Harga & Angka**: Poppins 700 / 800 dengan `tabular-nums`.
 
 ## 5. Komponen Utama
 
 ### Header & Navigasi
 
 - Sticky navbar putih dengan border bawah halus dan backdrop blur.
-- Logo brand Gofest dengan tiket icon badge royal blue.
+- Logo Gofest dari PNG transparan pengguna, tanpa badge tambahan atau rekonstruksi HTML.
 - Search input cepat dengan shortcut kota.
 - Link: Jelajah Event, Acara Gratis, Tiket Saya, dan tombol CTA "+ Buat Event".
 - Menu profil akun dengan dropdown responsif.

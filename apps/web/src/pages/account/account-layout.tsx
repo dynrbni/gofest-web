@@ -16,9 +16,9 @@ export function AccountLayout() {
       <div className="container max-w-6xl py-8 sm:py-10">
         <header className="account-welcome">
           <div>
-            <p className="text-xs font-semibold text-blue-700">Akun GoFest</p>
+            <p className="text-xs font-semibold text-blue-700">Akun Gofest</p>
             <h1 className="mt-2 text-2xl font-extrabold sm:text-3xl">
-              Halo, {user?.name ?? 'teman GoFest'}!
+              Halo, {user?.name ?? 'teman Gofest'}!
             </h1>
             <p className="mt-2 text-sm text-slate-500">
               Tiket, pesanan, dan cerita berikutnya. Semuanya di sini.

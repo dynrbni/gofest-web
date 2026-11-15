@@ -94,6 +94,32 @@ for (const width of [390, 1440]) {
       assert.equal(result.headings, 1, `${path}: expected exactly one page heading`);
       assert.equal(result.overflow, false, `${path}: horizontal overflow at ${width}px`);
       assert.equal(result.alerts.length, 0, `${path}: unexpected error state`);
+      browser(
+        'wait',
+        '--fn',
+        `[...document.querySelectorAll('img[src="/assets/gofest-logo.png"]')].every(img => img.complete && img.naturalWidth > 0)`,
+      );
+      const logos = browser(
+        'eval',
+        `[...document.querySelectorAll('img[src="/assets/gofest-logo.png"]')].filter(img => img.getBoundingClientRect().width > 0).map(img => {
+        const rect = img.getBoundingClientRect();
+        const style = getComputedStyle(img);
+        return { height: rect.height, ratio: rect.width / rect.height, fit: style.objectFit, shadow: style.boxShadow, filter: style.filter, border: style.borderWidth, background: style.backgroundColor };
+      })`,
+      ).result;
+      assert.ok(logos.length > 0, `${path}: supplied logo is visible`);
+      for (const logo of logos) {
+        assert.ok(
+          Math.abs(logo.height - (width < 640 ? 36 : 44)) < 1,
+          `${path}: responsive logo height`,
+        );
+        assert.ok(Math.abs(logo.ratio - 2192 / 690) < 0.01, `${path}: original logo aspect ratio`);
+        assert.equal(logo.fit, 'contain');
+        assert.equal(logo.shadow, 'none');
+        assert.equal(logo.filter, 'none');
+        assert.equal(logo.border, '0px');
+        assert.equal(logo.background, 'rgba(0, 0, 0, 0)');
+      }
       if (role && protectedRoutes[role].includes(path))
         assert.equal(result.path, path, 'Protected route redirected unexpectedly');
       const audit = browser('a11y');

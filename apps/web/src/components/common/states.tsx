@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { errorMessage } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
+import { BrandLogo } from '@/components/common/brand-logo';
 
 export function LoadingState({
   label = 'Memuat data',
@@ -36,6 +37,7 @@ export function LoadingState({
 export function PageLoading({ label = 'Memuat halaman' }: { label?: string }) {
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4" role="status">
+      <BrandLogo className="mb-2" />
       <div className="h-10 w-10 animate-spin rounded-full border-[3px] border-slate-200 border-t-blue-600" />
       <p className="text-sm font-semibold text-slate-500">{label}</p>
     </div>

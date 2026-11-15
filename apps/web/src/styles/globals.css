@@ -1,4 +1,8 @@
-@import '@fontsource-variable/manrope';
+@import '@fontsource/poppins/latin-400.css';
+@import '@fontsource/poppins/latin-500.css';
+@import '@fontsource/poppins/latin-600.css';
+@import '@fontsource/poppins/latin-700.css';
+@import '@fontsource/poppins/latin-800.css';
 
 @tailwind base;
 @tailwind components;
@@ -6,24 +10,24 @@
 
 @layer base {
   :root {
-    --background: 216 33% 98%;
-    --foreground: 222 53% 19%;
+    --background: 0 0% 100%;
+    --foreground: 220.909 39.286% 10.98%;
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 220.909 39.286% 10.98%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 220.909 39.286% 10.98%;
     --primary: 216 100% 40%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 210 40% 96%;
+    --secondary: 221.538 100% 97.451%;
+    --secondary-foreground: 220.909 39.286% 10.98%;
+    --muted: 221.538 100% 97.451%;
     --muted-foreground: 215 18% 43%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 222 47% 11%;
+    --accent: 221.538 100% 97.451%;
+    --accent-foreground: 220.909 39.286% 10.98%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
+    --border: 253.333 21.951% 91.961%;
+    --input: 253.333 21.951% 91.961%;
     --ring: 216 100% 40%;
     --radius: 0.75rem;
   }
@@ -108,10 +112,7 @@
     box-shadow: 0 2px 8px rgb(15 23 42 / 3%);
   }
   .brand-logo {
-    @apply inline-flex shrink-0 items-center gap-2 text-[25px] font-extrabold tracking-tight text-slate-900;
-  }
-  .brand-symbol {
-    @apply flex size-9 items-center justify-center rounded-[10px] bg-blue-600 text-white transition-transform duration-200 group-hover:-rotate-6;
+    @apply inline-flex min-h-11 shrink-0 items-center;
   }
   .primary-action {
     @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-blue-700 active:bg-blue-800;
@@ -162,65 +163,84 @@
   .section-title {
     @apply text-2xl font-extrabold tracking-tight sm:text-[28px];
   }
+  .event-carousel {
+    @apply relative;
+  }
   .hero-frame {
-    @apply relative isolate overflow-hidden rounded-2xl bg-blue-950;
-    height: 340px;
+    @apply relative isolate overflow-hidden bg-blue-950;
+    height: clamp(380px, 31.25vw, 620px);
   }
   .hero-slide {
     @apply absolute inset-0 overflow-hidden;
   }
+  .hero-slide-outgoing {
+    pointer-events: none;
+    visibility: hidden;
+  }
+  .hero-banner-link {
+    @apply absolute inset-0 block;
+  }
+  .hero-banner-link:focus-visible {
+    outline-offset: -4px;
+  }
   .hero-image {
-    @apply absolute right-0 top-0 h-full w-[72%] object-cover;
+    @apply absolute inset-0 h-full w-full object-cover;
     object-position: center 55%;
   }
   .hero-image-event {
-    @apply w-[62%];
+    @apply w-full;
   }
   .hero-shade {
     @apply absolute inset-0;
-    background: linear-gradient(
-      90deg,
-      #102447 0%,
-      #102447 32%,
-      rgb(16 36 71 / 90%) 44%,
-      rgb(16 36 71 / 12%) 75%
-    );
+    background: linear-gradient(0deg, rgb(16 36 71 / 45%), transparent 55%);
   }
   .hero-copy {
-    @apply relative flex h-full max-w-[620px] flex-col items-start justify-center px-7 py-7 sm:px-12;
+    @apply absolute bottom-16 left-4 right-4 grid max-w-[760px] gap-x-5 gap-y-1 rounded-xl bg-white p-4 sm:left-16 sm:right-auto sm:grid-cols-[1fr_auto] sm:px-5;
+  }
+  .hero-caption-meta {
+    @apply text-xs font-medium text-slate-600 sm:col-span-2;
   }
   .hero-title {
-    @apply max-w-[490px] text-[32px] font-extrabold leading-[1.15] tracking-tight text-white sm:text-[42px];
-  }
-  .hero-title-event {
-    @apply max-w-[480px] text-[28px] sm:text-[36px];
+    @apply self-center text-base font-extrabold leading-snug text-slate-900 sm:text-lg;
   }
   .hero-action {
-    @apply inline-flex min-h-11 items-center justify-center gap-3 rounded-lg bg-white px-5 py-3 text-sm font-bold text-blue-950 transition-colors hover:bg-blue-100;
+    @apply inline-flex min-h-11 items-center gap-2 whitespace-nowrap rounded-lg text-sm font-bold text-blue-700 transition-colors hover:text-blue-800 hover:underline;
   }
   .carousel-controls {
-    @apply flex h-14 items-center justify-between gap-3;
+    @apply absolute inset-x-0 bottom-2 z-10 flex h-11 items-center justify-center gap-3;
   }
   .carousel-dot {
     @apply flex h-11 w-7 items-center justify-center;
   }
   .carousel-dot span {
-    @apply h-1.5 w-1.5 rounded-full bg-slate-300 transition-[width,background-color] duration-300;
+    @apply h-1.5 w-1.5 rounded-full bg-white/60 transition-[width,background-color] duration-300;
   }
   .carousel-dot .carousel-dot-active {
-    @apply w-5 bg-blue-600;
+    @apply w-5 bg-white;
   }
   .carousel-arrow {
-    @apply flex size-11 items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-blue-50 hover:text-blue-700;
+    @apply absolute top-1/2 z-10 flex size-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-blue-950 shadow-sm transition-colors hover:bg-blue-50;
+  }
+  .carousel-arrow-left {
+    @apply left-3 sm:left-6;
+  }
+  .carousel-arrow-right {
+    @apply right-3 sm:right-6;
   }
   .carousel-arrow svg {
     @apply size-4;
   }
   .category-strip {
-    @apply grid grid-cols-3 gap-x-2 gap-y-5 border-b border-slate-200 pb-6 pt-3 sm:grid-cols-6 sm:pb-7;
+    @apply mt-5 flex gap-5 overflow-x-auto pb-2;
   }
   .category-shortcut {
-    @apply flex min-w-0 flex-col items-center gap-2.5 text-center text-xs font-semibold text-slate-700 transition-colors hover:text-blue-700 sm:text-sm;
+    @apply flex shrink-0 items-center gap-2 text-center text-xs font-semibold text-slate-700 transition-colors hover:text-blue-700;
+  }
+  .category-shortcut .category-symbol {
+    @apply size-9 rounded-lg;
+  }
+  .category-shortcut .category-symbol svg {
+    @apply size-5;
   }
   .category-symbol {
     @apply flex size-12 items-center justify-center rounded-2xl transition-transform duration-200 group-hover:-translate-y-1;
@@ -250,14 +270,26 @@
   .event-card-row {
     @apply h-auto;
   }
+  .event-card-discovery {
+    @apply overflow-visible rounded-none border-0 hover:translate-y-0;
+  }
+  .event-card-discovery:hover {
+    box-shadow: none;
+  }
+  .event-card-discovery .event-poster {
+    @apply rounded-lg;
+  }
   .poster-label {
     @apply absolute left-3 top-3 rounded-md px-2 py-1 text-[11px] font-bold;
   }
   .creator-banner {
     @apply flex flex-col items-start justify-between gap-6 rounded-2xl border border-blue-100 bg-blue-50 p-6 sm:p-8 lg:flex-row lg:items-center;
   }
+  .city-destinations {
+    @apply mt-8 grid grid-cols-1 gap-5 pb-3 min-[480px]:grid-cols-2 min-[800px]:grid-cols-3 xl:grid-cols-5;
+  }
   .city-destination {
-    @apply relative isolate block min-h-[180px] min-w-0 rounded-2xl border-2 border-slate-200 bg-white p-6;
+    @apply relative isolate block h-36 min-w-0 rounded-xl border border-slate-200 bg-white p-4;
     transition:
       transform 220ms ease,
       box-shadow 220ms ease,
@@ -269,15 +301,15 @@
     position: absolute;
     z-index: -1;
     inset: 10px 18px -8px;
-    border-radius: 16px;
-    background: #bce8eb;
+    border-radius: 12px;
+    background: var(--city-accent, #bce8eb);
   }
   .city-destination::after {
     content: '';
     position: absolute;
     z-index: -1;
     inset: 0;
-    border-radius: 14px;
+    border-radius: 11px;
     background: white;
   }
   .city-destination:is(:hover, :focus-visible) {
@@ -289,14 +321,31 @@
   .city-landmark {
     position: absolute;
     right: 0;
-    bottom: 3px;
-    width: 54%;
-    height: calc(100% + 16px);
+    bottom: -12px;
+    width: 108px;
+    height: 180px;
     background-image: url('/images/city-landmarks.webp');
     background-size: 500% 100%;
     background-repeat: no-repeat;
+    clip-path: inset(0 3px 0 8px);
     pointer-events: none;
     transition: transform 220ms ease;
+  }
+  .city-name {
+    @apply relative z-10 block max-w-[60%] text-lg font-extrabold leading-snug;
+    overflow-wrap: normal;
+  }
+  .city-destination:nth-child(1) {
+    --city-accent: #ffab98;
+  }
+  .city-destination:nth-child(2) {
+    --city-accent: #a9c1ff;
+  }
+  .city-destination:nth-child(3) {
+    --city-accent: #f4d08a;
+  }
+  .city-destination:nth-child(4) {
+    --city-accent: #a2cbb6;
   }
   .city-destination:is(:hover, :focus-visible) .city-landmark {
     transform: translateY(-6px) scale(1.04);
@@ -311,8 +360,13 @@
   }
   .category-mega-menu {
     @apply z-50 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-5 shadow-xl sm:p-7;
-    width: min(1120px, calc(100vw - 32px));
-    max-height: min(640px, var(--radix-popover-content-available-height));
+    position: fixed;
+    top: 77px;
+    left: 0;
+    right: 0;
+    margin-inline: auto;
+    width: min(1280px, calc(100vw - 48px));
+    max-height: min(640px, calc(100dvh - 96px));
     animation: menu-enter 180ms ease-out;
   }
   .mega-category-link {
@@ -408,6 +462,45 @@
     @apply rounded-xl border border-slate-200 border-t-4 border-t-blue-600 bg-white p-5 sm:p-6;
     box-shadow: 0 4px 20px rgb(16 36 71 / 4%);
   }
+  .event-detail-page {
+    @apply relative isolate bg-white pb-28 lg:pb-12;
+  }
+  .event-detail-backdrop {
+    @apply absolute inset-x-0 top-0 -z-10 h-[360px] overflow-hidden bg-blue-950 lg:h-[320px];
+  }
+  .event-detail-backdrop-image {
+    @apply absolute -inset-10 bg-cover bg-center;
+    filter: blur(40px);
+    opacity: 0.35;
+  }
+  .event-detail-grid {
+    @apply grid items-start gap-x-9 gap-y-6;
+    grid-template-areas: 'heading' 'summary' 'content';
+  }
+  .event-detail-heading {
+    @apply min-w-0 pb-2 pt-7 lg:min-h-[320px] lg:pb-8 lg:pt-8;
+    grid-area: heading;
+  }
+  .event-detail-summary {
+    @apply min-w-0 lg:sticky lg:top-36 lg:mt-10;
+    grid-area: summary;
+  }
+  .event-summary-card {
+    @apply overflow-hidden rounded-xl bg-white;
+    box-shadow: 0 4px 24px rgb(16 36 71 / 8%);
+  }
+  .event-detail-content {
+    @apply min-w-0;
+    grid-area: content;
+    scroll-margin-top: 10rem;
+  }
+  @media (min-width: 1024px) {
+    .event-detail-grid {
+      grid-template-columns: minmax(0, 1fr) 35%;
+      grid-template-areas: 'heading summary' 'content summary';
+      row-gap: 0;
+    }
+  }
   .ticket-option {
     @apply block cursor-pointer rounded-xl border border-slate-200 p-4 transition-colors hover:border-blue-400;
   }
@@ -424,7 +517,7 @@
     @apply min-h-12 shrink-0 rounded-none border-b-2 border-transparent px-2 text-xs font-semibold text-slate-600 shadow-none data-[state=active]:border-blue-600 data-[state=active]:bg-transparent data-[state=active]:text-blue-700 data-[state=active]:shadow-none sm:text-sm;
   }
   .detail-tab-content {
-    @apply min-h-40 rounded-b-xl bg-white p-5 text-sm leading-7 sm:p-6;
+    @apply min-h-40 bg-white py-5 text-sm leading-7 sm:py-6;
   }
   .event-description {
     @apply space-y-4 text-slate-600;
@@ -467,12 +560,20 @@
     transform: translateY(0);
   }
 }
-@keyframes slide-enter {
+@keyframes banner-in {
   from {
-    transform: translateX(12px);
+    transform: translateX(calc(var(--slide-direction) * 100%));
   }
   to {
     transform: translateX(0);
+  }
+}
+@keyframes banner-out {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(var(--slide-direction) * -100%));
   }
 }
 @keyframes menu-enter {
@@ -495,8 +596,12 @@
   .route-content {
     animation: page-enter 240ms ease-out;
   }
-  .hero-slide {
-    animation: slide-enter 480ms cubic-bezier(0.2, 0.7, 0.3, 1);
+  .hero-slide-incoming {
+    animation: banner-in 720ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  }
+  .hero-slide-outgoing {
+    visibility: visible;
+    animation: banner-out 720ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
   }
   .event-grid > * {
     animation: card-enter 360ms both;
@@ -513,33 +618,19 @@
 }
 @media (max-width: 639px) {
   .hero-frame {
-    height: 350px;
+    height: 400px;
   }
   .hero-image,
   .hero-image-event {
     width: 100%;
-    opacity: 0.55;
-  }
-  .hero-shade {
-    background: linear-gradient(90deg, rgb(16 36 71 / 95%), rgb(16 36 71 / 45%));
   }
   .hero-copy {
-    padding: 24px;
+    padding: 12px 16px;
   }
-  .hero-title {
-    font-size: 32px;
-    max-width: 340px;
-  }
-  .hero-title-event {
-    font-size: 28px;
-  }
-  .brand-logo {
-    font-size: 21px;
-    gap: 6px;
-  }
-  .brand-symbol {
-    width: 30px;
-    height: 32px;
+  .category-mega-menu {
+    top: 65px;
+    width: calc(100vw - 24px);
+    max-height: calc(100dvh - 88px);
   }
   .header-login,
   .header-register {

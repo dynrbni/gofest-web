@@ -1,5 +1,28 @@
 # Progress
 
+## Supplied brand identity, 2026-11-15
+
+- Copied the user's transparent 2192 × 690 PNG byte-for-byte to `public/assets/gofest-logo.png`; favicon and app icons use a crop of its original G icon.
+- Added shared image/link logo components; replaced the ticket-square HTML wordmark across public and workspace layouts, authentication, loading/error screens, printed tickets and email. Desktop logo height 44px; mobile 36px; original aspect ratio and transparency retained.
+- Applied the supplied palette through CSS/Tailwind tokens and self-hosted Poppins; removed unused Manrope/Instrument Serif dependencies. Semantic ticket navigation icons remain functional ticket symbols.
+- Added browser assertions for original logo proportions, responsive sizing, contain fitting and absence of border/background/filter/shadow. Public 24, admin 16, organizer/account 26 and staff two route checks pass (68 total) with zero automated accessibility violations; discovery and detail/checkout suites also pass. Final `pnpm check` passes all 45 API tests, lint/type checks and both builds; production PNG is byte-identical to source.
+- User authorized committing and pushing all pending work, including the earlier home/detail/carousel changes. Remote was fetched and main was aligned before commit.
+
+## Event detail and carousel follow-up, 2026-11-15
+
+- Rebuilt event detail around the user's LOKET reference: colored header with title/location/time/category at left; proportional poster, price, buy action and organizer at right; description/ticket/terms/location tabs below. Mobile stacks these regions with a bottom purchase action.
+- Ticket choice now lives in the Tickets tab. Buy opens the tab, availability and min/max remain truthful, and the selected ticket ID still reaches checkout.
+- Taller viewport-wide carousel uses actual event slides, whole-banner event links, left/right edge arrows, 720ms directional enter/exit motion and wraparound. Removed visible pause/stop per the user's explicit request; hover/focus/hidden/reduced-motion stopping remains.
+- Preserved concurrent removal of the lower header navigation and homepage category/city filter strips; cleaned the unused imports/variable and adapted the footer free-event navigation check.
+- Verification: `LOG_LEVEL=silent pnpm check` passes (zero lint errors/warnings, all TypeScript checks, 45 API tests, both builds). `pnpm test:discovery`, `pnpm test:event-detail`, and 24 public browser route checks pass. Detail/ticket accessibility and layout tested at 320/390/768/1024/1440px; no browser runtime errors found.
+
+## Home layout correction, 2026-11-15
+
+- Matched the user's LOKET screenshots: centered category panel beneath the primary header, viewport-wide hero with bottom caption, flat discovery event cards, and five city cards per desktop row.
+- Replaced trigger-relative category positioning with a Radix Dialog panel; Escape, outside click, focus trapping and trigger focus return remain available.
+- Preserved the city sprite's native cell ratio and clipped neighboring-cell fragments; responsive cards no longer stretch the landmark artwork.
+- Verification: `LOG_LEVEL=silent pnpm check` passed (45 API tests, lint, all TypeScript packages and both production builds). Discovery E2E covers centered panels, edge-to-edge banners, native landmark ratio and overflow at 320/390/768/1024/1440px. Public browser smoke: 24 route checks passed, zero automated accessibility violations.
+
 - Audited routes and components; inspected live Loket in a separate browser session.
 - Baseline lint and TypeScript checks completed.
 - Generated homepage design reference requested before implementation.

@@ -22,6 +22,14 @@ const open = (path) => {
 };
 const ready = () =>
   wait('document.querySelector("#event-results")?.getAttribute("aria-busy") === "false"');
+const centeredCategoryMenu = () => {
+  const bounds = evaluate(`(() => {
+    const rect = document.querySelector('.category-mega-menu').getBoundingClientRect();
+    return { center: rect.left + rect.width / 2, viewport: innerWidth, left: rect.left, right: rect.right };
+  })()`);
+  assert.ok(Math.abs(bounds.center - bounds.viewport / 2) < 1, 'Category menu is centered');
+  assert.ok(bounds.left >= 0 && bounds.right <= bounds.viewport, 'Category menu fits viewport');
+};
 
 try {
   browser('set', 'viewport', '1440', '1000');
@@ -31,6 +39,7 @@ try {
   assert.ok(initialCards > 0, 'Published seed events are required');
   click('Kategori');
   browser('wait', '.category-mega-menu');
+  centeredCategoryMenu();
   assert.equal(browser('a11y').counts.violations, 0, 'Category menu accessibility');
   browser('press', 'Escape');
   wait('!document.querySelector(".category-menu-trigger[data-state=open]")');
@@ -99,14 +108,13 @@ try {
   browser('reload');
   browser('wait', 'main h1');
   assert.equal(evaluate('document.documentElement.lang'), 'en', 'Language persists after reload');
-  browser('click', 'nav[aria-label="Event navigation"] a[href="/events?price=free"]');
+  browser('click', 'footer a[href="/events?price=free"]');
   wait('new URLSearchParams(location.search).get("price") === "free"');
   ready();
+  wait(`document.querySelector('select[aria-label="Ticket price"]')?.value === 'free'`);
   assert.equal(
-    evaluate(
-      `document.querySelector('nav[aria-label="Event navigation"] a[aria-current=page]').textContent`,
-    ),
-    'Free events',
+    evaluate(`document.querySelector('select[aria-label="Ticket price"]')?.value`),
+    'free',
   );
   open('/login');
   click('Log in');
@@ -131,6 +139,7 @@ try {
   browser('wait', '#mobile-navigation');
   click('Categories');
   browser('wait', '.category-mega-menu');
+  centeredCategoryMenu();
   assert.equal(browser('a11y').counts.violations, 0, 'Mobile category menu accessibility');
   assert.equal(evaluate('document.documentElement.scrollWidth > innerWidth + 1'), false);
   browser('press', 'Escape');
@@ -141,13 +150,67 @@ try {
   open('/');
   browser('wait', '.city-destination');
   assert.equal(evaluate('document.querySelectorAll(".city-destination").length'), 5);
+  browser('wait', '.hero-slide-current .hero-banner-link[href^="/events/"]');
+  assert.equal(
+    evaluate('document.querySelectorAll(".event-carousel button[aria-label*=otomatis]").length'),
+    0,
+    'No stop button',
+  );
+  const initialSlide = evaluate(
+    'document.querySelector(".hero-slide-current .hero-title").textContent',
+  );
+  click('Sorotan berikutnya');
+  assert.notEqual(
+    evaluate('document.querySelector(".hero-slide-current .hero-title").textContent'),
+    initialSlide,
+  );
+  click('Sorotan sebelumnya');
+  assert.equal(
+    evaluate('document.querySelector(".hero-slide-current .hero-title").textContent'),
+    initialSlide,
+  );
+  click('Lihat sorotan 2');
+  assert.equal(
+    evaluate(
+      `document.querySelector('button[aria-label="Lihat sorotan 2"]').getAttribute('aria-pressed')`,
+    ),
+    'true',
+  );
+  for (const width of [1440, 1024, 768, 390, 320]) {
+    browser('set', 'viewport', String(width), '1000');
+    const layout = evaluate(`(() => {
+      const hero = document.querySelector('.hero-frame').getBoundingClientRect();
+      const cities = [...document.querySelectorAll('.city-destination')].map(e => e.getBoundingClientRect());
+      const landmark = document.querySelector('.city-landmark').getBoundingClientRect();
+      const left = document.querySelector('.carousel-arrow-left').getBoundingClientRect();
+      const right = document.querySelector('.carousel-arrow-right').getBoundingClientRect();
+      return { heroLeft: hero.left, heroRight: hero.right, viewport: innerWidth,
+        height: hero.height, arrowsCentered: Math.abs(left.top + left.height / 2 - (hero.top + hero.height / 2)) < 1 && Math.abs(left.top - right.top) < 1,
+        arrowsAtEdges: left.left < 50 && right.right > innerWidth - 50,
+        overflow: document.documentElement.scrollWidth > innerWidth + 1,
+        cityRows: new Set(cities.map(e => Math.round(e.top))).size,
+        landmarkRatio: landmark.width / landmark.height };
+    })()`);
+    assert.ok(Math.abs(layout.heroLeft) < 1, `Banner reaches left edge at ${width}px`);
+    assert.ok(Math.abs(layout.heroRight - width) < 1, `Banner reaches right edge at ${width}px`);
+    assert.equal(layout.overflow, false, `No overflow at ${width}px`);
+    assert.ok(layout.height >= 380, 'Banner has a taller composition');
+    assert.ok(
+      layout.arrowsCentered && layout.arrowsAtEdges,
+      'Arrows sit at the left and right sides',
+    );
+    assert.ok(Math.abs(layout.landmarkRatio - 0.6) < 0.01, 'Landmarks retain their native ratio');
+    if (width === 1440) assert.equal(layout.cityRows, 1, 'Five cities fit one desktop row');
+  }
+  browser('set', 'viewport', '390', '1000');
   browser('find', 'role', 'link', 'click', '--name', 'Kota Denpasar', '--exact');
   wait('new URLSearchParams(location.search).get("city") === "Denpasar"');
   ready();
   assert.equal(evaluate('new URLSearchParams(location.search).get("city")'), 'Denpasar');
   assert.equal(evaluate('document.querySelectorAll("main [role=alert]").length'), 0);
+  assert.deepEqual(browser('errors').errors, [], 'No browser runtime errors');
   process.stdout.write(
-    'PASS category menu, city/price/date filters, reset, free navigation, ID/English persistence, auth validation, password visibility, mobile category menu, city links.\n',
+    'PASS centered category menus, full-width banners and city proportions at five widths, carousel controls, city/price/date filters, reset, free navigation, ID/English persistence, auth validation, password visibility, city links, zero browser errors.\n',
   );
 } finally {
   browser('close');

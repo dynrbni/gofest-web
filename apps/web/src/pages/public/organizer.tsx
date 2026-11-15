@@ -62,7 +62,7 @@ export function OrganizerPublicPage() {
             )}
           </div>
           <div className="min-w-0 pt-3">
-            <p className="text-xs font-semibold text-blue-700">Organizer GoFest</p>
+            <p className="text-xs font-semibold text-blue-700">Organizer Gofest</p>
             <h1 className="mt-2 text-2xl font-extrabold sm:text-3xl">
               {organizer.organizationName}
             </h1>

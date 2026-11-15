@@ -1,4 +1,5 @@
 import type { EmailTemplate } from '@prisma/client';
+import { env } from '../../config/env';
 
 function escapeHtml(value: unknown): string {
   return String(value ?? '')
@@ -19,18 +20,19 @@ function formatIdr(value: unknown): string {
 }
 
 function layout(title: string, body: string): string {
+  const logoUrl = new URL('/assets/gofest-logo.png', env.WEB_URL).href;
   return `<!doctype html>
 <html lang="id">
-  <body style="margin:0;padding:24px;background:#F5F2EA;color:#191B1A;font-family:Arial,Helvetica,sans-serif;">
-    <div style="max-width:600px;margin:0 auto;background:#FAF8F3;border:1px solid #D9D4CA;border-radius:8px;overflow:hidden;">
-      <div style="padding:24px 28px;border-bottom:1px solid #D9D4CA;">
-        <div style="font-size:13px;letter-spacing:0.14em;text-transform:uppercase;color:#65735D;">Gofest</div>
+  <body style="margin:0;padding:24px;background:#F2F6FF;color:#111827;font-family:Arial,Helvetica,sans-serif;">
+    <div style="max-width:600px;margin:0 auto;background:#FFFFFF;border:1px solid #E8E6EF;border-radius:8px;overflow:hidden;">
+      <div style="padding:24px 28px;border-bottom:1px solid #E8E6EF;">
+        <img src="${escapeHtml(logoUrl)}" alt="Gofest" width="140" height="44" style="display:block;width:140px;max-width:100%;height:auto;" />
         <h1 style="margin:8px 0 0;font-size:26px;line-height:1.2;font-weight:700;">${escapeHtml(title)}</h1>
       </div>
       <div style="padding:28px;font-size:15px;line-height:1.65;">
         ${body}
       </div>
-      <div style="padding:18px 28px;border-top:1px solid #D9D4CA;color:#5C5A52;font-size:12px;">
+      <div style="padding:18px 28px;border-top:1px solid #E8E6EF;color:#475569;font-size:12px;">
         Email ini dikirim otomatis oleh Gofest. Jangan balas email ini.
       </div>
     </div>
@@ -39,8 +41,8 @@ function layout(title: string, body: string): string {
 }
 
 function button(label: string, url: string): string {
-  return `<p style="margin:24px 0;"><a href="${escapeHtml(url)}" style="display:inline-block;background:#B8432C;color:#F5F2EA;text-decoration:none;padding:12px 18px;border-radius:6px;font-weight:700;">${escapeHtml(label)}</a></p>
-  <p style="margin:0;color:#5C5A52;font-size:13px;word-break:break-all;">${escapeHtml(url)}</p>`;
+  return `<p style="margin:24px 0;"><a href="${escapeHtml(url)}" style="display:inline-block;background:#0052CC;color:#FFFFFF;text-decoration:none;padding:12px 18px;border-radius:6px;font-weight:700;">${escapeHtml(label)}</a></p>
+  <p style="margin:0;color:#475569;font-size:13px;word-break:break-all;">${escapeHtml(url)}</p>`;
 }
 
 export function renderEmail(
@@ -105,7 +107,10 @@ export function renderEmail(
       };
     }
     default: {
-      const html = layout('Informasi Gofest', '<p>Ada informasi baru terkait akun Gofest kamu.</p>');
+      const html = layout(
+        'Informasi Gofest',
+        '<p>Ada informasi baru terkait akun Gofest kamu.</p>',
+      );
       return { html, text: 'Ada informasi baru terkait akun Gofest kamu.' };
     }
   }

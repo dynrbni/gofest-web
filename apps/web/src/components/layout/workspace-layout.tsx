@@ -2,7 +2,7 @@ import { ArrowUpRight, LogOut, Menu, Ticket } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import type { LucideIcon } from 'lucide-react';
-import { Logo } from '@/components/layout/public-layout';
+import { Logo } from '@/components/common/brand-logo';
 import { RouteContent } from '@/components/common/route-content';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { useAuth } from '@/lib/auth';
@@ -66,14 +66,15 @@ export function WorkspaceLayout({
               </button>
             </SheetTrigger>
             <SheetContent side="left" className="w-72 overflow-y-auto">
+              <Logo className="mb-6" />
               <SheetHeader>
                 <SheetTitle>{title}</SheetTitle>
               </SheetHeader>
               <div className="mt-8">{sidebar}</div>
             </SheetContent>
           </Sheet>
-          <Logo />
-          <span className="ml-3 hidden border-l border-slate-200 pl-5 text-sm font-semibold text-slate-500 sm:inline">
+          <Logo className="lg:hidden" />
+          <span className="ml-3 hidden border-l border-slate-200 pl-5 text-sm font-semibold text-slate-500 sm:inline lg:ml-0 lg:border-0 lg:pl-0">
             {workspace}
           </span>
         </div>
@@ -99,6 +100,7 @@ export function WorkspaceLayout({
       </header>
       <div className="flex">
         <aside className="sticky top-[76px] hidden h-[calc(100dvh-76px)] w-60 shrink-0 flex-col border-r border-slate-200 bg-white px-4 py-7 lg:flex">
+          <Logo className="mb-7 px-3" />
           <p className="mb-5 px-3 text-xs font-semibold text-slate-500">{title}</p>
           {sidebar}
           <div className="mt-auto border-t border-slate-200 px-3 pt-5">

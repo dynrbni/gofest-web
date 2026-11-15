@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { ArrowLeft, ArrowUpRight, Ticket } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight } from 'lucide-react';
+import { BrandLogo } from '@/components/common/brand-logo';
 import { Link, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/lib/language';
 
@@ -29,7 +30,7 @@ export function AuthShell({
         <div className="auth-grid">
           <section
             className="auth-visual"
-            aria-label={t('Pengalaman GoFest', 'The GoFest experience')}
+            aria-label={t('Pengalaman Gofest', 'The Gofest experience')}
           >
             <img
               src="/images/concert-crowd.webp"
@@ -40,9 +41,6 @@ export function AuthShell({
             />
             <div className="absolute inset-0 bg-gradient-to-t from-blue-950 via-blue-950/20 to-transparent" />
             <div className="relative mt-auto p-8">
-              <span className="mb-5 flex size-11 items-center justify-center rounded-xl bg-white/15 text-white">
-                <Ticket className="size-5" aria-hidden />
-              </span>
               <h2 className="max-w-xs text-3xl font-extrabold leading-tight text-white">
                 {t('Satu akun, banyak cerita.', 'One account. So many stories.')}
               </h2>
@@ -62,6 +60,7 @@ export function AuthShell({
             </div>
           </section>
           <section className="auth-form-panel" aria-labelledby="auth-heading">
+            <BrandLogo className="mb-6" />
             <nav aria-label={t('Akun', 'Account')} className="mb-7 flex border-b border-slate-200">
               <Link
                 to="/login"

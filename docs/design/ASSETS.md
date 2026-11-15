@@ -1,6 +1,13 @@
 # GoFest visual assets
 
-Generated with the built-in ImageGen tool on 2026-11-15. The existing GoFest logo and event covers are retained. The concert image is a generic illustration of the live-event experience, not a photograph claiming to depict one of the listed events.
+Discovery reference images were generated with the built-in ImageGen tool on 2026-11-15. Event covers are retained. The current logo is the original transparent PNG supplied by the user, documented below. The concert image is a generic illustration of the live-event experience, not a photograph claiming to depict one of the listed events.
+
+## User-supplied brand assets
+
+- Source: `gofest-logo-blue-transparent.png`, supplied by the user on 2026-11-15, 2192 × 690 RGBA.
+- Website: `apps/web/public/assets/gofest-logo.png`, copied without modifying a pixel or byte. SHA-256: `1d94b77bf92f3e989cd2b063d795ddba92a904d4e49b3b3010420badd28d7e88`.
+- Icon: crop rectangle `(79, 71, 679, 620)` from the source, excluding the wordmark. The original icon pixels are centered on a transparent 648px square and resized for `favicon-32.png`, `favicon.ico` (16/32/48), `apple-touch-icon.png` (180), and `gofest-icon-192.png` / `gofest-icon-512.png`. No shape was redrawn, no color/gradient was changed, and no background/effect was added.
+- `site.webmanifest` references the 192/512px icons with the supplied white/blue brand colors. It does not introduce offline behavior or a service worker.
 
 | File                                        | Purpose                                                                             |
 | ------------------------------------------- | ----------------------------------------------------------------------------------- |
