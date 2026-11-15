@@ -52,7 +52,7 @@ export function AccountProfilePage() {
   return (
     <div className="max-w-xl space-y-6">
       <div>
-        <h2 className="text-xl font-bold tracking-tight text-slate-900">Informasi Akun</h2>
+        <h2 className="text-xl font-semibold tracking-tight text-slate-900">Informasi Akun</h2>
         <p className="mt-0.5 text-xs text-slate-500">
           Perbarui nama dan nomor kontak untuk komunikasi pesanan tiketmu
         </p>
@@ -87,7 +87,7 @@ export function AccountProfilePage() {
         </Field>
 
         <div className="pt-2">
-          <Button type="submit" disabled={saving} className="rounded-xl bg-blue-600 px-6 font-bold text-white shadow-xs hover:bg-blue-700">
+          <Button type="submit" disabled={saving} className="rounded-xl bg-blue-600 px-6 font-medium text-white shadow-xs hover:bg-blue-700">
             {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
           </Button>
         </div>

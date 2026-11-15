@@ -40,7 +40,7 @@ export function AdminAuditLogsPage() {
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 border-b border-warm-border pb-6 sm:flex-row sm:items-center">
         <div>
-          <h1 className="font-display text-3xl font-bold tracking-tightest">Audit Log Sistem</h1>
+          <h1 className="font-display text-3xl font-semibold tracking-tightest">Audit Log Sistem</h1>
           <p className="mt-1 text-xs text-muted-foreground">
             Riwayat tercatat untuk seluruh aksi administratif dan perubahan sensitif di platform
           </p>
@@ -90,7 +90,7 @@ export function AdminAuditLogsPage() {
             className="overflow-x-auto rounded-md border border-warm-border bg-card"
           >
             <table className="w-full text-left text-xs">
-              <thead className="border-b border-warm-border bg-warm-muted/40 font-semibold text-ink">
+              <thead className="border-b border-warm-border bg-warm-muted/40 font-medium text-ink">
                 <tr>
                   <th className="px-4 py-3">Waktu</th>
                   <th className="px-4 py-3">Aktor (Admin)</th>
@@ -108,7 +108,7 @@ export function AdminAuditLogsPage() {
                     <td className="px-4 py-3">
                       {log.actor ? (
                         <div>
-                          <p className="font-semibold text-ink">{log.actor.name}</p>
+                          <p className="font-medium text-ink">{log.actor.name}</p>
                           <p className="text-[11px] text-muted-foreground">{log.actor.email}</p>
                         </div>
                       ) : (
@@ -116,7 +116,7 @@ export function AdminAuditLogsPage() {
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <span className="rounded bg-warm-muted px-2 py-0.5 font-mono text-[11px] font-bold text-ink">
+                      <span className="rounded bg-warm-muted px-2 py-0.5 font-mono text-[11px] font-medium text-ink">
                         {log.action}
                       </span>
                     </td>

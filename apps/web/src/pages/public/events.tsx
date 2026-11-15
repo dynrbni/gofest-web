@@ -108,7 +108,7 @@ function DateFilter({
           className="z-50 w-[min(340px,calc(100vw-32px))] rounded-xl border border-slate-200 bg-white p-5 shadow-xl"
           aria-label={t('Pilih rentang tanggal', 'Choose date range')}
         >
-          <h2 className="font-bold">{t('Kapan mau pergi?', 'When are you going?')}</h2>
+          <h2 className="font-semibold">{t('Kapan mau pergi?', 'When are you going?')}</h2>
           <form
             onSubmit={(event) => {
               event.preventDefault();
@@ -118,7 +118,7 @@ function DateFilter({
             }}
           >
             <div className="mt-4 grid grid-cols-2 gap-3">
-              <label htmlFor="events-date-from" className="min-w-0 text-xs font-semibold">
+              <label htmlFor="events-date-from" className="min-w-0 text-xs font-medium">
                 {t('Mulai', 'From')}
                 <input
                   id="events-date-from"
@@ -128,7 +128,7 @@ function DateFilter({
                   className="mt-2 h-11 w-full min-w-0 rounded-lg border border-slate-200 px-2"
                 />
               </label>
-              <label htmlFor="events-date-to" className="min-w-0 text-xs font-semibold">
+              <label htmlFor="events-date-to" className="min-w-0 text-xs font-medium">
                 {t('Sampai', 'To')}
                 <input
                   id="events-date-to"
@@ -220,7 +220,7 @@ export function EventsPage() {
   );
   return (
     <main className="container catalog-page py-8 sm:py-12">
-      <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">
+      <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
         {t('Cari event seru favoritmu', 'Find your next favourite event')}
       </h1>
       <div className="relative mt-8 sm:mt-10">
@@ -354,7 +354,7 @@ export function EventsPage() {
             <button
               key={filter.key}
               type="button"
-              className="inline-flex min-h-9 items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 text-xs font-semibold text-blue-700"
+              className="inline-flex min-h-9 items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 text-xs font-medium text-blue-700"
               onClick={() => update({ [filter.key]: undefined })}
               aria-label={`${t('Hapus filter', 'Remove filter')}: ${filter.label}`}
             >
@@ -427,7 +427,7 @@ export function EventsPage() {
         <Ticket className="size-5 text-blue-700" aria-hidden />
         <p>
           {t('Punya acara untuk dibagikan?', 'Have an event to share?')}{' '}
-          <Link to="/organizer/apply" className="font-bold text-blue-700 hover:underline">
+          <Link to="/organizer/apply" className="font-medium text-blue-700 hover:underline">
             {t('Jadi event creator', 'Become an event creator')}
           </Link>
         </p>

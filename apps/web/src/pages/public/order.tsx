@@ -19,7 +19,7 @@ function Countdown({ target }: { target: string }) {
   const minutes = Math.floor(remaining / 60000);
   const seconds = Math.floor((remaining % 60000) / 1000);
   return (
-    <span className="font-bold tabular-nums" aria-live="polite">
+    <span className="font-medium tabular-nums" aria-live="polite">
       {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
     </span>
   );
@@ -113,7 +113,7 @@ export function OrderPage() {
   if (accessDenied) {
     return (
       <main className="container max-w-lg py-14">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-olive">Akses pesanan</p>
+        <p className="text-xs font-medium uppercase tracking-[0.16em] text-olive">Akses pesanan</p>
         <h1 className="mt-2 font-display text-4xl tracking-tightest">Tautan ini butuh token akses.</h1>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
           Detail pesanan memuat data pribadi, jadi kode pesanan saja tidak cukup. Buka tautan lengkap dari
@@ -129,7 +129,7 @@ export function OrderPage() {
             sessionStorage.setItem(`gofest-order-token:${orderCode}`, value);
           }}
         >
-          <label htmlFor="order-token" className="block text-sm font-semibold">
+          <label htmlFor="order-token" className="block text-sm font-medium">
             Token akses
           </label>
           <Input
@@ -143,7 +143,7 @@ export function OrderPage() {
             Buka pesanan
           </Button>
         </form>
-        <Link to="/login" className="mt-6 inline-block text-sm font-semibold underline underline-offset-4">
+        <Link to="/login" className="mt-6 inline-block text-sm font-medium underline underline-offset-4">
           Masuk dengan akun pembeli
         </Link>
       </main>
@@ -153,7 +153,7 @@ export function OrderPage() {
   if (orderQuery.isError || !order) {
     return (
       <main className="container max-w-3xl py-14">
-        <Link to="/events" className="inline-flex items-center gap-2 text-sm font-semibold text-olive">
+        <Link to="/events" className="inline-flex items-center gap-2 text-sm font-medium text-olive">
           <ArrowLeft className="h-4 w-4" aria-hidden />
           Kembali ke jelajah acara
         </Link>
@@ -175,7 +175,7 @@ export function OrderPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Link
           to={`/events/${order.event.slug}`}
-          className="inline-flex items-center gap-2 text-sm font-bold text-blue-600 hover:underline"
+          className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:underline"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden />
           Halaman acara
@@ -183,7 +183,7 @@ export function OrderPage() {
         <button
           type="button"
           onClick={() => void orderQuery.refetch()}
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-blue-600"
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-blue-600"
           disabled={orderQuery.isFetching}
         >
           <RefreshCw className={cn('h-3.5 w-3.5', orderQuery.isFetching && 'animate-spin')} aria-hidden />
@@ -192,9 +192,9 @@ export function OrderPage() {
       </div>
 
       <header className="mt-5 border-b border-slate-200 pb-5">
-        <p className="text-xs font-bold uppercase tracking-wider text-blue-600">Pesanan Tiket</p>
+        <p className="text-xs font-medium uppercase tracking-wider text-blue-600">Pesanan Tiket</p>
         <div className="mt-1 flex flex-wrap items-center gap-3">
-          <h1 className="text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
+          <h1 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
             {order.orderCode}
           </h1>
           <OrderStatusBadge status={order.status} />
@@ -208,29 +208,29 @@ export function OrderPage() {
         <section className="mt-6 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-md" aria-labelledby="payment-heading">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <div className="flex items-center gap-2 text-sm font-bold text-coral-600">
+              <div className="flex items-center gap-2 text-sm font-medium text-coral-600">
                 <Clock className="h-4 w-4" aria-hidden />
                 Selesaikan Pembayaran Sebelum Waktu Habis
               </div>
-              <h2 id="payment-heading" className="mt-1 text-2xl font-black text-slate-900">
+              <h2 id="payment-heading" className="mt-1 text-2xl font-semibold text-slate-900">
                 Sisa Waktu: <Countdown target={order.expiresAt} />
               </h2>
               <p className="mt-1 max-w-prose text-xs text-slate-500">
                 Tiket direservasi khusus untukmu sampai batas waktu di atas.
               </p>
             </div>
-            <p className="text-3xl font-black text-blue-600 tabular-nums">{formatIDR(order.total)}</p>
+            <p className="text-3xl font-semibold text-blue-600 tabular-nums">{formatIDR(order.total)}</p>
           </div>
 
           {order.payment ? (
             <dl className="mt-5 grid gap-3 border-t border-slate-100 pt-4 text-sm sm:grid-cols-2">
               <div>
                 <dt className="text-xs font-medium text-slate-400">Kode / Referensi Bayar</dt>
-                <dd className="font-mono text-base font-bold text-slate-900 tabular-nums">{order.payment.providerReference}</dd>
+                <dd className="font-mono text-base font-medium text-slate-900 tabular-nums">{order.payment.providerReference}</dd>
               </div>
               <div>
                 <dt className="text-xs font-medium text-slate-400">Metode Pembayaran</dt>
-                <dd className="font-semibold text-slate-800">{order.payment.method ?? order.payment.provider}</dd>
+                <dd className="font-medium text-slate-800">{order.payment.method ?? order.payment.provider}</dd>
               </div>
             </dl>
           ) : (
@@ -244,7 +244,7 @@ export function OrderPage() {
               type="button"
               onClick={() => void createPayment()}
               disabled={busy !== null}
-              className="h-11 rounded-xl bg-blue-600 px-6 font-bold text-white shadow-md transition-all hover:bg-blue-700 active:scale-95"
+              className="h-11 rounded-xl bg-blue-600 px-6 font-medium text-white shadow-md transition-all hover:bg-blue-700 active:scale-95"
             >
               <CreditCard className="h-4 w-4" aria-hidden />
               {busy === 'payment' ? 'Menyiapkan...' : order.payment ? 'Buat Ulang Instruksi' : 'Lanjut ke Pembayaran'}
@@ -255,14 +255,14 @@ export function OrderPage() {
                 variant="outline"
                 onClick={() => void mockPay()}
                 disabled={busy !== null}
-                className="h-11 rounded-xl border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-100"
+                className="h-11 rounded-xl border-slate-200 text-xs font-medium text-slate-700 hover:bg-slate-100"
               >
                 {busy === 'mock' ? 'Memproses...' : 'Simulasikan Pembayaran Berhasil'}
               </Button>
             ) : null}
           </div>
           {actionError ? (
-            <p className="mt-3 text-sm font-semibold text-rose-600" role="alert">
+            <p className="mt-3 text-sm font-medium text-rose-600" role="alert">
               {errorMessage(actionError)}
             </p>
           ) : null}
@@ -273,7 +273,7 @@ export function OrderPage() {
         <section className="mt-6 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-6 text-emerald-950" aria-live="polite">
           <CheckCircle2 className="mt-0.5 h-6 w-6 shrink-0 text-emerald-600" aria-hidden />
           <div>
-            <h2 className="text-xl font-black text-emerald-900">Pembayaran Berhasil & Terkonfirmasi!</h2>
+            <h2 className="text-xl font-semibold text-emerald-900">Pembayaran Berhasil & Terkonfirmasi!</h2>
             <p className="mt-1 text-sm text-emerald-800">
               Tiket resmi sudah diterbitkan. Kamu bisa langsung membuka dan mengunduh e-tiket di bawah ini untuk dibawa saat check-in di venue.
             </p>
@@ -283,7 +283,7 @@ export function OrderPage() {
 
       {order.status === 'PAYMENT_REVIEW' ? (
         <section className="mt-6 border border-amber-700/30 bg-amber-50 p-5">
-          <h2 className="text-lg font-bold text-amber-900">Pembayaran sedang ditinjau</h2>
+          <h2 className="text-lg font-semibold text-amber-900">Pembayaran sedang ditinjau</h2>
           <p className="mt-1 text-sm leading-relaxed text-amber-900/80">
             Pembayaran diterima setelah batas reservasi. Admin akan memeriksa ketersediaan kuota sebelum
             menerbitkan tiket atau memproses refund. Kamu tidak perlu membayar ulang.
@@ -293,7 +293,7 @@ export function OrderPage() {
 
       {['EXPIRED', 'CANCELLED', 'REFUNDED', 'PARTIALLY_REFUNDED', 'REFUND_PENDING'].includes(order.status) ? (
         <section className="mt-6 border border-warm-border bg-warm-muted/60 p-5">
-          <h2 className="text-lg font-bold">
+          <h2 className="text-lg font-semibold">
             {order.status === 'EXPIRED'
               ? 'Pesanan kedaluwarsa'
               : order.status === 'REFUND_PENDING'
@@ -311,7 +311,7 @@ export function OrderPage() {
           </p>
           <Link
             to={`/events/${order.event.slug}`}
-            className="mt-4 inline-flex text-sm font-semibold underline underline-offset-4"
+            className="mt-4 inline-flex text-sm font-medium underline underline-offset-4"
           >
             Lihat halaman acara
           </Link>
@@ -320,21 +320,21 @@ export function OrderPage() {
 
       {paid && order.tickets.length > 0 ? (
         <section className="mt-8 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
-          <h2 className="border-b border-slate-100 pb-3 text-base font-bold text-slate-900">E-Tiket Resmi Kamu</h2>
+          <h2 className="border-b border-slate-100 pb-3 text-base font-semibold text-slate-900">E-Tiket Resmi Kamu</h2>
           <div className="mt-2 divide-y divide-slate-100">
             {order.tickets.map((ticket) => (
               <div key={ticket.id} className="flex flex-wrap items-center justify-between gap-3 py-4 first:pt-2 last:pb-0">
                 <div>
-                  <p className="text-sm font-bold text-slate-900">{ticket.holderName}</p>
+                  <p className="text-sm font-medium text-slate-900">{ticket.holderName}</p>
                   <p className="mt-0.5 text-xs text-slate-500">
-                    {ticket.ticketTypeName ?? 'Tiket'} · <span className="font-mono font-bold text-blue-600 tabular-nums">{ticket.ticketCode}</span>
+                    {ticket.ticketTypeName ?? 'Tiket'} · <span className="font-mono font-medium text-blue-600 tabular-nums">{ticket.ticketCode}</span>
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
                   <TicketStatusBadge status={ticket.status} />
                   <Link
                     to={`/ticket/${ticket.ticketCode}${ticketTokenQuery}`}
-                    className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-xs transition-colors hover:bg-blue-700"
+                    className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-medium text-white shadow-xs transition-colors hover:bg-blue-700"
                   >
                     Buka E-Tiket
                   </Link>
@@ -347,33 +347,33 @@ export function OrderPage() {
 
       <section className="mt-8 grid gap-8 lg:grid-cols-[1fr_320px]">
         <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
-          <h2 className="border-b border-slate-100 pb-3 text-base font-bold text-slate-900">Rincian Tagihan</h2>
+          <h2 className="border-b border-slate-100 pb-3 text-base font-semibold text-slate-900">Rincian Tagihan</h2>
           <div className="mt-3 space-y-2 text-xs text-slate-700">
             {order.items.map((item) => (
               <div key={item.id} className="flex justify-between gap-4">
                 <span>
                   {item.ticketNameSnapshot ?? item.ticketTypeName} × {item.quantity}
                 </span>
-                <span className="font-bold tabular-nums">{formatIDR(item.lineTotal)}</span>
+                <span className="font-medium tabular-nums">{formatIDR(item.lineTotal)}</span>
               </div>
             ))}
           </div>
           <div className="mt-4 space-y-2 border-t border-dashed border-slate-200 pt-3 text-xs">
             <div className="flex justify-between text-slate-600">
               <span>Subtotal</span>
-              <span className="font-bold tabular-nums">{formatIDR(order.subtotal)}</span>
+              <span className="font-medium tabular-nums">{formatIDR(order.subtotal)}</span>
             </div>
             <div className="flex justify-between text-emerald-600">
               <span>Diskon</span>
-              <span className="font-bold tabular-nums">
+              <span className="font-medium tabular-nums">
                 {order.discount ? `− ${formatIDR(order.discount)}` : formatIDR(0)}
               </span>
             </div>
             <div className="flex justify-between text-slate-600">
               <span>Biaya Layanan</span>
-              <span className="font-bold tabular-nums">{formatIDR(order.platformFee)}</span>
+              <span className="font-medium tabular-nums">{formatIDR(order.platformFee)}</span>
             </div>
-            <div className="flex justify-between border-t border-slate-200 pt-2 text-sm font-black text-slate-900">
+            <div className="flex justify-between border-t border-slate-200 pt-2 text-sm font-semibold text-slate-900">
               <span>Total Akhir</span>
               <span className="text-base text-blue-600 tabular-nums">{formatIDR(order.total)}</span>
             </div>
@@ -381,20 +381,20 @@ export function OrderPage() {
         </div>
 
         <aside className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs text-xs">
-          <h2 className="border-b border-slate-100 pb-3 text-base font-bold text-slate-900">Data Pemesan</h2>
+          <h2 className="border-b border-slate-100 pb-3 text-base font-semibold text-slate-900">Data Pemesan</h2>
           <dl className="mt-3 space-y-3">
             <div>
               <dt className="text-slate-400 font-medium">Nama Pembeli</dt>
-              <dd className="font-bold text-slate-900">{order.buyerName}</dd>
+              <dd className="font-medium text-slate-900">{order.buyerName}</dd>
             </div>
             <div>
               <dt className="text-slate-400 font-medium">Email Konfirmasi</dt>
-              <dd className="break-all font-semibold text-slate-800">{order.buyerEmail}</dd>
+              <dd className="break-all font-medium text-slate-800">{order.buyerEmail}</dd>
             </div>
             {order.buyerPhone ? (
               <div>
                 <dt className="text-slate-400 font-medium">Nomor WhatsApp</dt>
-                <dd className="font-semibold text-slate-800">{order.buyerPhone}</dd>
+                <dd className="font-medium text-slate-800">{order.buyerPhone}</dd>
               </div>
             ) : null}
           </dl>
@@ -408,7 +408,7 @@ export function OrderPage() {
                 toast.error('Tautan tidak dapat disalin');
               }
             }}
-            className="mt-5 inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:underline"
+            className="mt-5 inline-flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:underline"
           >
             <Copy className="h-3.5 w-3.5" aria-hidden />
             Salin Tautan Akses Pesanan

@@ -116,7 +116,7 @@ export function EventTicketManagementPage() {
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-xl font-bold tracking-tight text-ink">Jenis Tiket & Kuota</h2>
+          <h2 className="text-xl font-semibold tracking-tight text-ink">Jenis Tiket & Kuota</h2>
           <p className="mt-0.5 text-xs text-muted-foreground">
             Tentukan kategori tiket (misal Presale, Early Bird, VIP), harga dalam Rupiah, dan batas
             kuota
@@ -152,7 +152,7 @@ export function EventTicketManagementPage() {
           className="overflow-x-auto rounded-md border border-warm-border bg-card"
         >
           <table className="w-full text-left text-xs">
-            <thead className="border-b border-warm-border bg-warm-muted/40 font-semibold text-ink">
+            <thead className="border-b border-warm-border bg-warm-muted/40 font-medium text-ink">
               <tr>
                 <th className="px-4 py-3">Nama Tiket</th>
                 <th className="px-4 py-3">Harga</th>
@@ -173,7 +173,7 @@ export function EventTicketManagementPage() {
                 return (
                   <tr key={ticket.id} className="hover:bg-warm-muted/20">
                     <td className="px-4 py-3">
-                      <p className="font-bold text-ink">{ticket.name}</p>
+                      <p className="font-medium text-ink">{ticket.name}</p>
                       {ticket.description ? (
                         <p className="text-[11px] text-muted-foreground">{ticket.description}</p>
                       ) : null}
@@ -187,7 +187,7 @@ export function EventTicketManagementPage() {
                     <td className="px-4 py-3 text-center font-mono tabular-nums text-olive">
                       {ticket.quantitySold}
                     </td>
-                    <td className="px-4 py-3 text-center font-mono font-bold tabular-nums">
+                    <td className="px-4 py-3 text-center font-mono font-medium tabular-nums">
                       {available}
                     </td>
                     <td className="px-4 py-3 text-center text-muted-foreground">
@@ -195,7 +195,7 @@ export function EventTicketManagementPage() {
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span
-                        className={`inline-block rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                        className={`inline-block rounded px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider ${
                           ticket.isActive
                             ? 'bg-olive/15 text-olive'
                             : 'bg-warm-muted text-muted-foreground'
@@ -208,7 +208,7 @@ export function EventTicketManagementPage() {
                       <button
                         type="button"
                         onClick={() => handleDeactivate(ticket.id)}
-                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-muted-foreground hover:text-ink"
+                        className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-ink"
                         title={ticket.isActive ? 'Nonaktifkan penjualan' : 'Aktifkan penjualan'}
                       >
                         <Power className="h-3.5 w-3.5" aria-hidden />

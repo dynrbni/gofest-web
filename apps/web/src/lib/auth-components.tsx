@@ -121,7 +121,7 @@ export function RequireAuth({
   if (roles && !roles.some((role) => user.roles.includes(role))) {
     return (
       <main className="container flex min-h-[70vh] max-w-2xl flex-col items-start justify-center py-16">
-        <p className="text-xs font-semibold tracking-[0.14em] text-olive">Akses terbatas</p>
+        <p className="text-xs font-medium tracking-[0.14em] text-olive">Akses terbatas</p>
         <h1 className="mt-3 font-display text-4xl tracking-tightest">
           Halaman ini bukan untuk akunmu.
         </h1>
@@ -133,14 +133,14 @@ export function RequireAuth({
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="rounded-md border border-ink px-4 py-2 text-sm font-semibold"
+            className="rounded-md border border-ink px-4 py-2 text-sm font-medium"
           >
             Kembali
           </button>
           <button
             type="button"
             onClick={() => navigate('/')}
-            className="rounded-md bg-brick px-4 py-2 text-sm font-semibold text-paper"
+            className="rounded-md bg-brick px-4 py-2 text-sm font-medium text-paper"
           >
             Ke beranda
           </button>

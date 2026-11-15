@@ -220,12 +220,12 @@ export function StaffCheckInScannerPage() {
         <div>
           <Link
             to="/staff/events"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-ink"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-ink"
           >
             <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
             Kembali ke daftar tugas
           </Link>
-          <h1 className="mt-2 text-2xl font-bold tracking-tight text-ink sm:text-3xl">
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
             {event.title}
           </h1>
           <p className="mt-0.5 text-xs text-muted-foreground">
@@ -238,7 +238,7 @@ export function StaffCheckInScannerPage() {
           <button
             type="button"
             onClick={() => setSoundEnabled((val) => !val)}
-            className="inline-flex h-9 items-center gap-1.5 rounded-md border border-warm-border px-3 text-xs font-semibold hover:bg-warm-muted"
+            className="inline-flex h-9 items-center gap-1.5 rounded-md border border-warm-border px-3 text-xs font-medium hover:bg-warm-muted"
             title={soundEnabled ? 'Matikan suara feedback' : 'Aktifkan suara feedback'}
           >
             {soundEnabled ? (
@@ -254,7 +254,7 @@ export function StaffCheckInScannerPage() {
             )}
           </button>
 
-          <div className="rounded-md bg-warm-muted px-3 py-1.5 text-xs font-semibold text-ink tabular-nums">
+          <div className="rounded-md bg-warm-muted px-3 py-1.5 text-xs font-medium text-ink tabular-nums">
             Sesi ini: <strong>{sessionCount}</strong> scan
           </div>
         </div>
@@ -262,7 +262,7 @@ export function StaffCheckInScannerPage() {
 
       {/* Gate setting */}
       <div className="flex items-center gap-3 rounded-md border border-warm-border bg-card p-3.5 text-xs">
-        <span className="font-semibold text-ink">Lokasi Pintu:</span>
+        <span className="font-medium text-ink">Lokasi Pintu:</span>
         <input
           value={gate}
           onChange={(e) => setGate(e.target.value)}
@@ -294,7 +294,7 @@ export function StaffCheckInScannerPage() {
             <div className="flex-1 space-y-1">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span
-                  className={`rounded px-2.5 py-0.5 text-xs font-extrabold uppercase tracking-wider ${
+                  className={`rounded px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider ${
                     lastResult.accepted
                       ? 'bg-olive text-paper'
                       : lastResult.result === 'ALREADY_USED'
@@ -313,13 +313,13 @@ export function StaffCheckInScannerPage() {
                 </span>
               </div>
 
-              <p className="mt-1 text-sm font-semibold">{lastResult.message}</p>
+              <p className="mt-1 text-sm font-medium">{lastResult.message}</p>
 
               {lastResult.ticket ? (
                 <div className="mt-3 rounded border border-ink/10 bg-paper/80 p-3 text-xs space-y-1 text-ink">
                   <p>
                     Pemegang:{' '}
-                    <strong className="text-sm font-bold">{lastResult.ticket.holderName}</strong>
+                    <strong className="text-sm font-medium">{lastResult.ticket.holderName}</strong>
                   </p>
                   <p>
                     Jenis Tiket: <strong>{lastResult.ticket.ticketTypeName}</strong>
@@ -328,7 +328,7 @@ export function StaffCheckInScannerPage() {
                     Kode: {lastResult.ticket.ticketCode} · Order: {lastResult.ticket.orderCode}
                   </p>
                   {lastResult.ticket.checkedInAt ? (
-                    <p className="text-amber-800 font-semibold pt-1">
+                    <p className="text-amber-800 font-medium pt-1">
                       Waktu check-in pertama: {formatDateTime(lastResult.ticket.checkedInAt)}
                     </p>
                   ) : null}
@@ -346,7 +346,7 @@ export function StaffCheckInScannerPage() {
             <div className="relative aspect-video w-full bg-black">
               <video ref={videoRef} className="h-full w-full object-cover" />
               {scanning ? (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-paper font-semibold text-sm">
+                <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-paper font-medium text-sm">
                   Memvalidasi tiket...
                 </div>
               ) : null}
@@ -354,13 +354,13 @@ export function StaffCheckInScannerPage() {
           ) : (
             <div className="flex flex-col items-center justify-center py-16 px-4 text-center text-paper">
               <Camera className="h-10 w-10 text-warm-muted/60" aria-hidden />
-              <h2 className="mt-3 text-lg font-bold text-white">Kamera Belum Aktif</h2>
+              <h2 className="mt-3 text-lg font-semibold text-white">Kamera Belum Aktif</h2>
               <p className="mt-1 max-w-sm text-xs text-warm-muted/80">
                 Tekan tombol di bawah untuk meminta izin kamera browser dan mulai memindai QR tiket
                 pengunjung.
               </p>
               {cameraError ? (
-                <p className="mt-3 max-w-sm text-xs font-semibold text-brick bg-paper px-3 py-1.5 rounded">
+                <p className="mt-3 max-w-sm text-xs font-medium text-brick bg-paper px-3 py-1.5 rounded">
                   {cameraError}
                 </p>
               ) : null}
@@ -394,7 +394,7 @@ export function StaffCheckInScannerPage() {
 
       {/* Manual Input Fallback */}
       <div className="rounded-md border border-warm-border bg-card p-5 space-y-3">
-        <div className="flex items-center gap-2 text-sm font-bold text-ink">
+        <div className="flex items-center gap-2 text-sm font-medium text-ink">
           <Keyboard className="h-4 w-4" aria-hidden />
           Fallback: Masukkan Kode Tiket Manual
         </div>

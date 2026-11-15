@@ -14,8 +14,8 @@ export function StaffEventsPage() {
   return (
     <main className="container max-w-4xl py-8 sm:py-12">
       <div className="border-b border-warm-border pb-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-olive">Event Staff Portal</p>
-        <h1 className="mt-2 font-display text-3xl font-bold tracking-tightest sm:text-4xl">
+        <p className="text-xs font-medium uppercase tracking-[0.16em] text-olive">Event Staff Portal</p>
+        <h1 className="mt-2 font-display text-3xl font-semibold tracking-tightest sm:text-4xl">
           Penugasan Scanner & Check-In
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -42,17 +42,17 @@ export function StaffEventsPage() {
               >
                 <div className="space-y-3">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="rounded bg-warm-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-ink">
+                    <span className="rounded bg-warm-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-ink">
                       Peran: {event.accessRole}
                     </span>
                     <EventStatusBadge status={event.status} />
                   </div>
 
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-olive">
+                    <p className="text-xs font-medium uppercase tracking-wider text-olive">
                       {event.organizer?.organizationName ?? 'Penyelenggara'}
                     </p>
-                    <h2 className="mt-1 text-lg font-bold text-ink">{event.title}</h2>
+                    <h2 className="mt-1 text-lg font-semibold text-ink">{event.title}</h2>
                   </div>
 
                   <div className="space-y-1.5 text-xs text-muted-foreground">
@@ -77,7 +77,7 @@ export function StaffEventsPage() {
                 <div className="mt-6 border-t border-warm-border pt-4">
                   <Link
                     to={`/staff/events/${event.id}/check-in`}
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-brick px-4 py-2.5 text-sm font-semibold text-paper shadow-sm transition-colors hover:bg-brick/90"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-brick px-4 py-2.5 text-sm font-medium text-paper shadow-sm transition-colors hover:bg-brick/90"
                   >
                     <QrCode className="h-4 w-4" aria-hidden />
                     Buka Scanner Pintu

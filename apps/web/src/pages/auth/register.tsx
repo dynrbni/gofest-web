@@ -84,7 +84,7 @@ export function RegisterPage() {
       footer={
         <>
           {t('Sudah punya akun?', 'Already have an account?')}{' '}
-          <Link to="/login" className="font-semibold text-ink underline underline-offset-4">
+          <Link to="/login" className="font-medium text-ink underline underline-offset-4">
             {t('Masuk', 'Log in')}
           </Link>
         </>
@@ -209,18 +209,18 @@ export function RegisterPage() {
             />
             <span>
               {t('Saya menyetujui', 'I agree to the')}{' '}
-              <Link to="/terms" className="font-bold text-blue-600 underline underline-offset-4">
+              <Link to="/terms" className="font-medium text-blue-600 underline underline-offset-4">
                 {t('Syarat Layanan', 'Terms of service')}
               </Link>{' '}
               {t('dan', 'and')}{' '}
-              <Link to="/privacy" className="font-bold text-blue-600 underline underline-offset-4">
+              <Link to="/privacy" className="font-medium text-blue-600 underline underline-offset-4">
                 {t('Kebijakan Privasi', 'Privacy policy')}
               </Link>
               .
             </span>
           </label>
           {errors.terms ? (
-            <p id="register-terms-error" className="mt-1 text-xs font-semibold text-rose-600">
+            <p id="register-terms-error" className="mt-1 text-xs font-medium text-rose-600">
               {errors.terms}
             </p>
           ) : null}
@@ -231,7 +231,7 @@ export function RegisterPage() {
         <Button
           type="submit"
           disabled={submitting}
-          className="h-12 w-full rounded-xl bg-blue-600 font-bold text-white shadow-md transition-all hover:bg-blue-700 active:scale-95"
+          className="h-12 w-full rounded-xl bg-blue-600 font-medium text-white shadow-md transition-all hover:bg-blue-700 active:scale-95"
         >
           {submitting
             ? t('Membuat akun...', 'Creating account...')

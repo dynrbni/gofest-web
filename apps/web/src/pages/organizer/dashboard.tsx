@@ -34,8 +34,8 @@ export function OrganizerDashboardPage() {
     <div className="space-y-8">
       <div className="flex flex-col justify-between gap-4 border-b border-warm-border pb-6 sm:flex-row sm:items-center">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-olive">Workspace</p>
-          <h1 className="mt-1 font-display text-3xl font-bold tracking-tightest sm:text-4xl">
+          <p className="text-xs font-medium uppercase tracking-[0.14em] text-olive">Workspace</p>
+          <h1 className="mt-1 font-display text-3xl font-semibold tracking-tightest sm:text-4xl">
             Ringkasan Penjualan & Acara
           </h1>
           <p className="mt-1 text-xs text-muted-foreground">
@@ -45,7 +45,7 @@ export function OrganizerDashboardPage() {
 
         <Link
           to="/organizer/events/new"
-          className="inline-flex items-center gap-2 rounded-md bg-brick px-4 py-2 text-sm font-semibold text-paper shadow-sm transition-colors hover:bg-brick/90"
+          className="inline-flex items-center gap-2 rounded-md bg-brick px-4 py-2 text-sm font-medium text-paper shadow-sm transition-colors hover:bg-brick/90"
         >
           <Plus className="h-4 w-4" aria-hidden />
           Buat Acara Baru
@@ -56,12 +56,12 @@ export function OrganizerDashboardPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-md border border-warm-border bg-card p-5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-[0.12em] text-olive">
+            <span className="text-xs font-medium uppercase tracking-[0.12em] text-olive">
               Gross Sales
             </span>
             <DollarSign className="h-4 w-4 text-muted-foreground" aria-hidden />
           </div>
-          <p className="mt-3 text-2xl font-bold tabular-nums text-ink">
+          <p className="mt-3 text-2xl font-medium tabular-nums text-ink">
             {formatIDR(summary.grossRevenue ?? 0)}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">Total omset tiket terkonfirmasi</p>
@@ -69,12 +69,12 @@ export function OrganizerDashboardPage() {
 
         <div className="rounded-md border border-warm-border bg-card p-5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-[0.12em] text-olive">
+            <span className="text-xs font-medium uppercase tracking-[0.12em] text-olive">
               Tiket Terjual
             </span>
             <Ticket className="h-4 w-4 text-muted-foreground" aria-hidden />
           </div>
-          <p className="mt-3 text-2xl font-bold tabular-nums text-ink">
+          <p className="mt-3 text-2xl font-medium tabular-nums text-ink">
             {summary.ticketsSold ?? 0}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">Tiket lunas diterbitkan</p>
@@ -82,12 +82,12 @@ export function OrganizerDashboardPage() {
 
         <div className="rounded-md border border-warm-border bg-card p-5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-[0.12em] text-olive">
+            <span className="text-xs font-medium uppercase tracking-[0.12em] text-olive">
               Acara Terbit
             </span>
             <Calendar className="h-4 w-4 text-muted-foreground" aria-hidden />
           </div>
-          <p className="mt-3 text-2xl font-bold tabular-nums text-ink">
+          <p className="mt-3 text-2xl font-medium tabular-nums text-ink">
             {summary.publishedEvents ?? 0}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
@@ -97,12 +97,12 @@ export function OrganizerDashboardPage() {
 
         <div className="rounded-md border border-warm-border bg-card p-5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-[0.12em] text-olive">
+            <span className="text-xs font-medium uppercase tracking-[0.12em] text-olive">
               Kehadiran
             </span>
             <Users className="h-4 w-4 text-muted-foreground" aria-hidden />
           </div>
-          <p className="mt-3 text-2xl font-bold tabular-nums text-ink">
+          <p className="mt-3 text-2xl font-medium tabular-nums text-ink">
             {summary.ticketsCheckedIn ?? 0}
             <span className="ml-1 text-sm font-normal text-muted-foreground">
               ({Math.round(attendanceRate)}%)
@@ -115,10 +115,10 @@ export function OrganizerDashboardPage() {
       {/* Recent Orders Section */}
       <div className="space-y-4">
         <div className="flex items-baseline justify-between">
-          <h2 className="text-lg font-bold tracking-tight text-ink">Pesanan Terbaru</h2>
+          <h2 className="text-lg font-semibold tracking-tight text-ink">Pesanan Terbaru</h2>
           <Link
             to="/organizer/events"
-            className="text-xs font-semibold text-brick hover:underline hover:underline-offset-4"
+            className="text-xs font-medium text-brick hover:underline hover:underline-offset-4"
           >
             Buka kelola acara
           </Link>
@@ -131,7 +131,7 @@ export function OrganizerDashboardPage() {
             action={
               <Link
                 to="/organizer/events/new"
-                className="inline-flex h-9 items-center justify-center rounded-md bg-brick px-4 text-xs font-semibold text-paper hover:bg-brick/90"
+                className="inline-flex h-9 items-center justify-center rounded-md bg-brick px-4 text-xs font-medium text-paper hover:bg-brick/90"
               >
                 Buat Acara Baru
               </Link>
@@ -145,7 +145,7 @@ export function OrganizerDashboardPage() {
             className="overflow-x-auto rounded-md border border-warm-border bg-card"
           >
             <table className="w-full text-left text-xs">
-              <thead className="border-b border-warm-border bg-warm-muted/40 font-semibold text-ink">
+              <thead className="border-b border-warm-border bg-warm-muted/40 font-medium text-ink">
                 <tr>
                   <th className="px-4 py-3">Kode Order</th>
                   <th className="px-4 py-3">Acara</th>
@@ -158,7 +158,7 @@ export function OrganizerDashboardPage() {
               <tbody className="divide-y divide-warm-border text-ink">
                 {recentOrders.map((order) => (
                   <tr key={order.id} className="hover:bg-warm-muted/20">
-                    <td className="px-4 py-3 font-mono font-bold">{order.orderCode}</td>
+                    <td className="px-4 py-3 font-mono font-medium">{order.orderCode}</td>
                     <td className="px-4 py-3 font-medium">{order.event?.title ?? '-'}</td>
                     <td className="px-4 py-3">
                       <p className="font-medium">{order.buyerName}</p>
@@ -167,7 +167,7 @@ export function OrganizerDashboardPage() {
                     <td className="px-4 py-3">
                       <OrderStatusBadge status={order.status} />
                     </td>
-                    <td className="px-4 py-3 text-right font-bold tabular-nums">
+                    <td className="px-4 py-3 text-right font-medium tabular-nums">
                       {formatIDR(order.total)}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">

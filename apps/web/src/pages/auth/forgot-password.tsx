@@ -39,7 +39,7 @@ export function ForgotPasswordPage() {
       title="Lupa password"
       lede="Masukkan email akunmu. Kami akan mengirim tautan reset bila email tersebut terdaftar."
       footer={
-        <Link to="/login" className="font-semibold text-ink underline underline-offset-4">
+        <Link to="/login" className="font-medium text-ink underline underline-offset-4">
           Kembali ke halaman masuk
         </Link>
       }
@@ -47,7 +47,7 @@ export function ForgotPasswordPage() {
       {sent ? (
         <div className="space-y-4">
           <div className="border-l-4 border-olive bg-olive/5 px-4 py-3">
-            <p className="text-sm font-bold text-olive">Permintaan diterima</p>
+            <p className="text-sm font-medium text-olive">Permintaan diterima</p>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
               Bila email tersebut terdaftar, tautan reset akan dikirim. Tautan berlaku terbatas dan hanya
               dapat dipakai sekali.

@@ -49,14 +49,14 @@ export function ResetPasswordPage() {
         title="Token tidak ditemukan"
         lede="Halaman ini membutuhkan token reset dari email. Buka tautan terbaru dari emailmu, atau minta tautan baru."
         footer={
-          <Link to="/login" className="font-semibold text-ink underline underline-offset-4">
+          <Link to="/login" className="font-medium text-ink underline underline-offset-4">
             Kembali ke halaman masuk
           </Link>
         }
       >
         <Link
           to="/forgot-password"
-          className="inline-flex h-11 w-full items-center justify-center rounded-md bg-brick text-sm font-semibold text-paper"
+          className="inline-flex h-11 w-full items-center justify-center rounded-md bg-brick text-sm font-medium text-paper"
         >
           Minta tautan reset baru
         </Link>
@@ -69,7 +69,7 @@ export function ResetPasswordPage() {
       title="Password baru"
       lede="Buat password baru untuk akunmu. Setelah berhasil, semua sesi lama dicabut dan kamu perlu masuk kembali."
       footer={
-        <Link to="/login" className="font-semibold text-ink underline underline-offset-4">
+        <Link to="/login" className="font-medium text-ink underline underline-offset-4">
           Kembali ke halaman masuk
         </Link>
       }

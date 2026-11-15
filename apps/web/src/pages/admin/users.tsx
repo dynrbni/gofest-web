@@ -56,7 +56,7 @@ export function AdminUsersPage() {
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 border-b border-warm-border pb-6 sm:flex-row sm:items-center">
         <div>
-          <h1 className="font-display text-3xl font-bold tracking-tightest">Pengguna Platform</h1>
+          <h1 className="font-display text-3xl font-semibold tracking-tightest">Pengguna Platform</h1>
           <p className="mt-1 text-xs text-muted-foreground">
             Cari dan kelola status akun pengguna terdaftar di seluruh Gofest
           </p>
@@ -106,7 +106,7 @@ export function AdminUsersPage() {
             className="overflow-x-auto rounded-md border border-warm-border bg-card"
           >
             <table className="w-full text-left text-xs">
-              <thead className="border-b border-warm-border bg-warm-muted/40 font-semibold text-ink">
+              <thead className="border-b border-warm-border bg-warm-muted/40 font-medium text-ink">
                 <tr>
                   <th className="px-4 py-3">Nama</th>
                   <th className="px-4 py-3">Email</th>
@@ -119,15 +119,15 @@ export function AdminUsersPage() {
               <tbody className="divide-y divide-warm-border text-ink">
                 {users.map((user) => (
                   <tr key={user.id} className="hover:bg-warm-muted/20">
-                    <td className="px-4 py-3 font-bold">{user.name}</td>
+                    <td className="px-4 py-3 font-medium">{user.name}</td>
                     <td className="px-4 py-3 text-muted-foreground">{user.email}</td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1">
-                        <span className="rounded bg-warm-muted px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-ink">
+                        <span className="rounded bg-warm-muted px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-ink">
                           {user.role}
                         </span>
                         {user.organizerProfile ? (
-                          <span className="rounded bg-olive/15 text-olive px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                          <span className="rounded bg-olive/15 text-olive px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider">
                             ORGANIZER
                           </span>
                         ) : null}
@@ -135,7 +135,7 @@ export function AdminUsersPage() {
                     </td>
                     <td className="px-4 py-3">
                       <span
-                        className={`inline-block rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                        className={`inline-block rounded px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider ${
                           user.status === 'ACTIVE'
                             ? 'bg-olive/15 text-olive'
                             : 'bg-red-100 text-red-800'
@@ -153,7 +153,7 @@ export function AdminUsersPage() {
                           trigger={
                             <button
                               type="button"
-                              className="inline-flex items-center gap-1 text-[11px] font-semibold text-brick hover:underline"
+                              className="inline-flex items-center gap-1 text-[11px] font-medium text-brick hover:underline"
                             >
                               <Ban className="h-3 w-3" aria-hidden />
                               Suspend
@@ -170,7 +170,7 @@ export function AdminUsersPage() {
                           trigger={
                             <button
                               type="button"
-                              className="inline-flex items-center gap-1 text-[11px] font-semibold text-olive hover:underline"
+                              className="inline-flex items-center gap-1 text-[11px] font-medium text-olive hover:underline"
                             >
                               <CheckCircle className="h-3 w-3" aria-hidden />
                               Aktifkan

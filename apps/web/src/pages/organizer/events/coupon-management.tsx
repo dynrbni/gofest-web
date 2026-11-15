@@ -104,7 +104,7 @@ export function EventCouponManagementPage() {
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-xl font-bold tracking-tight text-ink">Kode Promo & Diskon</h2>
+          <h2 className="text-xl font-semibold tracking-tight text-ink">Kode Promo & Diskon</h2>
           <p className="mt-0.5 text-xs text-muted-foreground">
             Buat kode promo khusus untuk promosi penjualan tiket acaramu
           </p>
@@ -139,7 +139,7 @@ export function EventCouponManagementPage() {
           className="overflow-x-auto rounded-md border border-warm-border bg-card"
         >
           <table className="w-full text-left text-xs">
-            <thead className="border-b border-warm-border bg-warm-muted/40 font-semibold text-ink">
+            <thead className="border-b border-warm-border bg-warm-muted/40 font-medium text-ink">
               <tr>
                 <th className="px-4 py-3">Kode Kupon</th>
                 <th className="px-4 py-3">Potongan</th>
@@ -152,7 +152,7 @@ export function EventCouponManagementPage() {
             <tbody className="divide-y divide-warm-border text-ink">
               {coupons.map((coupon) => (
                 <tr key={coupon.id} className="hover:bg-warm-muted/20">
-                  <td className="px-4 py-3 font-mono font-bold text-ink">{coupon.code}</td>
+                  <td className="px-4 py-3 font-mono font-medium text-ink">{coupon.code}</td>
                   <td className="px-4 py-3 font-medium">
                     {coupon.discountType === 'PERCENTAGE'
                       ? `${coupon.discountValue}% (maks. ${coupon.maxDiscount ? formatIDR(coupon.maxDiscount) : 'tak terbatas'})`
@@ -166,7 +166,7 @@ export function EventCouponManagementPage() {
                   </td>
                   <td className="px-4 py-3 text-center">
                     <span
-                      className={`inline-block rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                      className={`inline-block rounded px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider ${
                         coupon.isActive
                           ? 'bg-olive/15 text-olive'
                           : 'bg-warm-muted text-muted-foreground'
@@ -179,7 +179,7 @@ export function EventCouponManagementPage() {
                     <button
                       type="button"
                       onClick={() => handleToggleCoupon(coupon.id)}
-                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-muted-foreground hover:text-ink"
+                      className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-ink"
                     >
                       <Power className="h-3.5 w-3.5" aria-hidden />
                       {coupon.isActive ? 'Nonaktifkan' : 'Aktifkan'}

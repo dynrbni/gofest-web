@@ -94,6 +94,22 @@ for (const width of [390, 1440]) {
       assert.equal(result.headings, 1, `${path}: expected exactly one page heading`);
       assert.equal(result.overflow, false, `${path}: horizontal overflow at ${width}px`);
       assert.equal(result.alerts.length, 0, `${path}: unexpected error state`);
+      browser('eval', 'document.fonts.ready');
+      const typography = browser(
+        'eval',
+        `({
+        family: getComputedStyle(document.body).fontFamily,
+        bodyWeight: getComputedStyle(document.body).fontWeight,
+        fontLoaded: document.fonts.check('400 16px "DM Sans Variable"'),
+        heavyText: [...document.querySelectorAll('h1,h2,h3,h4,h5,h6,p,span,a,button,label,th,td,input,select,textarea')]
+          .filter(element => element.getBoundingClientRect().width > 0 && Number(getComputedStyle(element).fontWeight) > 600)
+          .map(element => element.textContent.slice(0, 60))
+      })`,
+      ).result;
+      assert.ok(typography.family.startsWith('"DM Sans Variable"'), `${path}: new DM Sans family`);
+      assert.equal(typography.fontLoaded, true, `${path}: local variable font loads`);
+      assert.equal(typography.bodyWeight, '400', `${path}: body uses regular weight`);
+      assert.deepEqual(typography.heavyText, [], `${path}: no excessive bold text`);
       browser(
         'wait',
         '--fn',

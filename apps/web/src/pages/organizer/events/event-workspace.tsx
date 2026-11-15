@@ -95,7 +95,7 @@ export function EventWorkspaceLayout() {
       <div>
         <Link
           to="/organizer/events"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-ink"
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-ink"
         >
           <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
           Kembali ke daftar acara
@@ -105,11 +105,11 @@ export function EventWorkspaceLayout() {
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <EventStatusBadge status={event.status} />
-              <span className="text-xs font-semibold uppercase tracking-wider text-olive">
+              <span className="text-xs font-medium uppercase tracking-wider text-olive">
                 {event.category?.name}
               </span>
             </div>
-            <h1 className="mt-1 font-display text-2xl font-bold tracking-tightest sm:text-3xl">
+            <h1 className="mt-1 font-display text-2xl font-semibold tracking-tightest sm:text-3xl">
               {event.title}
             </h1>
             <p className="mt-0.5 text-xs text-muted-foreground">
@@ -123,7 +123,7 @@ export function EventWorkspaceLayout() {
                 to={`/events/${event.slug}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-md border border-warm-border bg-paper px-3 py-1.5 text-xs font-semibold text-ink hover:bg-warm-muted"
+                className="inline-flex items-center gap-1.5 rounded-md border border-warm-border bg-paper px-3 py-1.5 text-xs font-medium text-ink hover:bg-warm-muted"
               >
                 Lihat Acara
                 <ExternalLink className="h-3.5 w-3.5" aria-hidden />
@@ -135,7 +135,7 @@ export function EventWorkspaceLayout() {
                 type="button"
                 onClick={handleSubmitReview}
                 disabled={submitting}
-                className="inline-flex items-center gap-1.5 rounded-md bg-brick px-3.5 py-1.5 text-xs font-semibold text-paper hover:bg-brick/90 disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-md bg-brick px-3.5 py-1.5 text-xs font-medium text-paper hover:bg-brick/90 disabled:opacity-50"
               >
                 <Send className="h-3.5 w-3.5" aria-hidden />
                 {submitting ? 'Mengajukan...' : 'Ajukan Publikasi'}
@@ -147,7 +147,7 @@ export function EventWorkspaceLayout() {
                 trigger={
                   <button
                     type="button"
-                    className="inline-flex items-center gap-1.5 rounded-md border border-brick/40 px-3 py-1.5 text-xs font-semibold text-brick hover:bg-brick/10"
+                    className="inline-flex items-center gap-1.5 rounded-md border border-brick/40 px-3 py-1.5 text-xs font-medium text-brick hover:bg-brick/10"
                   >
                     <Ban className="h-3.5 w-3.5" aria-hidden />
                     Batalkan Acara
@@ -161,7 +161,7 @@ export function EventWorkspaceLayout() {
                       akan diberi tahu untuk proses pengembalian dana (refund).
                     </p>
                     <div>
-                      <label htmlFor="cancel-reason-input" className="block text-xs font-semibold text-ink">
+                      <label htmlFor="cancel-reason-input" className="block text-xs font-medium text-ink">
                         Alasan pembatalan (wajib diisi):
                       </label>
                       <input
@@ -191,7 +191,7 @@ export function EventWorkspaceLayout() {
               end={tab.end}
               className={({ isActive }) =>
                 cn(
-                  'inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors',
+                  'inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
                   isActive
                     ? 'bg-ink text-paper'
                     : 'bg-warm-muted/60 text-ink/75 hover:bg-warm-muted hover:text-ink',

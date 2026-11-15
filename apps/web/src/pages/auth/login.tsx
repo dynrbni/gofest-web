@@ -72,7 +72,7 @@ export function LoginPage() {
       footer={
         <>
           {t('Belum punya akun?', 'New to Gofest?')}{' '}
-          <Link to="/register" className="font-semibold text-ink underline underline-offset-4">
+          <Link to="/register" className="font-medium text-ink underline underline-offset-4">
             {t('Daftar sekarang', 'Create an account')}
           </Link>
         </>
@@ -126,7 +126,7 @@ export function LoginPage() {
         </Field>
 
         <div className="flex justify-end">
-          <Link to="/forgot-password" className="text-xs font-bold text-blue-600 hover:underline">
+          <Link to="/forgot-password" className="text-xs font-medium text-blue-600 hover:underline">
             {t('Lupa password?', 'Forgot password?')}
           </Link>
         </div>
@@ -136,7 +136,7 @@ export function LoginPage() {
         <Button
           type="submit"
           disabled={submitting}
-          className="h-12 w-full rounded-xl bg-blue-600 font-bold text-white shadow-md transition-all hover:bg-blue-700 active:scale-95"
+          className="h-12 w-full rounded-xl bg-blue-600 font-medium text-white shadow-md transition-all hover:bg-blue-700 active:scale-95"
         >
           {submitting ? t('Memeriksa akun...', 'Logging in...') : t('Masuk', 'Log in')}
         </Button>

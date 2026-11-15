@@ -85,7 +85,7 @@ export function AdminOrdersPage() {
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 border-b border-warm-border pb-6 sm:flex-row sm:items-center">
         <div>
-          <h1 className="font-display text-3xl font-bold tracking-tightest">Transaksi & Pesanan</h1>
+          <h1 className="font-display text-3xl font-semibold tracking-tightest">Transaksi & Pesanan</h1>
           <p className="mt-1 text-xs text-muted-foreground">
             Audit status transaksi, pembayaran provider, dan rekonsiliasi pembayaran terlambat
           </p>
@@ -135,7 +135,7 @@ export function AdminOrdersPage() {
             className="overflow-x-auto rounded-md border border-warm-border bg-card"
           >
             <table className="w-full text-left text-xs">
-              <thead className="border-b border-warm-border bg-warm-muted/40 font-semibold text-ink">
+              <thead className="border-b border-warm-border bg-warm-muted/40 font-medium text-ink">
                 <tr>
                   <th className="px-4 py-3">Kode Order</th>
                   <th className="px-4 py-3">Acara</th>
@@ -149,16 +149,16 @@ export function AdminOrdersPage() {
               <tbody className="divide-y divide-warm-border text-ink">
                 {orders.map((order) => (
                   <tr key={order.id} className="hover:bg-warm-muted/20">
-                    <td className="px-4 py-3 font-mono font-bold text-ink">{order.orderCode}</td>
+                    <td className="px-4 py-3 font-mono font-medium text-ink">{order.orderCode}</td>
                     <td className="px-4 py-3 font-medium">{order.event?.title ?? '-'}</td>
                     <td className="px-4 py-3">
-                      <p className="font-semibold">{order.buyerName}</p>
+                      <p className="font-medium">{order.buyerName}</p>
                       <p className="text-[11px] text-muted-foreground">{order.buyerEmail}</p>
                     </td>
                     <td className="px-4 py-3">
                       <OrderStatusBadge status={order.status} />
                     </td>
-                    <td className="px-4 py-3 text-right font-bold tabular-nums">
+                    <td className="px-4 py-3 text-right font-medium tabular-nums">
                       {formatIDR(order.total)}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">
@@ -176,7 +176,7 @@ export function AdminOrdersPage() {
                               });
                               setNote('');
                             }}
-                            className="rounded bg-olive px-2 py-1 text-[11px] font-semibold text-paper hover:bg-olive/90"
+                            className="rounded bg-olive px-2 py-1 text-[11px] font-medium text-paper hover:bg-olive/90"
                           >
                             Terbitkan Tiket
                           </button>
@@ -189,7 +189,7 @@ export function AdminOrdersPage() {
                               });
                               setNote('');
                             }}
-                            className="rounded border border-brick px-2 py-1 text-[11px] font-semibold text-brick hover:bg-brick/10"
+                            className="rounded border border-brick px-2 py-1 text-[11px] font-medium text-brick hover:bg-brick/10"
                           >
                             Tolak & Refund
                           </button>

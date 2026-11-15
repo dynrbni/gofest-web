@@ -79,7 +79,7 @@ export function OrganizerSettingsPage() {
   return (
     <div className="max-w-2xl space-y-6">
       <div className="border-b border-warm-border pb-4">
-        <h1 className="font-display text-3xl font-bold tracking-tightest">Profil Organisasi</h1>
+        <h1 className="font-display text-3xl font-semibold tracking-tightest">Profil Organisasi</h1>
         <p className="mt-1 text-xs text-muted-foreground">
           Kelola identitas publik organisasimu yang ditampilkan pada halaman acara
         </p>
@@ -90,7 +90,7 @@ export function OrganizerSettingsPage() {
 
         <div className="flex items-center gap-2 rounded bg-warm-muted/50 p-3 text-xs text-muted-foreground">
           <span>Status verifikasi:</span>
-          <span className="font-bold text-ink uppercase tracking-wider">{profile.status}</span>
+          <span className="font-medium text-ink uppercase tracking-wider">{profile.status}</span>
         </div>
 
         <Field

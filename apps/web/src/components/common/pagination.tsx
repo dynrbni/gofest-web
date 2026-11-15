@@ -29,7 +29,7 @@ export function Pagination({
           type="button"
           onClick={() => onPageChange(meta.page - 1)}
           disabled={meta.page <= 1}
-          className="inline-flex h-9 items-center gap-1 rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-40"
+          className="inline-flex h-9 items-center gap-1 rounded-xl border border-slate-200 px-3 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-40"
           aria-label="Halaman sebelumnya"
         >
           <ChevronLeft className="h-4 w-4" aria-hidden />
@@ -46,7 +46,7 @@ export function Pagination({
                 onClick={() => onPageChange(page)}
                 aria-current={page === meta.page ? 'page' : undefined}
                 className={cn(
-                  'h-9 min-w-9 rounded-xl border px-3 text-xs font-bold tabular-nums transition-colors',
+                  'h-9 min-w-9 rounded-xl border px-3 text-xs font-medium tabular-nums transition-colors',
                   page === meta.page
                     ? 'border-blue-600 bg-blue-600 text-white shadow-xs'
                     : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100',
@@ -61,7 +61,7 @@ export function Pagination({
           type="button"
           onClick={() => onPageChange(meta.page + 1)}
           disabled={meta.page >= meta.totalPages}
-          className="inline-flex h-9 items-center gap-1 rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-40"
+          className="inline-flex h-9 items-center gap-1 rounded-xl border border-slate-200 px-3 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-40"
           aria-label="Halaman berikutnya"
         >
           Berikutnya

@@ -72,7 +72,7 @@ export function OrganizerApplyPage() {
   return (
     <main className="container max-w-2xl py-12">
       <div className="space-y-2 border-b border-warm-border pb-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-olive">Workspace Penyelenggara</p>
+        <p className="text-xs font-medium uppercase tracking-[0.16em] text-olive">Workspace Penyelenggara</p>
         <h1 className="font-display text-4xl tracking-tightest sm:text-5xl">Mulai Membuat Acara di Gofest</h1>
         <p className="text-sm text-muted-foreground">
           Daftarkan profil organisasimu untuk mulai menerbitkan acara, mengatur tiket, dan memantau kehadiran.

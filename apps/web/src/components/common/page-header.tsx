@@ -22,8 +22,8 @@ export function PageHeader({
       )}
     >
       <div>
-        {eyebrow ? <p className="text-xs font-semibold text-blue-700">{eyebrow}</p> : null}
-        <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">{title}</h1>
+        {eyebrow ? <p className="text-xs font-medium text-blue-700">{eyebrow}</p> : null}
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">{title}</h1>
         {description ? (
           <div className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
             {description}
@@ -49,7 +49,7 @@ export function SectionHeading({
   return (
     <div className={cn('flex flex-wrap items-end justify-between gap-3', className)}>
       <div>
-        <h2 className="text-lg font-bold tracking-tight sm:text-xl">{title}</h2>
+        <h2 className="text-lg font-semibold tracking-tight sm:text-xl">{title}</h2>
         {description ? <p className="mt-1 text-sm text-muted-foreground">{description}</p> : null}
       </div>
       {action}

@@ -122,7 +122,7 @@ function RouteErrorPage() {
   return (
     <main className="container flex min-h-screen max-w-xl flex-col items-start justify-center py-12">
       <BrandLogo />
-      <h1 className="mt-3 text-3xl font-extrabold">Halaman belum bisa ditampilkan.</h1>
+      <h1 className="mt-3 text-3xl font-semibold">Halaman belum bisa ditampilkan.</h1>
       <p className="mt-4 text-sm leading-7 text-slate-600">
         Muat ulang halaman untuk mencoba lagi. Jika masalah berlanjut, kembali ke daftar acara.
       </p>
@@ -141,7 +141,7 @@ function RouteErrorPage() {
 function NotFoundPage() {
   return (
     <main className="container flex min-h-[60vh] max-w-lg flex-col items-center justify-center py-16 text-center">
-      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-olive">
+      <p className="text-xs font-medium uppercase tracking-[0.16em] text-olive">
         404 · Halaman tidak ditemukan
       </p>
       <h1 className="mt-4 font-display text-5xl leading-none tracking-tightest">
@@ -153,7 +153,7 @@ function NotFoundPage() {
       </p>
       <a
         href="/events"
-        className="mt-8 inline-flex h-11 items-center justify-center rounded-md bg-brick px-6 text-sm font-semibold text-paper hover:bg-brick/90"
+        className="mt-8 inline-flex h-11 items-center justify-center rounded-md bg-brick px-6 text-sm font-medium text-paper hover:bg-brick/90"
       >
         Lihat semua acara
       </a>

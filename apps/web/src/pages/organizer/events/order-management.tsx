@@ -47,7 +47,7 @@ export function EventOrderManagementPage() {
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-xl font-bold tracking-tight text-ink">Pesanan & Peserta</h2>
+          <h2 className="text-xl font-semibold tracking-tight text-ink">Pesanan & Peserta</h2>
           <p className="mt-0.5 text-xs text-muted-foreground">
             Daftar transaksi pembelian tiket dan nama pemegang tiket untuk acara ini
           </p>
@@ -106,7 +106,7 @@ export function EventOrderManagementPage() {
             className="overflow-x-auto rounded-md border border-warm-border bg-card"
           >
             <table className="w-full text-left text-xs">
-              <thead className="border-b border-warm-border bg-warm-muted/40 font-semibold text-ink">
+              <thead className="border-b border-warm-border bg-warm-muted/40 font-medium text-ink">
                 <tr>
                   <th className="px-4 py-3">Kode Order</th>
                   <th className="px-4 py-3">Pembeli</th>
@@ -119,9 +119,9 @@ export function EventOrderManagementPage() {
               <tbody className="divide-y divide-warm-border text-ink">
                 {orders.map((order) => (
                   <tr key={order.id} className="hover:bg-warm-muted/20">
-                    <td className="px-4 py-3 font-mono font-bold text-ink">{order.orderCode}</td>
+                    <td className="px-4 py-3 font-mono font-medium text-ink">{order.orderCode}</td>
                     <td className="px-4 py-3">
-                      <p className="font-semibold text-ink">{order.buyerName}</p>
+                      <p className="font-medium text-ink">{order.buyerName}</p>
                       <p className="text-[11px] text-muted-foreground">{order.buyerEmail}</p>
                       {order.buyerPhone ? (
                         <p className="text-[11px] text-muted-foreground">{order.buyerPhone}</p>
@@ -138,7 +138,7 @@ export function EventOrderManagementPage() {
                               key={t.id}
                               className="flex items-center gap-1.5 font-mono text-[11px]"
                             >
-                              <span className="font-bold">{t.ticketCode}</span>
+                              <span className="font-medium">{t.ticketCode}</span>
                               <span className="text-muted-foreground">({t.holderName})</span>
                             </div>
                           ))}
@@ -147,7 +147,7 @@ export function EventOrderManagementPage() {
                         <span className="text-muted-foreground">Belum diterbitkan</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-right font-bold tabular-nums">
+                    <td className="px-4 py-3 text-right font-medium tabular-nums">
                       {formatIDR(order.total)}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">

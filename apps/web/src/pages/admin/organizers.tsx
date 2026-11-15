@@ -89,7 +89,7 @@ export function AdminOrganizersPage() {
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 border-b border-warm-border pb-6 sm:flex-row sm:items-center">
         <div>
-          <h1 className="font-display text-3xl font-bold tracking-tightest">
+          <h1 className="font-display text-3xl font-semibold tracking-tightest">
             Moderasi Penyelenggara (Organizer)
           </h1>
           <p className="mt-1 text-xs text-muted-foreground">
@@ -141,7 +141,7 @@ export function AdminOrganizersPage() {
             className="overflow-x-auto rounded-md border border-warm-border bg-card"
           >
             <table className="w-full text-left text-xs">
-              <thead className="border-b border-warm-border bg-warm-muted/40 font-semibold text-ink">
+              <thead className="border-b border-warm-border bg-warm-muted/40 font-medium text-ink">
                 <tr>
                   <th className="px-4 py-3">Organisasi</th>
                   <th className="px-4 py-3">Pemilik / Akun</th>
@@ -155,7 +155,7 @@ export function AdminOrganizersPage() {
                 {organizers.map((org) => (
                   <tr key={org.id} className="hover:bg-warm-muted/20">
                     <td className="px-4 py-3">
-                      <p className="font-bold text-ink">{org.organizationName}</p>
+                      <p className="font-medium text-ink">{org.organizationName}</p>
                       <p className="text-[11px] text-muted-foreground font-mono">
                         /organizers/{org.slug}
                       </p>
@@ -164,12 +164,12 @@ export function AdminOrganizersPage() {
                       <p className="font-medium">{org.user?.name ?? '-'}</p>
                       <p className="text-[11px] text-muted-foreground">{org.user?.email}</p>
                     </td>
-                    <td className="px-4 py-3 text-center font-bold tabular-nums">
+                    <td className="px-4 py-3 text-center font-medium tabular-nums">
                       {org._count?.events ?? 0}
                     </td>
                     <td className="px-4 py-3">
                       <span
-                        className={`inline-block rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                        className={`inline-block rounded px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider ${
                           org.status === 'ACTIVE'
                             ? 'bg-olive/15 text-olive'
                             : org.status === 'PENDING'
@@ -193,7 +193,7 @@ export function AdminOrganizersPage() {
                                 setReviewModal({ organizer: org, action: 'ACTIVE' });
                                 setReviewNote('');
                               }}
-                              className="rounded bg-olive px-2 py-1 text-[11px] font-semibold text-paper hover:bg-olive/90"
+                              className="rounded bg-olive px-2 py-1 text-[11px] font-medium text-paper hover:bg-olive/90"
                             >
                               Setujui
                             </button>
@@ -203,7 +203,7 @@ export function AdminOrganizersPage() {
                                 setReviewModal({ organizer: org, action: 'REJECTED' });
                                 setReviewNote('');
                               }}
-                              className="rounded border border-brick px-2 py-1 text-[11px] font-semibold text-brick hover:bg-brick/10"
+                              className="rounded border border-brick px-2 py-1 text-[11px] font-medium text-brick hover:bg-brick/10"
                             >
                               Tolak
                             </button>
@@ -215,7 +215,7 @@ export function AdminOrganizersPage() {
                               setReviewModal({ organizer: org, action: 'SUSPENDED' });
                               setReviewNote('');
                             }}
-                            className="text-[11px] font-semibold text-brick hover:underline"
+                            className="text-[11px] font-medium text-brick hover:underline"
                           >
                             Suspend
                           </button>
@@ -226,7 +226,7 @@ export function AdminOrganizersPage() {
                               setReviewModal({ organizer: org, action: 'ACTIVE' });
                               setReviewNote('');
                             }}
-                            className="text-[11px] font-semibold text-olive hover:underline"
+                            className="text-[11px] font-medium text-olive hover:underline"
                           >
                             Aktifkan Kembali
                           </button>

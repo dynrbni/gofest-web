@@ -90,11 +90,11 @@ export default {
         sm: 'calc(var(--radius) - 4px)',
       },
       fontFamily: {
-        sans: ['Poppins', 'system-ui', 'sans-serif'],
-        display: ['Poppins', 'system-ui', 'sans-serif'],
+        sans: ['DM Sans Variable', 'DM Sans', 'system-ui', 'sans-serif'],
+        display: ['DM Sans Variable', 'DM Sans', 'system-ui', 'sans-serif'],
       },
       letterSpacing: {
-        tightest: '-0.045em',
+        tightest: '-0.025em',
       },
       keyframes: {
         'accordion-down': {

@@ -67,7 +67,7 @@ export function TicketPage() {
   if (accessDenied) {
     return (
       <main className="container max-w-lg py-14">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-olive">Akses tiket</p>
+        <p className="text-xs font-medium uppercase tracking-[0.16em] text-olive">Akses tiket</p>
         <h1 className="mt-2 font-display text-4xl tracking-tightest">
           Tiket ini terlindungi token.
         </h1>
@@ -83,7 +83,7 @@ export function TicketPage() {
             setToken(tokenInput.trim());
           }}
         >
-          <label htmlFor="ticket-token" className="block text-sm font-semibold">
+          <label htmlFor="ticket-token" className="block text-sm font-medium">
             Token akses order
           </label>
           <Input
@@ -106,7 +106,7 @@ export function TicketPage() {
       <main className="container max-w-3xl py-14">
         <Link
           to="/events"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-olive"
+          className="inline-flex items-center gap-2 text-sm font-medium text-olive"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden />
           Kembali ke jelajah acara
@@ -128,7 +128,7 @@ export function TicketPage() {
       <div className="no-print flex flex-wrap items-center justify-between gap-3">
         <Link
           to={`/order/${ticket.orderCode}${token ? `?token=${encodeURIComponent(token)}` : ''}`}
-          className="inline-flex items-center gap-2 text-sm font-bold text-blue-600 hover:underline"
+          className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:underline"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden />
           Kembali ke pesanan
@@ -137,7 +137,7 @@ export function TicketPage() {
           type="button"
           variant="outline"
           onClick={() => window.print()}
-          className="rounded-xl border-slate-200 font-bold text-xs"
+          className="rounded-xl border-slate-200 font-medium text-xs"
         >
           <Printer className="h-4 w-4 mr-1.5" aria-hidden />
           Cetak E-Tiket
@@ -149,14 +149,14 @@ export function TicketPage() {
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <BrandLogo className="mb-3 h-8 sm:h-8" />
-              <p className="text-xs font-semibold text-blue-600">Tiket digital</p>
-              <h1 className="mt-2 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+              <p className="text-xs font-medium text-blue-600">Tiket digital</p>
+              <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
                 {ticket.event.title}
               </h1>
             </div>
             <TicketStatusBadge status={ticket.status} />
           </div>
-          <p className="mt-2 text-xs font-semibold text-slate-500">
+          <p className="mt-2 text-xs font-medium text-slate-500">
             {formatEventWhen(ticket.event.startsAt, ticket.event.endsAt, ticket.event.timezone)}
           </p>
         </header>
@@ -165,24 +165,24 @@ export function TicketPage() {
           <div>
             <dl className="space-y-4 text-xs">
               <div>
-                <dt className="font-bold uppercase tracking-wider text-slate-400">
+                <dt className="font-medium uppercase tracking-wider text-slate-400">
                   Pemegang Tiket
                 </dt>
-                <dd className="mt-0.5 text-base font-extrabold text-slate-900">
+                <dd className="mt-0.5 text-base font-semibold text-slate-900">
                   {ticket.holderName}
                 </dd>
               </div>
               <div>
-                <dt className="font-bold uppercase tracking-wider text-slate-400">
+                <dt className="font-medium uppercase tracking-wider text-slate-400">
                   Kategori Tiket
                 </dt>
-                <dd className="mt-0.5 font-bold text-slate-800">{ticket.ticketType.name}</dd>
+                <dd className="mt-0.5 font-medium text-slate-800">{ticket.ticketType.name}</dd>
               </div>
               <div>
-                <dt className="font-bold uppercase tracking-wider text-slate-400">
+                <dt className="font-medium uppercase tracking-wider text-slate-400">
                   Kode Tiket (Barcode Ref)
                 </dt>
-                <dd className="mt-0.5 font-mono text-base font-black text-blue-600 tabular-nums tracking-wider">
+                <dd className="mt-0.5 font-mono text-base font-semibold text-blue-600 tabular-nums tracking-wider">
                   {ticket.ticketCode}
                 </dd>
               </div>
@@ -194,7 +194,7 @@ export function TicketPage() {
                 )}
                 <div>
                   <dt className="sr-only">Lokasi</dt>
-                  <dd className="font-semibold text-slate-800">
+                  <dd className="font-medium text-slate-800">
                     {ticket.event.type === 'ONLINE'
                       ? 'Acara Online (Virtual)'
                       : `${ticket.event.venueName ?? 'Venue'}${ticket.event.address ? ` · ${ticket.event.address}` : ''}`}
@@ -209,7 +209,7 @@ export function TicketPage() {
                   <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" aria-hidden />
                   <div>
                     <dt className="sr-only">Check-in</dt>
-                    <dd className="font-bold text-emerald-700">
+                    <dd className="font-medium text-emerald-700">
                       Check-in berhasil: {formatDateTime(ticket.checkedInAt, ticket.event.timezone)}
                     </dd>
                   </div>
@@ -219,14 +219,14 @@ export function TicketPage() {
 
             {ticket.event.onlineAccessUrl ? (
               <div className="mt-5 rounded-xl border border-blue-200 bg-blue-50/70 p-3.5">
-                <p className="text-xs font-bold uppercase tracking-wider text-blue-700">
+                <p className="text-xs font-medium uppercase tracking-wider text-blue-700">
                   Tautan Streaming Online
                 </p>
                 <a
                   href={ticket.event.onlineAccessUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="mt-1 block break-all text-xs font-bold text-blue-600 underline underline-offset-4"
+                  className="mt-1 block break-all text-xs font-medium text-blue-600 underline underline-offset-4"
                 >
                   {ticket.event.onlineAccessUrl}
                 </a>
@@ -239,7 +239,7 @@ export function TicketPage() {
 
           <div className="flex flex-col items-center justify-center sm:border-l sm:border-dashed sm:border-slate-200 sm:pl-6">
             {invalid ? (
-              <div className="flex h-44 w-full items-center justify-center rounded-xl border border-rose-200 bg-rose-50 p-4 text-center text-xs font-bold text-rose-700">
+              <div className="flex h-44 w-full items-center justify-center rounded-xl border border-rose-200 bg-rose-50 p-4 text-center text-xs font-medium text-rose-700">
                 QR tidak berlaku karena tiket sudah{' '}
                 {ticket.status === 'REFUNDED' ? 'di-refund' : 'dibatalkan'}.
               </div>
@@ -264,7 +264,7 @@ export function TicketPage() {
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p>
               Nomor Pesanan:{' '}
-              <span className="font-mono font-bold text-slate-800 tabular-nums">
+              <span className="font-mono font-medium text-slate-800 tabular-nums">
                 {ticket.orderCode}
               </span>
             </p>
@@ -284,7 +284,7 @@ export function TicketPage() {
               <Button
                 type="button"
                 variant="outline"
-                className="rounded-xl border-slate-200 text-xs font-bold"
+                className="rounded-xl border-slate-200 text-xs font-medium"
                 disabled={regenerating}
               >
                 <RefreshCw
@@ -303,7 +303,7 @@ export function TicketPage() {
       ) : null}
 
       {actionError ? (
-        <p className="no-print mt-3 text-sm font-semibold text-rose-600" role="alert">
+        <p className="no-print mt-3 text-sm font-medium text-rose-600" role="alert">
           {errorMessage(actionError)}
         </p>
       ) : null}

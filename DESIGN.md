@@ -19,7 +19,7 @@ Referensi visual yang diimplementasikan ada di `docs/design/marketplace-referenc
 - Sesuai permintaan pengguna, carousel tidak menampilkan tombol stop/jeda. Rotasi 6.5 detik berhenti saat hover, fokus keyboard, tab browser tidak aktif atau reduced motion. Slide keluar memakai `inert` dan `aria-hidden` sehingga hanya banner aktif dapat diklik atau difokuskan.
 - Klaim pembayaran dan keamanan harus mencerminkan integrasi yang tersedia. Jangan menampilkan logo bank/wallet yang belum terhubung.
 
-Token utama: primary `#0052CC`, highlight `#2A73D6`, deep blue `#003D97`, teks navy `#111827`, putih `#FFFFFF`, border `#E8E6EF`, latar biru ringan `#F2F6FF`. Navy `#102447` tetap digunakan pada permukaan gelap yang sudah ada. Poppins menjadi font antarmuka; wordmark tetap bagian PNG asli. Radius 8px untuk kontrol, 12px untuk kartu dan panel, 16px untuk banner.
+Token utama: primary `#0052CC`, highlight `#2A73D6`, deep blue `#003D97`, teks navy `#111827`, putih `#FFFFFF`, border `#E8E6EF`, latar biru ringan `#F2F6FF`. Navy `#102447` tetap digunakan pada permukaan gelap yang sudah ada. DM Sans menjadi font antarmuka; wordmark tetap bagian PNG asli. Radius 8px untuk kontrol, 12px untuk kartu dan panel, 16px untuk banner.
 
 ## Brand identity terbaru
 
@@ -27,7 +27,7 @@ Token utama: primary `#0052CC`, highlight `#2A73D6`, deep blue `#003D97`, teks n
 - Komponen bersama `BrandLogo` menampilkan PNG dengan `object-fit: contain`, tinggi 44px desktop dan 36px mobile, width otomatis. `Logo` menambahkan tautan ke beranda; gambar tanpa tautan dipakai pada form akun, loading, error dan tiket cetak.
 - Navbar/footer publik, form autentikasi, sidebar admin/organizer, navigasi workspace mobile, halaman akun melalui layout publik, loading, error, tiket digital dan email memakai identitas yang sama.
 - Favicon ICO/PNG, Apple touch icon dan app icon 192/512 diambil dari piksel ikon G pada aset asli. Gradient asli dipertahankan; canvas ikon transparan.
-- Font Poppins di-host lokal dengan bobot 400/500 untuk teks, 600 untuk kontrol yang sudah ada, dan 700/800 untuk heading. Wordmark tidak direkonstruksi dengan font tersebut.
+- DM Sans variable di-host lokal, menggantikan Poppins tanpa kembali ke Manrope. Bukaan huruf yang jelas dan bentuk yang lebih netral mendukung pemindaian acara, form dan tabel tanpa kesan terlalu geometris. Bobot 400 untuk isi; 500 untuk navigasi, tombol, label, badge dan angka pendukung; 600 untuk heading dan harga utama. Bobot 700–900 tidak dipakai pada antarmuka. Wordmark tidak direkonstruksi dengan font tersebut.
 
 Arah desain ini mengikat seluruh halaman Gofest. Mengadopsi standar komersial industri event ticketing Indonesia seperti **Artatix** dan **Loket.com**.
 
@@ -65,11 +65,11 @@ Gofest dirancang untuk kecepatan navigasi dan konversi pembelian tiket, dengan h
 
 ## 4. Tipografi
 
-- **Font Keluarga**: Poppins yang di-host lokal (dan system-ui sans-serif fallback).
+- **Font Keluarga**: DM Sans variable yang di-host lokal (dan system-ui sans-serif fallback), termasuk italic asli untuk konten deskripsi.
 - Tidak menggunakan font serif vintage/antik pada headline atau navigasi.
-- **Heading**: Poppins 700 / 800 bold dengan letter-spacing tight (`-0.025em`).
-- **Body**: Poppins 400 / 500 dengan line-height 1.6.
-- **Harga & Angka**: Poppins 700 / 800 dengan `tabular-nums`.
+- **Heading**: DM Sans 600; ukuran dan jarak membangun hierarki, bukan bobot berlebihan. `tracking-tightest` dibatasi `-0.025em`.
+- **Body**: DM Sans 400; label dan kontrol 500. Teks panjang tetap memakai line-height yang lapang.
+- **Harga & Angka**: DM Sans 500–600 dengan `tabular-nums`.
 
 ## 5. Komponen Utama
 

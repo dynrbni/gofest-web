@@ -22,7 +22,7 @@ export function AuthShell({
       <div className="auth-container">
         <Link
           to="/events"
-          className="mb-6 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-blue-700 hover:underline"
+          className="mb-6 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-blue-700 hover:underline"
         >
           <ArrowLeft className="size-4" aria-hidden />
           {t('Kembali ke acara', 'Back to events')}
@@ -41,7 +41,7 @@ export function AuthShell({
             />
             <div className="absolute inset-0 bg-gradient-to-t from-blue-950 via-blue-950/20 to-transparent" />
             <div className="relative mt-auto p-8">
-              <h2 className="max-w-xs text-3xl font-extrabold leading-tight text-white">
+              <h2 className="max-w-xs text-3xl font-semibold leading-tight text-white">
                 {t('Satu akun, banyak cerita.', 'One account. So many stories.')}
               </h2>
               <p className="mt-4 max-w-xs text-sm leading-6 text-blue-100">
@@ -52,7 +52,7 @@ export function AuthShell({
               </p>
               <Link
                 to="/events"
-                className="mt-5 inline-flex min-h-11 items-center gap-2 text-sm font-bold text-white hover:underline"
+                className="mt-5 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-white hover:underline"
               >
                 {t('Temukan acaramu', 'Find your next event')}
                 <ArrowUpRight className="size-4" aria-hidden />
@@ -77,7 +77,7 @@ export function AuthShell({
                 {t('Daftar', 'Sign up')}
               </Link>
             </nav>
-            <h1 id="auth-heading" className="text-2xl font-extrabold tracking-tight sm:text-3xl">
+            <h1 id="auth-heading" className="text-2xl font-semibold tracking-tight sm:text-3xl">
               {title}
             </h1>
             <p className="mt-3 text-sm leading-6 text-slate-600">{lede}</p>

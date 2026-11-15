@@ -1,5 +1,12 @@
 # Progress
 
+## Typography correction, 2026-11-15
+
+- User rejected the heavy Poppins styling and requested a new font while preserving the calmer pre-brand-update appearance. Replaced Poppins with self-hosted DM Sans variable; Manrope was not restored.
+- Normalized typography across public discovery/detail/checkout, authentication, account, admin, organizer and staff: regular 400 body; medium 500 controls/labels/supporting text; semibold 600 headings and prominent prices. Removed 700/800/900 utility classes, reduced overly tight tracking and supplied native italics without synthetic font styles.
+- Retained original logo PNG, brand palette, layouts and application behavior. TSX edits change font-weight classes only, plus final newlines.
+- Browser checks now assert loaded DM Sans, regular body weight and no visible text over 600. Public/admin/organizer/account/staff suites cover 68 route/viewport combinations, alongside existing discovery and event-detail/checkout interaction suites.
+
 ## Supplied brand identity, 2026-11-15
 
 - Copied the user's transparent 2192 × 690 PNG byte-for-byte to `public/assets/gofest-logo.png`; favicon and app icons use a crop of its original G icon.

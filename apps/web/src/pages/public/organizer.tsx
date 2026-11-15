@@ -54,7 +54,7 @@ export function OrganizerPublicPage() {
           </div>
         </div>
         <div className="relative flex flex-col gap-5 px-6 pb-7 sm:flex-row sm:items-end sm:px-8">
-          <div className="-mt-10 flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-4 border-white bg-blue-600 text-3xl font-extrabold text-white">
+          <div className="-mt-10 flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-4 border-white bg-blue-600 text-3xl font-semibold text-white">
             {logo ? (
               <img src={logo} alt="" className="h-full w-full object-cover" />
             ) : (
@@ -62,8 +62,8 @@ export function OrganizerPublicPage() {
             )}
           </div>
           <div className="min-w-0 pt-3">
-            <p className="text-xs font-semibold text-blue-700">Organizer Gofest</p>
-            <h1 className="mt-2 text-2xl font-extrabold sm:text-3xl">
+            <p className="text-xs font-medium text-blue-700">Organizer Gofest</p>
+            <h1 className="mt-2 text-2xl font-semibold sm:text-3xl">
               {organizer.organizationName}
             </h1>
             {organizer.description ? (

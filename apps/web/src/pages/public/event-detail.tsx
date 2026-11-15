@@ -110,7 +110,7 @@ export function EventDetailPage() {
   ) : (
     <p
       role="status"
-      className="rounded-lg bg-slate-100 p-4 text-center text-sm font-semibold text-slate-600"
+      className="rounded-lg bg-slate-100 p-4 text-center text-sm font-medium text-slate-600"
     >
       {unavailable}
     </p>
@@ -130,14 +130,14 @@ export function EventDetailPage() {
         <section className="event-detail-heading" aria-labelledby="event-title">
           <Link
             to="/events"
-            className="mb-5 inline-flex min-h-6 items-center gap-2 text-xs font-semibold text-white/90 hover:underline"
+            className="mb-5 inline-flex min-h-6 items-center gap-2 text-xs font-medium text-white/90 hover:underline"
           >
             <ArrowLeft className="size-3.5" aria-hidden />
             Semua acara
           </Link>
           <h1
             id="event-title"
-            className="text-2xl font-extrabold leading-snug text-white sm:text-[28px]"
+            className="text-2xl font-semibold leading-snug text-white sm:text-[28px]"
           >
             {event.title}
           </h1>
@@ -193,7 +193,7 @@ export function EventDetailPage() {
                 <p className="text-xs text-slate-500">
                   {activeTab === 'tickets' ? 'Harga per tiket' : 'Harga mulai dari'}
                 </p>
-                <p className="mt-1 text-xl font-extrabold tabular-nums text-slate-900">
+                <p className="mt-1 text-xl font-semibold tabular-nums text-slate-900">
                   {priceLabel}
                 </p>
               </div>
@@ -203,12 +203,12 @@ export function EventDetailPage() {
               to={`/organizers/${event.organizer.slug}`}
               className="flex items-center gap-3 p-5 hover:bg-slate-50"
             >
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-blue-950 font-bold text-white">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-blue-950 font-medium text-white">
                 {event.organizer.organizationName.charAt(0)}
               </span>
               <div className="min-w-0">
                 <p className="text-xs text-slate-500">Diselenggarakan oleh</p>
-                <p className="mt-1 flex items-center gap-2 text-sm font-bold">
+                <p className="mt-1 flex items-center gap-2 text-sm font-medium">
                   {event.organizer.organizationName}
                   {event.organizer.status === 'ACTIVE' ? (
                     <CheckCircle2
@@ -221,11 +221,11 @@ export function EventDetailPage() {
             </Link>
           </div>
           <div className="mt-5 flex items-center justify-between gap-4">
-            <p className="text-sm font-bold">Bagikan event</p>
+            <p className="text-sm font-medium">Bagikan event</p>
             <button
               type="button"
               onClick={() => void share()}
-              className="flex min-h-11 items-center gap-2 rounded-full border border-slate-200 px-4 text-sm font-semibold text-blue-700 hover:bg-blue-50"
+              className="flex min-h-11 items-center gap-2 rounded-full border border-slate-200 px-4 text-sm font-medium text-blue-700 hover:bg-blue-50"
               aria-label="Bagikan acara"
             >
               <Share2 className="size-4" aria-hidden />
@@ -238,7 +238,7 @@ export function EventDetailPage() {
           {cancelled || ended ? (
             <div
               role="status"
-              className="mb-5 flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-900"
+              className="mb-5 flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-900"
             >
               <AlertCircle className="size-5 shrink-0" aria-hidden />
               {unavailable}. Penjualan tiket ditutup.
@@ -260,7 +260,7 @@ export function EventDetailPage() {
               </div>
             </TabsContent>
             <TabsContent value="tickets" className="detail-tab-content">
-              <h2 className="text-xl font-extrabold">Pilih tiketmu</h2>
+              <h2 className="text-xl font-semibold">Pilih tiketmu</h2>
               <p className="mt-2 text-sm text-slate-600">
                 Pilih kategori tiket, lalu lanjutkan ke data pembeli.
               </p>
@@ -295,8 +295,8 @@ export function EventDetailPage() {
                           />
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-start justify-between gap-2">
-                              <span className="text-sm font-bold">{ticket.name}</span>
-                              <span className="text-sm font-extrabold tabular-nums">
+                              <span className="text-sm font-medium">{ticket.name}</span>
+                              <span className="text-sm font-semibold tabular-nums">
                                 {ticket.price === 0 ? 'Gratis' : formatIDR(ticket.price)}
                               </span>
                             </div>
@@ -307,7 +307,7 @@ export function EventDetailPage() {
                             ) : null}
                             <p
                               className={cn(
-                                'mt-3 text-xs font-semibold',
+                                'mt-3 text-xs font-medium',
                                 available ? 'text-emerald-700' : 'text-slate-500',
                               )}
                             >
@@ -339,7 +339,7 @@ export function EventDetailPage() {
               <div className="mt-6 flex flex-col gap-4 border-t border-slate-200 pt-5 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-xs text-slate-500">Harga per tiket</p>
-                  <p className="mt-1 text-xl font-extrabold">{priceLabel}</p>
+                  <p className="mt-1 text-xl font-semibold">{priceLabel}</p>
                 </div>
                 <div className="sm:min-w-52">{bookingButton}</div>
               </div>
@@ -349,14 +349,14 @@ export function EventDetailPage() {
               </p>
             </TabsContent>
             <TabsContent value="rules" className="detail-tab-content">
-              <h2 className="mb-4 text-lg font-bold">Syarat & ketentuan</h2>
+              <h2 className="mb-4 text-lg font-semibold">Syarat & ketentuan</h2>
               <div className="event-description">
                 <ReactMarkdown>
                   {event.rules ||
                     'Penyelenggara belum menambahkan ketentuan khusus. Baca syarat layanan Gofest sebelum memesan.'}
                 </ReactMarkdown>
               </div>
-              <h2 className="mb-4 mt-8 text-lg font-bold">Pengembalian dana</h2>
+              <h2 className="mb-4 mt-8 text-lg font-semibold">Pengembalian dana</h2>
               <div className="event-description">
                 <ReactMarkdown>
                   {event.refundPolicy ||
@@ -365,7 +365,7 @@ export function EventDetailPage() {
               </div>
             </TabsContent>
             <TabsContent value="location" className="detail-tab-content">
-              <h2 className="text-lg font-bold">
+              <h2 className="text-lg font-semibold">
                 {event.type === 'ONLINE'
                   ? 'Ikuti dari mana saja'
                   : (event.venueName ?? 'Lokasi menyusul')}
@@ -394,7 +394,7 @@ export function EventDetailPage() {
         <div className="mobile-booking">
           <div className="min-w-0">
             <p className="truncate text-xs text-slate-500">{selected?.name}</p>
-            <p className="mt-1 font-extrabold tabular-nums">{priceLabel}</p>
+            <p className="mt-1 font-semibold tabular-nums">{priceLabel}</p>
           </div>
           <div className="max-w-[60%]">{bookingButton}</div>
         </div>

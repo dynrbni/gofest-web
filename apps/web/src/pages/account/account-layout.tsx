@@ -16,8 +16,8 @@ export function AccountLayout() {
       <div className="container max-w-6xl py-8 sm:py-10">
         <header className="account-welcome">
           <div>
-            <p className="text-xs font-semibold text-blue-700">Akun Gofest</p>
-            <h1 className="mt-2 text-2xl font-extrabold sm:text-3xl">
+            <p className="text-xs font-medium text-blue-700">Akun Gofest</p>
+            <h1 className="mt-2 text-2xl font-semibold sm:text-3xl">
               Halo, {user?.name ?? 'teman Gofest'}!
             </h1>
             <p className="mt-2 text-sm text-slate-500">
@@ -39,7 +39,7 @@ export function AccountLayout() {
               end={tab.end}
               className={({ isActive }) =>
                 cn(
-                  'flex min-h-12 shrink-0 items-center gap-2 border-b-2 px-1 text-sm font-semibold transition-colors',
+                  'flex min-h-12 shrink-0 items-center gap-2 border-b-2 px-1 text-sm font-medium transition-colors',
                   isActive
                     ? 'border-blue-600 text-blue-700'
                     : 'border-transparent text-slate-500 hover:text-blue-700',

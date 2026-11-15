@@ -69,10 +69,10 @@ function UserMenu() {
           className="flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 px-2 py-1.5"
           aria-label={`Menu akun ${user.name}`}
         >
-          <span className="flex size-7 items-center justify-center rounded-full bg-blue-50 text-xs font-bold text-blue-700">
+          <span className="flex size-7 items-center justify-center rounded-full bg-blue-50 text-xs font-medium text-blue-700">
             {initials}
           </span>
-          <span className="hidden max-w-24 truncate text-sm font-semibold xl:block">
+          <span className="hidden max-w-24 truncate text-sm font-medium xl:block">
             {user.name}
           </span>
           <ChevronDown className="size-4" aria-hidden />
@@ -159,7 +159,7 @@ function CategoryMenu() {
       <Dialog.Trigger asChild>
         <button
           type="button"
-          className="category-menu-trigger flex min-h-11 items-center gap-2 rounded-lg px-3 text-sm font-bold hover:bg-blue-50 data-[state=open]:bg-blue-50 data-[state=open]:text-blue-700"
+          className="category-menu-trigger flex min-h-11 items-center gap-2 rounded-lg px-3 text-sm font-medium hover:bg-blue-50 data-[state=open]:bg-blue-50 data-[state=open]:text-blue-700"
         >
           <Compass className="size-4" aria-hidden />
           {t('Kategori', 'Categories')}
@@ -174,7 +174,7 @@ function CategoryMenu() {
           aria-describedby={undefined}
         >
           <div className="mb-5 flex items-center justify-between gap-4">
-            <Dialog.Title className="text-xl font-extrabold">
+            <Dialog.Title className="text-xl font-semibold">
               {t('Kategori acara', 'Event categories')}
             </Dialog.Title>
             <Dialog.Close
@@ -211,7 +211,7 @@ function CategoryMenu() {
                 >
                   <CategoryIcon slug={category.slug} />
                   <span className="min-w-0">
-                    <span className="block font-semibold group-hover:text-blue-700">
+                    <span className="block font-medium group-hover:text-blue-700">
                       {categoryName(category, language)}
                     </span>
                     <span className="mt-1 line-clamp-2 text-xs leading-5 text-slate-600">
@@ -241,7 +241,7 @@ function LanguageMenu() {
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-sm font-semibold hover:bg-slate-50"
+          className="flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-sm font-medium hover:bg-slate-50"
           aria-label={t('Pilih bahasa', 'Choose language')}
         >
           <Globe className="size-4" aria-hidden />
@@ -297,14 +297,14 @@ export function PublicLayout() {
           <div className="ml-auto flex shrink-0 items-center gap-3 lg:gap-5">
             <Link
               to={creatorLink}
-              className="hidden items-center gap-1.5 whitespace-nowrap text-sm font-semibold hover:text-blue-700 lg:flex"
+              className="hidden items-center gap-1.5 whitespace-nowrap text-sm font-medium hover:text-blue-700 lg:flex"
             >
               <PlusCircle className="size-4" aria-hidden />
               {t('Buat acara', 'Create event')}
             </Link>
             <Link
               to="/account/orders"
-              className="hidden items-center gap-1.5 whitespace-nowrap text-sm font-semibold hover:text-blue-700 xl:flex"
+              className="hidden items-center gap-1.5 whitespace-nowrap text-sm font-medium hover:text-blue-700 xl:flex"
             >
               <Ticket className="size-4" aria-hidden />
               {t('Tiket saya', 'My tickets')}
@@ -375,7 +375,7 @@ export function PublicLayout() {
               </Link>
             </div>
             <div>
-              <h2 className="text-sm font-bold">{t('Jelajahi Gofest', 'Explore Gofest')}</h2>
+              <h2 className="text-sm font-semibold">{t('Jelajahi Gofest', 'Explore Gofest')}</h2>
               <ul className="footer-links">
                 <li>
                   <Link to="/events">{t('Semua acara', 'All events')}</Link>
@@ -394,7 +394,7 @@ export function PublicLayout() {
               </ul>
             </div>
             <div>
-              <h2 className="text-sm font-bold">{t('Informasi', 'Information')}</h2>
+              <h2 className="text-sm font-semibold">{t('Informasi', 'Information')}</h2>
               <ul className="footer-links">
                 <li>
                   <Link to="/terms">{t('Syarat & ketentuan', 'Terms & conditions')}</Link>

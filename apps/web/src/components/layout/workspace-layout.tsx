@@ -74,14 +74,14 @@ export function WorkspaceLayout({
             </SheetContent>
           </Sheet>
           <Logo className="lg:hidden" />
-          <span className="ml-3 hidden border-l border-slate-200 pl-5 text-sm font-semibold text-slate-500 sm:inline lg:ml-0 lg:border-0 lg:pl-0">
+          <span className="ml-3 hidden border-l border-slate-200 pl-5 text-sm font-medium text-slate-500 sm:inline lg:ml-0 lg:border-0 lg:pl-0">
             {workspace}
           </span>
         </div>
         <div className="flex items-center gap-3">
           <Link
             to="/"
-            className="hidden min-h-11 items-center gap-2 px-2 text-xs font-semibold text-slate-600 hover:text-blue-700 sm:flex"
+            className="hidden min-h-11 items-center gap-2 px-2 text-xs font-medium text-slate-600 hover:text-blue-700 sm:flex"
           >
             Lihat halaman publik
             <ArrowUpRight className="size-4" aria-hidden />
@@ -91,7 +91,7 @@ export function WorkspaceLayout({
             onClick={() => {
               void logout().then(() => navigate('/'));
             }}
-            className="flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 px-3 text-xs font-semibold text-slate-600 hover:bg-rose-50 hover:text-rose-700"
+            className="flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 px-3 text-xs font-medium text-slate-600 hover:bg-rose-50 hover:text-rose-700"
           >
             <LogOut className="size-4" aria-hidden />
             Keluar
@@ -101,21 +101,21 @@ export function WorkspaceLayout({
       <div className="flex">
         <aside className="sticky top-[76px] hidden h-[calc(100dvh-76px)] w-60 shrink-0 flex-col border-r border-slate-200 bg-white px-4 py-7 lg:flex">
           <Logo className="mb-7 px-3" />
-          <p className="mb-5 px-3 text-xs font-semibold text-slate-500">{title}</p>
+          <p className="mb-5 px-3 text-xs font-medium text-slate-500">{title}</p>
           {sidebar}
           <div className="mt-auto border-t border-slate-200 px-3 pt-5">
             <div className="flex items-center gap-3">
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-sm font-bold text-blue-700">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-sm font-medium text-blue-700">
                 {user?.name.charAt(0)}
               </span>
               <div className="min-w-0">
-                <p className="truncate text-xs font-bold">{user?.name}</p>
+                <p className="truncate text-xs font-medium">{user?.name}</p>
                 <p className="mt-1 truncate text-[11px] text-slate-500">{user?.email}</p>
               </div>
             </div>
             <Link
               to="/account/orders"
-              className="mt-4 flex min-h-10 items-center gap-2 text-xs font-semibold text-blue-700"
+              className="mt-4 flex min-h-10 items-center gap-2 text-xs font-medium text-blue-700"
             >
               <Ticket className="size-4" aria-hidden />
               Tiket & pesanan saya

@@ -41,7 +41,7 @@ export function AccountOrderDetailPage() {
       <div>
         <Link
           to="/account/orders"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-ink"
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-ink"
         >
           <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
           Kembali ke daftar pesanan
@@ -49,7 +49,7 @@ export function AccountOrderDetailPage() {
         <div className="mt-3 flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-4">
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-2xl font-bold tracking-tight text-slate-900">Pesanan {order.orderCode}</h2>
+              <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Pesanan {order.orderCode}</h2>
               <OrderStatusBadge status={order.status} />
             </div>
             <p className="mt-1 text-xs text-slate-500">
@@ -60,7 +60,7 @@ export function AccountOrderDetailPage() {
           {isPending ? (
             <Link
               to={`/order/${order.orderCode}`}
-              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-md hover:bg-blue-700"
+              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-medium text-white shadow-md hover:bg-blue-700"
             >
               <CreditCard className="h-4 w-4" aria-hidden />
               Selesaikan Pembayaran
@@ -74,8 +74,8 @@ export function AccountOrderDetailPage() {
           {/* Event information */}
           {order.event ? (
             <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
-              <p className="text-xs font-bold uppercase tracking-wider text-blue-600">Informasi Acara</p>
-              <h3 className="mt-1 text-lg font-bold text-slate-900">
+              <p className="text-xs font-medium uppercase tracking-wider text-blue-600">Informasi Acara</p>
+              <h3 className="mt-1 text-lg font-semibold text-slate-900">
                 <Link to={`/events/${order.event.slug}`} className="hover:text-blue-600">
                   {order.event.title}
                 </Link>
@@ -95,7 +95,7 @@ export function AccountOrderDetailPage() {
 
           {/* Tickets issued */}
           <div className="space-y-3">
-            <h3 className="text-base font-bold text-slate-900">
+            <h3 className="text-base font-semibold text-slate-900">
               Tiket Digital ({order.tickets?.length ?? 0})
             </h3>
 
@@ -108,17 +108,17 @@ export function AccountOrderDetailPage() {
                   >
                     <div>
                       <div className="flex items-center justify-between gap-2">
-                        <span className="font-mono text-xs font-bold text-blue-600">{ticket.ticketCode}</span>
+                        <span className="font-mono text-xs font-medium text-blue-600">{ticket.ticketCode}</span>
                         <TicketStatusBadge status={ticket.status} />
                       </div>
-                      <p className="mt-2 text-sm font-bold text-slate-900">{ticket.holderName}</p>
+                      <p className="mt-2 text-sm font-medium text-slate-900">{ticket.holderName}</p>
                       <p className="text-xs text-slate-400">{ticket.holderEmail}</p>
                     </div>
 
                     <div className="mt-4 border-t border-dashed border-slate-200 pt-3">
                       <Link
                         to={`/ticket/${ticket.ticketCode}`}
-                        className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 underline underline-offset-4 hover:text-blue-800"
+                        className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-600 underline underline-offset-4 hover:text-blue-800"
                       >
                         <QrCode className="h-3.5 w-3.5" aria-hidden />
                         Buka Tiket & QR Code
@@ -139,29 +139,29 @@ export function AccountOrderDetailPage() {
 
         {/* Pricing Summary */}
         <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs h-fit">
-          <h3 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-3">Ringkasan Biaya</h3>
+          <h3 className="text-base font-semibold text-slate-900 border-b border-slate-100 pb-3">Ringkasan Biaya</h3>
           <div className="mt-4 space-y-2 text-xs">
             <div className="flex justify-between text-slate-600">
               <span>Subtotal Tiket</span>
-              <span className="font-bold tabular-nums text-slate-900">{formatIDR(order.subtotal)}</span>
+              <span className="font-medium tabular-nums text-slate-900">{formatIDR(order.subtotal)}</span>
             </div>
             {order.discount ? (
               <div className="flex justify-between text-emerald-600">
                 <span>Diskon Promo</span>
-                <span className="font-bold tabular-nums">− {formatIDR(order.discount)}</span>
+                <span className="font-medium tabular-nums">− {formatIDR(order.discount)}</span>
               </div>
             ) : null}
             <div className="flex justify-between text-slate-600">
               <span>Biaya Layanan</span>
-              <span className="font-bold tabular-nums text-slate-900">{formatIDR(order.platformFee)}</span>
+              <span className="font-medium tabular-nums text-slate-900">{formatIDR(order.platformFee)}</span>
             </div>
-            <div className="border-t border-slate-200 pt-3 flex justify-between text-sm font-black text-slate-900">
+            <div className="border-t border-slate-200 pt-3 flex justify-between text-sm font-semibold text-slate-900">
               <span>Total Bayar</span>
               <span className="text-base text-blue-600 tabular-nums">{formatIDR(order.total)}</span>
             </div>
           </div>
           <div className="mt-6 border-t border-slate-100 pt-4 text-xs text-slate-500 space-y-1">
-            <p className="font-bold text-slate-800">Data Pembeli:</p>
+            <p className="font-medium text-slate-800">Data Pembeli:</p>
             <p>{order.buyerName}</p>
             <p>{order.buyerEmail}</p>
             {order.buyerPhone ? <p>{order.buyerPhone}</p> : null}

@@ -96,7 +96,7 @@ export function AdminSettingsPage() {
   return (
     <div className="max-w-xl space-y-6">
       <div className="border-b border-warm-border pb-4">
-        <h1 className="font-display text-3xl font-bold tracking-tightest">Konfigurasi Platform</h1>
+        <h1 className="font-display text-3xl font-semibold tracking-tightest">Konfigurasi Platform</h1>
         <p className="mt-1 text-xs text-muted-foreground">
           Pengaturan global untuk biaya layanan platform dan durasi reservasi kuota checkout
         </p>

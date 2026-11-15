@@ -219,7 +219,7 @@ export function CheckoutPage() {
       <main className="container max-w-3xl py-14">
         <Link
           to="/events"
-          className="inline-flex items-center gap-2 text-sm font-bold text-blue-600 hover:underline"
+          className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:underline"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden />
           Kembali ke acara
@@ -240,7 +240,7 @@ export function CheckoutPage() {
     <main className="container max-w-6xl py-8 sm:py-10">
       <Link
         to={`/events/${event.slug}`}
-        className="inline-flex items-center gap-2 text-sm font-bold text-blue-600 hover:underline"
+        className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:underline"
       >
         <ArrowLeft className="h-4 w-4" aria-hidden />
         Kembali ke detail acara
@@ -270,8 +270,8 @@ export function CheckoutPage() {
         </li>
       </ol>
       <div className="mt-6 border-b border-slate-200 pb-5">
-        <p className="text-xs font-semibold text-blue-700">Selesaikan pesananmu</p>
-        <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
+        <p className="text-xs font-medium text-blue-700">Selesaikan pesananmu</p>
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
           {event.title}
         </h1>
         <p className="mt-2 text-sm text-slate-500">
@@ -299,13 +299,13 @@ export function CheckoutPage() {
             className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs"
           >
             <div className="flex items-end justify-between gap-3 border-b border-slate-100 pb-3">
-              <h2 id="tickets-heading" className="text-base font-bold text-slate-900">
+              <h2 id="tickets-heading" className="text-base font-semibold text-slate-900">
                 1. Pilih Jumlah Tiket
               </h2>
               <p className="text-xs text-slate-400">Maksimal 10 tiket per pesanan</p>
             </div>
             {errors.items ? (
-              <p className="mt-2 text-xs font-semibold text-rose-600">{errors.items}</p>
+              <p className="mt-2 text-xs font-medium text-rose-600">{errors.items}</p>
             ) : null}
             <div className="mt-2 divide-y divide-slate-100">
               {sellable.length === 0 ? (
@@ -321,7 +321,7 @@ export function CheckoutPage() {
                     <div key={ticket.id} className="py-4 first:pt-2 last:pb-0">
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <p className="text-sm font-bold text-slate-900">{ticket.name}</p>
+                          <p className="text-sm font-medium text-slate-900">{ticket.name}</p>
                           {ticket.description ? (
                             <p className="mt-0.5 max-w-md text-xs leading-relaxed text-slate-500">
                               {ticket.description}
@@ -333,7 +333,7 @@ export function CheckoutPage() {
                           </p>
                         </div>
                         <div className="flex items-center gap-3">
-                          <p className="text-sm font-extrabold text-slate-900 tabular-nums">
+                          <p className="text-sm font-semibold text-slate-900 tabular-nums">
                             {ticket.price === 0 ? 'Gratis' : formatIDR(ticket.price)}
                           </p>
                           <div className="flex items-center rounded-xl border border-slate-200 bg-slate-50">
@@ -349,7 +349,7 @@ export function CheckoutPage() {
                               <Minus className="h-4 w-4" aria-hidden />
                             </button>
                             <span
-                              className="w-8 text-center text-sm font-bold text-slate-900 tabular-nums"
+                              className="w-8 text-center text-sm font-medium text-slate-900 tabular-nums"
                               aria-live="polite"
                             >
                               {quantity}
@@ -381,7 +381,7 @@ export function CheckoutPage() {
           >
             <h2
               id="buyer-heading"
-              className="border-b border-slate-100 pb-3 text-base font-bold text-slate-900"
+              className="border-b border-slate-100 pb-3 text-base font-semibold text-slate-900"
             >
               2. Data Informasi Pembeli
             </h2>
@@ -434,7 +434,7 @@ export function CheckoutPage() {
             {!user ? (
               <p className="mt-4 text-xs text-slate-500">
                 Kamu memesan sebagai tamu.{' '}
-                <Link to="/login" className="font-bold text-blue-600 underline underline-offset-4">
+                <Link to="/login" className="font-medium text-blue-600 underline underline-offset-4">
                   Masuk ke akun
                 </Link>{' '}
                 untuk menyimpan tiket langsung di akunmu.
@@ -448,7 +448,7 @@ export function CheckoutPage() {
           >
             <h2
               id="coupon-heading"
-              className="border-b border-slate-100 pb-3 text-base font-bold text-slate-900"
+              className="border-b border-slate-100 pb-3 text-base font-semibold text-slate-900"
             >
               3. Kode Promo & Voucher Diskon
             </h2>
@@ -467,7 +467,7 @@ export function CheckoutPage() {
                 type="button"
                 variant="outline"
                 onClick={applyCoupon}
-                className="h-11 rounded-xl border-slate-200 font-bold text-slate-700 hover:bg-slate-100"
+                className="h-11 rounded-xl border-slate-200 font-medium text-slate-700 hover:bg-slate-100"
               >
                 Terapkan
               </Button>
@@ -476,20 +476,20 @@ export function CheckoutPage() {
                   type="button"
                   variant="ghost"
                   onClick={resetCoupon}
-                  className="h-11 rounded-xl text-rose-600 hover:bg-rose-50 font-bold"
+                  className="h-11 rounded-xl text-rose-600 hover:bg-rose-50 font-medium"
                 >
                   Hapus
                 </Button>
               ) : null}
             </div>
             {quoteError ? (
-              <p className="mt-2 max-w-md text-xs font-semibold text-rose-600" role="alert">
+              <p className="mt-2 max-w-md text-xs font-medium text-rose-600" role="alert">
                 {quoteError instanceof ApiError
                   ? quoteError.message
                   : 'Kode promo tidak valid atau kuota habis.'}
               </p>
             ) : couponCode && quote?.couponCode ? (
-              <p className="mt-2 text-xs font-semibold text-emerald-600">
+              <p className="mt-2 text-xs font-medium text-emerald-600">
                 ✓ Kode promo {quote.couponCode} berhasil diterapkan!
               </p>
             ) : null}
@@ -511,14 +511,14 @@ export function CheckoutPage() {
               />
               <span>
                 Saya telah membaca dan menyetujui{' '}
-                <Link to="/terms" className="font-bold text-blue-600 underline underline-offset-4">
+                <Link to="/terms" className="font-medium text-blue-600 underline underline-offset-4">
                   Syarat & Ketentuan Layanan
                 </Link>
                 . Tiket berlaku sah sesuai aturan organizer.
               </span>
             </label>
             {errors.terms ? (
-              <p className="mt-2 text-xs font-semibold text-rose-600">{errors.terms}</p>
+              <p className="mt-2 text-xs font-medium text-rose-600">{errors.terms}</p>
             ) : null}
           </section>
         </div>
@@ -526,7 +526,7 @@ export function CheckoutPage() {
         <aside className="lg:sticky lg:top-36 lg:h-fit">
           <div className="booking-panel">
             <div className="border-b border-slate-100 pb-4">
-              <h2 className="text-base font-bold text-slate-900">Ringkasan Pembayaran</h2>
+              <h2 className="text-base font-semibold text-slate-900">Ringkasan Pembayaran</h2>
               <p className="mt-0.5 text-xs text-slate-400">
                 Cek tiket dan total sebelum melanjutkan.
               </p>
@@ -546,7 +546,7 @@ export function CheckoutPage() {
                       <span>
                         {ticket.name} × {item.quantity}
                       </span>
-                      <span className="font-bold tabular-nums">
+                      <span className="font-medium tabular-nums">
                         {formatIDR(ticket.price * item.quantity)}
                       </span>
                     </div>
@@ -556,25 +556,25 @@ export function CheckoutPage() {
               <div className="my-2 border-t border-dashed border-slate-200" />
               <div className="flex justify-between gap-3 text-xs text-slate-600">
                 <span>Subtotal</span>
-                <span className="font-bold tabular-nums">
+                <span className="font-medium tabular-nums">
                   {formatIDR(quote?.subtotal ?? localSubtotal)}
                 </span>
               </div>
               <div className="flex justify-between gap-3 text-xs text-emerald-600">
                 <span>Potongan Promo</span>
-                <span className="font-bold tabular-nums">
+                <span className="font-medium tabular-nums">
                   {quote?.discount ? `− ${formatIDR(quote.discount)}` : formatIDR(0)}
                 </span>
               </div>
               <div className="flex justify-between gap-3 text-xs text-slate-600">
                 <span>Biaya Layanan Platform</span>
-                <span className="font-bold tabular-nums">
+                <span className="font-medium tabular-nums">
                   {quoteLoading ? 'Menghitung...' : quote ? formatIDR(quote.platformFee) : '—'}
                 </span>
               </div>
               <div className="mt-3 flex items-baseline justify-between border-t border-slate-200 pt-3">
-                <span className="font-bold text-slate-900">Total Pembayaran</span>
-                <span className="text-xl font-black text-blue-600 tabular-nums">
+                <span className="font-medium text-slate-900">Total Pembayaran</span>
+                <span className="text-xl font-semibold text-blue-600 tabular-nums">
                   {quote ? formatIDR(quote.total) : formatIDR(localSubtotal)}
                 </span>
               </div>
@@ -589,7 +589,7 @@ export function CheckoutPage() {
               <Button
                 type="submit"
                 disabled={submitting || totalQuantity === 0 || sellable.length === 0}
-                className="mt-4 h-12 w-full rounded-xl bg-blue-600 text-sm font-bold text-white shadow-md transition-all hover:bg-blue-700 active:scale-95"
+                className="mt-4 h-12 w-full rounded-xl bg-blue-600 text-sm font-medium text-white shadow-md transition-all hover:bg-blue-700 active:scale-95"
               >
                 {submitting ? 'Memproses Pesanan...' : 'Lanjut ke Pembayaran'}
               </Button>

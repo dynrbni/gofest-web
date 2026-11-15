@@ -52,11 +52,11 @@ export function EventPoster({
         />
       ) : (
         <div className="flex h-full flex-col justify-between bg-blue-950 p-5 text-white">
-          <span className="flex items-center gap-2 text-xs font-semibold text-blue-200">
+          <span className="flex items-center gap-2 text-xs font-medium text-blue-200">
             <Ticket className="size-4" aria-hidden />
             {category}
           </span>
-          <p className="line-clamp-2 text-xl font-extrabold leading-tight">{title}</p>
+          <p className="line-clamp-2 text-xl font-semibold leading-tight">{title}</p>
           <span className="text-xs text-blue-200">
             {date.day} {date.month} {date.year}
             {city ? ` · ${city}` : ''}
@@ -79,8 +79,8 @@ export function DateBlock({
   const date = dateParts(startsAt, timezone);
   return (
     <div className={cn('flex items-baseline gap-2', className)}>
-      <span className="text-2xl font-extrabold text-blue-700">{date.day}</span>
-      <span className="text-xs font-semibold text-slate-600">
+      <span className="text-2xl font-semibold text-blue-700">{date.day}</span>
+      <span className="text-xs font-medium text-slate-600">
         {date.month} {date.year}
       </span>
     </div>
@@ -143,7 +143,7 @@ export function EventCard({
                 ? t('Acara online', 'Online event')
                 : event.city || t('Lokasi menyusul', 'Location to be announced')}
             </p>
-            <h3 className="mt-2 truncate text-base font-extrabold leading-6 group-hover:text-blue-700">
+            <h3 className="mt-2 truncate text-base font-semibold leading-6 group-hover:text-blue-700">
               {event.title}
             </h3>
             <p className="mt-2 truncate text-sm text-slate-600">
@@ -151,7 +151,7 @@ export function EventCard({
             </p>
             <div className="mt-3 border-t border-dashed border-slate-200 pt-3">
               <span className="text-xs text-slate-500">{t('Mulai dari', 'From')}</span>
-              <p className="mt-1 text-base font-extrabold tabular-nums text-slate-900">{price}</p>
+              <p className="mt-1 text-base font-semibold tabular-nums text-slate-900">{price}</p>
             </div>
           </div>
         ) : (
@@ -160,7 +160,7 @@ export function EventCard({
               <CalendarDays className="size-3.5 shrink-0" aria-hidden />
               {date.day} {date.month} {date.year}
             </p>
-            <h3 className="mt-2 line-clamp-2 min-h-[2.75rem] text-sm font-extrabold leading-snug transition-colors group-hover:text-blue-700">
+            <h3 className="mt-2 line-clamp-2 min-h-[2.75rem] text-sm font-semibold leading-snug transition-colors group-hover:text-blue-700">
               {event.title}
             </h3>
             <p className="mt-2 flex min-w-0 items-center gap-1 text-xs text-slate-500">
@@ -178,10 +178,10 @@ export function EventCard({
                   ? t('Mulai dari', 'From')
                   : t('Tiket acara', 'Event tickets')}
               </span>
-              <p className="mt-0.5 text-base font-extrabold tabular-nums text-slate-900">{price}</p>
+              <p className="mt-0.5 text-base font-semibold tabular-nums text-slate-900">{price}</p>
             </div>
             <div className="mt-auto flex items-center gap-2 border-t border-slate-100 pt-3">
-              <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[10px] font-bold text-slate-700">
+              <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[10px] font-medium text-slate-700">
                 {event.organizer.organizationName.charAt(0).toUpperCase()}
               </span>
               <span className="truncate text-xs text-slate-600">

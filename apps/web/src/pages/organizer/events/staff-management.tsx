@@ -72,7 +72,7 @@ export function EventStaffManagementPage() {
   return (
     <div className="space-y-6">
       <div className="border-b border-warm-border pb-4">
-        <h2 className="text-xl font-bold tracking-tight text-ink">
+        <h2 className="text-xl font-semibold tracking-tight text-ink">
           Petugas Check-In (Event Staff)
         </h2>
         <p className="mt-0.5 text-xs text-muted-foreground">
@@ -86,7 +86,7 @@ export function EventStaffManagementPage() {
         onSubmit={handleAddStaff}
         className="rounded-md border border-warm-border bg-card p-5 space-y-4 max-w-xl"
       >
-        <h3 className="text-sm font-bold text-ink flex items-center gap-2">
+        <h3 className="text-sm font-semibold text-ink flex items-center gap-2">
           <UserPlus className="h-4 w-4" aria-hidden />
           Tugaskan Petugas Baru
         </h3>
@@ -144,7 +144,7 @@ export function EventStaffManagementPage() {
           className="overflow-x-auto rounded-md border border-warm-border bg-card"
         >
           <table className="w-full text-left text-xs">
-            <thead className="border-b border-warm-border bg-warm-muted/40 font-semibold text-ink">
+            <thead className="border-b border-warm-border bg-warm-muted/40 font-medium text-ink">
               <tr>
                 <th className="px-4 py-3">Nama Petugas</th>
                 <th className="px-4 py-3">Email</th>
@@ -156,12 +156,12 @@ export function EventStaffManagementPage() {
             <tbody className="divide-y divide-warm-border text-ink">
               {staffList.map((assignment) => (
                 <tr key={assignment.id} className="hover:bg-warm-muted/20">
-                  <td className="px-4 py-3 font-semibold text-ink">
+                  <td className="px-4 py-3 font-medium text-ink">
                     {assignment.user?.name ?? 'Petugas'}
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">{assignment.user?.email}</td>
                   <td className="px-4 py-3">
-                    <span className="rounded bg-warm-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-ink">
+                    <span className="rounded bg-warm-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-ink">
                       {assignment.role}
                     </span>
                   </td>
@@ -173,7 +173,7 @@ export function EventStaffManagementPage() {
                       trigger={
                         <button
                           type="button"
-                          className="inline-flex items-center gap-1 text-[11px] font-semibold text-brick hover:underline"
+                          className="inline-flex items-center gap-1 text-[11px] font-medium text-brick hover:underline"
                         >
                           <Trash2 className="h-3.5 w-3.5" aria-hidden />
                           Hapus

@@ -87,7 +87,7 @@ export function HomePage() {
               <Ticket className="size-7" aria-hidden />
             </span>
             <div>
-              <h2 id="creator-heading" className="text-xl font-extrabold sm:text-2xl">
+              <h2 id="creator-heading" className="text-xl font-semibold sm:text-2xl">
                 {t('Punya ide acara? Waktunya jadi nyata.', 'An event in mind? Make it happen.')}
               </h2>
               <p className="mt-2 text-sm text-slate-600">

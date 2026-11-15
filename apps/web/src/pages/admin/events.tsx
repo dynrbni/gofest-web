@@ -92,7 +92,7 @@ export function AdminEventsPage() {
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 border-b border-warm-border pb-6 sm:flex-row sm:items-center">
         <div>
-          <h1 className="font-display text-3xl font-bold tracking-tightest">Moderasi Acara</h1>
+          <h1 className="font-display text-3xl font-semibold tracking-tightest">Moderasi Acara</h1>
           <p className="mt-1 text-xs text-muted-foreground">
             Tinjau konten dan publikasi acara yang diajukan oleh penyelenggara di Gofest
           </p>
@@ -142,7 +142,7 @@ export function AdminEventsPage() {
             className="overflow-x-auto rounded-md border border-warm-border bg-card"
           >
             <table className="w-full text-left text-xs">
-              <thead className="border-b border-warm-border bg-warm-muted/40 font-semibold text-ink">
+              <thead className="border-b border-warm-border bg-warm-muted/40 font-medium text-ink">
                 <tr>
                   <th className="px-4 py-3">Judul Acara</th>
                   <th className="px-4 py-3">Penyelenggara</th>
@@ -155,7 +155,7 @@ export function AdminEventsPage() {
                 {events.map((event) => (
                   <tr key={event.id} className="hover:bg-warm-muted/20">
                     <td className="px-4 py-3">
-                      <p className="font-bold text-ink">{event.title}</p>
+                      <p className="font-medium text-ink">{event.title}</p>
                       <p className="text-[11px] text-muted-foreground">
                         {event.category?.name ?? 'Umum'} · /events/{event.slug}
                       </p>
@@ -176,7 +176,7 @@ export function AdminEventsPage() {
                             to={`/events/${event.slug}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-[11px] font-semibold text-muted-foreground hover:text-ink mr-2"
+                            className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-ink mr-2"
                           >
                             Buka
                             <ExternalLink className="h-3 w-3" aria-hidden />
@@ -191,7 +191,7 @@ export function AdminEventsPage() {
                                 setReviewModal({ event, action: 'PUBLISHED' });
                                 setReviewNote('');
                               }}
-                              className="rounded bg-olive px-2.5 py-1 text-[11px] font-semibold text-paper hover:bg-olive/90"
+                              className="rounded bg-olive px-2.5 py-1 text-[11px] font-medium text-paper hover:bg-olive/90"
                             >
                               Publikasikan
                             </button>
@@ -201,7 +201,7 @@ export function AdminEventsPage() {
                                 setReviewModal({ event, action: 'REJECTED' });
                                 setReviewNote('');
                               }}
-                              className="rounded border border-brick px-2.5 py-1 text-[11px] font-semibold text-brick hover:bg-brick/10"
+                              className="rounded border border-brick px-2.5 py-1 text-[11px] font-medium text-brick hover:bg-brick/10"
                             >
                               Tolak
                             </button>
