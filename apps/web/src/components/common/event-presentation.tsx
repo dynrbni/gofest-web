@@ -1,4 +1,4 @@
-import { CalendarDays, Ticket } from 'lucide-react';
+import { CalendarDays, Pause, Play, Ticket } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -7,6 +7,7 @@ import { assetUrl } from '@/lib/assets';
 import { dateParts, formatIDR } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/lib/language';
+import { OverflowMarquee } from './overflow-marquee';
 
 export function EventPoster({
   title,
@@ -117,6 +118,9 @@ export function OrganizerAvatar({
 
 export function EventCard({ event }: { event: EventSummary }) {
   const { t } = useLanguage();
+  const [titleOverflows, setTitleOverflows] = useState(false);
+  const [creatorOverflows, setCreatorOverflows] = useState(false);
+  const [textPaused, setTextPaused] = useState(false);
   const dateFormatter = new Intl.DateTimeFormat('id-ID', {
     day: '2-digit',
     month: 'long',
@@ -132,7 +136,7 @@ export function EventCard({ event }: { event: EventSummary }) {
         : t('Belum dijual', 'Not on sale');
   const ended = event.status === 'COMPLETED' || new Date(event.endsAt).getTime() <= Date.now();
   return (
-    <article className="event-card group flex flex-col">
+    <article className="event-card group relative flex flex-col">
       <Link to={`/events/${event.slug}`} className="flex min-w-0 flex-1 flex-col">
         <div className="relative shrink-0">
           <EventPoster
@@ -157,8 +161,12 @@ export function EventCard({ event }: { event: EventSummary }) {
           ) : null}
         </div>
         <div className="event-card-information mt-3 flex min-w-0 flex-1 flex-col rounded-t-2xl bg-white px-4 pt-4">
-          <h3 className="line-clamp-2 min-h-12 text-base font-semibold leading-6 transition-colors group-hover:text-blue-700">
-            {event.title}
+          <h3 className="min-w-0 text-base font-semibold leading-6 transition-colors group-hover:text-blue-700">
+            <OverflowMarquee
+              text={event.title}
+              paused={textPaused}
+              onOverflowChange={setTitleOverflows}
+            />
           </h3>
           <p className="mt-3 flex min-h-10 items-start gap-2 text-sm leading-6 text-slate-600">
             <CalendarDays className="mt-0.5 size-5 shrink-0 text-blue-600" aria-hidden />
@@ -189,9 +197,37 @@ export function EventCard({ event }: { event: EventSummary }) {
             name={event.organizer.organizationName}
             logoKey={event.organizer.logoKey}
           />
-          <span className="min-w-0 truncate">{event.organizer.organizationName}</span>
+          <OverflowMarquee
+            text={event.organizer.organizationName}
+            paused={textPaused}
+            onOverflowChange={setCreatorOverflows}
+            className="flex-1"
+          />
         </Link>
       </div>
+      {titleOverflows || creatorOverflows ? (
+        <button
+          type="button"
+          className="event-marquee-control absolute right-5 top-5 z-10 flex size-11 items-center justify-center rounded-full bg-white text-blue-800 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+          aria-label={
+            textPaused
+              ? t('Lanjutkan teks bergerak', 'Resume scrolling text')
+              : t('Jeda teks bergerak', 'Pause scrolling text')
+          }
+          title={
+            textPaused
+              ? t('Lanjutkan teks bergerak', 'Resume scrolling text')
+              : t('Jeda teks bergerak', 'Pause scrolling text')
+          }
+          onClick={() => setTextPaused((value) => !value)}
+        >
+          {textPaused ? (
+            <Play className="size-4" aria-hidden />
+          ) : (
+            <Pause className="size-4" aria-hidden />
+          )}
+        </button>
+      ) : null}
     </article>
   );
 }

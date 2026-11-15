@@ -268,6 +268,25 @@
   .event-card:focus-within {
     @apply ring-2 ring-blue-600 ring-offset-2;
   }
+  .overflow-marquee {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .overflow-marquee-track {
+    display: inline-flex;
+    width: max-content;
+    vertical-align: top;
+  }
+  .overflow-marquee-copy,
+  .overflow-marquee-content {
+    display: inline-block;
+    flex-shrink: 0;
+  }
+  .overflow-marquee[data-overflow='true'] .overflow-marquee-copy {
+    padding-right: 32px;
+  }
   .poster-label {
     @apply absolute left-3 top-3 rounded-md px-2 py-1 text-[11px] font-medium;
   }
@@ -589,7 +608,24 @@
     transform: translateY(0);
   }
 }
+@keyframes overflow-marquee {
+  0%,
+  8% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
 @media (prefers-reduced-motion: no-preference) {
+  .overflow-marquee[data-overflow='true'] .overflow-marquee-track {
+    animation: overflow-marquee var(--marquee-duration) linear infinite;
+  }
+  .overflow-marquee[data-paused='true'] .overflow-marquee-track,
+  .event-card:hover .overflow-marquee-track,
+  .event-card:focus-within .overflow-marquee-track {
+    animation-play-state: paused;
+  }
   .route-content {
     animation: page-enter 240ms ease-out;
   }
@@ -611,6 +647,24 @@
   }
   .event-grid > :nth-child(4) {
     animation-delay: 120ms;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .overflow-marquee-track {
+    display: block;
+    width: auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .overflow-marquee-copy:first-child {
+    display: contents;
+  }
+  .overflow-marquee-content {
+    display: inline;
+  }
+  .overflow-marquee-copy[aria-hidden='true'],
+  .event-marquee-control {
+    display: none;
   }
 }
 @media (max-width: 639px) {

@@ -1,5 +1,12 @@
 # Progress
 
+## Overflow-only event card marquees, 2026-11-15
+
+- Event titles and creator names now use a single-line marquee only when their measured text width exceeds available space. Short labels remain static; dates, prices and creator footers keep aligned positions. ResizeObserver handles responsive widths/font changes and IntersectionObserver pauses offscreen text.
+- Seamless copies preserve full accessible labels while hiding duplicate text from assistive technology. Hover/focus pauses both labels; an independent 44px control pauses/resumes a card persistently. Reduced motion uses static ellipses and full native tooltips.
+- Verification: the new browser regression covers short/long titles and creators, five widths (1440/1024/768/390/320), aligned card rows, dynamic resize, loop geometry, live movement, hover/focus/manual pause, reduced motion and complete labels. No horizontal overflow, browser runtime errors or automated accessibility violations. Creator/card navigation regression also passes. Web typecheck, scoped ESLint and production build pass.
+- Other ongoing workspace edits are preserved outside this change. No database or API changes are required.
+
 ## Creator profiles and shared event cards, 2026-11-15
 
 - Simplified public creator profiles to banner, circular logo, name, join month/year and total public events, following the supplied Artatix reference. Active/past tabs use real event status/end times, URL state and 12-item pagination; drafts/review/cancelled events are excluded from counts and history.
