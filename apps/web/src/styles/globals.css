@@ -405,19 +405,28 @@
     @apply ml-auto flex items-center gap-1 pl-3;
   }
   .auth-page {
-    @apply flex min-h-dvh items-center justify-center bg-white px-5 py-8 sm:py-12;
+    @apply flex min-h-dvh flex-col bg-blue-50 px-5 py-6 sm:py-8;
   }
   .auth-container {
-    @apply mx-auto w-full max-w-[440px];
+    @apply mx-auto grid w-full max-w-[1080px] flex-1 content-center items-center gap-5 py-5 md:grid-cols-2 md:gap-10 md:py-12 lg:gap-20;
+  }
+  .auth-mascot {
+    @apply flex flex-col items-center text-center;
+  }
+  .auth-mascot-image {
+    @apply size-32 object-contain sm:size-40 md:mb-5 md:size-full md:max-w-[380px];
   }
   .auth-form-panel {
-    @apply min-w-0;
+    @apply mx-auto w-full min-w-0 max-w-[460px];
   }
-  .auth-tab {
-    @apply flex min-h-12 items-center justify-center border-b-[3px] border-transparent px-7 text-sm font-semibold text-slate-600 hover:text-blue-700;
+  .auth-switch {
+    @apply mt-3 text-center text-sm leading-6 text-slate-600;
   }
-  .auth-tab[aria-current='page'] {
-    @apply border-blue-600 font-medium text-blue-700;
+  .auth-switch a {
+    @apply inline-flex min-h-6 items-center font-medium text-blue-700 underline-offset-4 hover:underline;
+  }
+  .auth-form-card {
+    @apply mt-6 rounded-2xl border border-blue-100 bg-white p-5 shadow-sm sm:p-7;
   }
   .workspace-surface {
     @apply rounded-xl border border-slate-200 bg-white;

@@ -64,7 +64,7 @@ export function LoginPage() {
 
   return (
     <AuthShell
-      title={t('Senang bertemu lagi.', 'Good to see you again.')}
+      title={t('Masuk ke Gofest', 'Log in to Gofest')}
       lede={t(
         'Masuk untuk membuka tiket dan melanjutkan rencana serumu.',
         'Log in to access your tickets and pick up where you left off.',
@@ -72,9 +72,7 @@ export function LoginPage() {
       footer={
         <>
           {t('Belum punya akun?', 'New to Gofest?')}{' '}
-          <Link to="/register" className="font-medium text-ink underline underline-offset-4">
-            {t('Daftar sekarang', 'Create an account')}
-          </Link>
+          <Link to="/register">{t('Daftar sekarang', 'Create an account')}</Link>
         </>
       }
     >

@@ -76,7 +76,7 @@ export function RegisterPage() {
 
   return (
     <AuthShell
-      title={t('Mulai cerita barumu.', 'Your next story starts here.')}
+      title={t('Buat akun Gofest', 'Create your Gofest account')}
       lede={t(
         'Buat akun untuk menyimpan tiket dan mengelola pesananmu.',
         'Create an account to keep your tickets and manage your orders.',
@@ -84,9 +84,7 @@ export function RegisterPage() {
       footer={
         <>
           {t('Sudah punya akun?', 'Already have an account?')}{' '}
-          <Link to="/login" className="font-medium text-ink underline underline-offset-4">
-            {t('Masuk', 'Log in')}
-          </Link>
+          <Link to="/login">{t('Masuk', 'Log in')}</Link>
         </>
       }
     >
@@ -213,7 +211,10 @@ export function RegisterPage() {
                 {t('Syarat Layanan', 'Terms of service')}
               </Link>{' '}
               {t('dan', 'and')}{' '}
-              <Link to="/privacy" className="font-medium text-blue-600 underline underline-offset-4">
+              <Link
+                to="/privacy"
+                className="font-medium text-blue-600 underline underline-offset-4"
+              >
                 {t('Kebijakan Privasi', 'Privacy policy')}
               </Link>
               .

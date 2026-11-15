@@ -1,7 +1,5 @@
 import type { ReactNode } from 'react';
-import { ArrowLeft } from 'lucide-react';
 import { BrandLogo } from '@/components/common/brand-logo';
-import { Link, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/lib/language';
 
 export function AuthShell({
@@ -16,41 +14,45 @@ export function AuthShell({
   footer?: ReactNode;
 }) {
   const { t } = useLanguage();
-  const location = useLocation();
   return (
     <main className="auth-page">
+      <BrandLogo className="mx-auto shrink-0" />
       <div className="auth-container">
-        <Link
-          to="/events"
-          className="mb-6 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-blue-700 hover:underline"
-        >
-          <ArrowLeft className="size-4" aria-hidden />
-          {t('Kembali ke acara', 'Back to events')}
-        </Link>
+        <div className="auth-mascot">
+          <img
+            src="/assets/gofest-mascot.png"
+            alt={t(
+              'Maskot Gofest, berang-berang biru dengan headphone dan tiket konser',
+              'Gofest mascot, a blue otter wearing headphones and holding a concert ticket',
+            )}
+            width={1254}
+            height={1254}
+            className="auth-mascot-image"
+            fetchPriority="high"
+            draggable={false}
+          />
+          <div className="hidden md:block">
+            <p className="text-2xl font-semibold leading-snug text-blue-800">
+              {t('Ada acara seru yang menunggumu.', 'Your next great event is waiting.')}
+            </p>
+            <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-slate-600">
+              {t(
+                'Dari konser sampai festival, mulai rencanamu di Gofest.',
+                'From concerts to festivals, make your plans with Gofest.',
+              )}
+            </p>
+          </div>
+        </div>
         <section className="auth-form-panel" aria-labelledby="auth-heading">
-          <BrandLogo className="mb-6" />
-          <nav aria-label={t('Akun', 'Account')} className="mb-7 flex border-b border-slate-200">
-            <Link
-              to="/login"
-              aria-current={location.pathname === '/login' ? 'page' : undefined}
-              className="auth-tab"
-            >
-              {t('Masuk', 'Log in')}
-            </Link>
-            <Link
-              to="/register"
-              aria-current={location.pathname === '/register' ? 'page' : undefined}
-              className="auth-tab"
-            >
-              {t('Daftar', 'Sign up')}
-            </Link>
-          </nav>
-          <h1 id="auth-heading" className="text-2xl font-semibold tracking-tight sm:text-3xl">
+          <h1
+            id="auth-heading"
+            className="text-center text-2xl font-semibold tracking-tight sm:text-[28px]"
+          >
             {title}
           </h1>
-          <p className="mt-3 text-sm leading-6 text-slate-600">{lede}</p>
-          <div className="mt-6">{children}</div>
-          {footer ? <div className="mt-6 text-center text-sm text-slate-600">{footer}</div> : null}
+          <p className="mt-3 text-center text-sm leading-6 text-slate-600">{lede}</p>
+          {footer ? <div className="auth-switch">{footer}</div> : null}
+          <div className="auth-form-card">{children}</div>
         </section>
       </div>
     </main>

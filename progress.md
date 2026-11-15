@@ -1,5 +1,12 @@
 # Progress
 
+## Blue mascot authentication, 2026-11-15
+
+- Created an original transparent blue otter concert mascot using the built-in imagegen tool, with headphones, festival wristband and ticket. Saved the 1254px PNG in public/assets; supplied Gofest logo remains unchanged.
+- Matched the new reference with a centered top logo, mascot/form desktop columns, pale blue canvas and one white form card. Mobile retains a compact mascot above the form. Removed the back-to-events action and login/register tabs; a contextual account-switch link remains beneath the heading.
+- Login/register validation, password visibility, recovery, language support and submission handlers are retained. Asset prompt and provenance are recorded in docs/design/gofest-mascot.md.
+- Verification: all ten auth layout checks across five widths, 24 public route/accessibility checks and discovery interactions pass. Lint, package type checks, 45 API tests and both production builds pass.
+
 ## Authentication and public navigation, 2026-11-15
 
 - Removed the direct tickets link from desktop/mobile public navigation and renamed the creator action to Jadi Partner Kami, including the home CTA and footer partner link.
