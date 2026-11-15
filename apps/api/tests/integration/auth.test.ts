@@ -7,10 +7,11 @@ import { verifiedRegistration } from '../helpers';
 const app = createApp();
 
 const buyer = {
+  name: 'Budi Pembeli',
   username: 'budipembeli',
   email: 'budi@example.com',
   phone: '081234567890',
-  password: 'Rahasia123',
+  password: 'Rahasia123!',
 };
 
 describe('auth', () => {
@@ -29,7 +30,7 @@ describe('auth', () => {
 
     const me = await agent.get('/api/v1/auth/me');
     expect(me.status).toBe(200);
-    expect(me.body.data.user.name).toBe(buyer.username);
+    expect(me.body.data.user.name).toBe(buyer.name);
   });
 
   it('rejects duplicate email addresses', async () => {
@@ -92,7 +93,7 @@ describe('auth', () => {
 
     const reset = await request(app)
       .post('/api/v1/auth/reset-password')
-      .send({ token, password: 'PasswordBaru123' });
+      .send({ token, password: 'PasswordBaru123!' });
     expect(reset.status).toBe(200);
 
     const oldLogin = await request(app)
@@ -102,7 +103,7 @@ describe('auth', () => {
 
     const newLogin = await request(app)
       .post('/api/v1/auth/login')
-      .send({ email: buyer.email, password: 'PasswordBaru123' });
+      .send({ email: buyer.email, password: 'PasswordBaru123!' });
     expect(newLogin.status).toBe(200);
   });
 

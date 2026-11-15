@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import { z } from 'zod';
+import { canUseRegistrationTestOtp } from './registration-otp-mode';
 
 const booleanString = z.enum(['true', 'false']).transform((value) => value === 'true');
 
@@ -20,6 +21,7 @@ const envSchema = z.object({
   PAYMENT_PROVIDER: z.enum(['mock']).default('mock'),
   PAYMENT_WEBHOOK_SECRET: z.string().min(16, 'PAYMENT_WEBHOOK_SECRET minimal 16 karakter'),
   EMAIL_PROVIDER: z.enum(['console', 'smtp']).default('console'),
+  REGISTRATION_TEST_OTP: booleanString.default('false'),
   EMAIL_FROM: z.string().min(3).default('Gofest <no-reply@gofest.local>'),
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z.coerce.number().int().optional(),
@@ -48,6 +50,9 @@ const databaseUrl =
   raw.NODE_ENV === 'test' ? (raw.DATABASE_URL_TEST ?? raw.DATABASE_URL) : raw.DATABASE_URL;
 
 if (raw.NODE_ENV === 'production') {
+  if (raw.REGISTRATION_TEST_OTP) {
+    throw new Error('REGISTRATION_TEST_OTP tidak boleh diaktifkan di production');
+  }
   if (raw.PAYMENT_PROVIDER === 'mock') {
     throw new Error('PAYMENT_PROVIDER=mock tidak boleh dipakai di production');
   }
@@ -65,6 +70,11 @@ if (raw.NODE_ENV === 'production') {
 export const env = {
   ...raw,
   DATABASE_URL: databaseUrl,
+  registrationTestOtp: canUseRegistrationTestOtp(
+    raw.NODE_ENV,
+    raw.EMAIL_PROVIDER,
+    raw.REGISTRATION_TEST_OTP,
+  ),
   isDevelopment: raw.NODE_ENV === 'development',
   isProduction: raw.NODE_ENV === 'production',
   isTest: raw.NODE_ENV === 'test',

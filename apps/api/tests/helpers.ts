@@ -15,11 +15,11 @@ export function uniqueSlug(prefix = 'event') {
   return `${prefix}-${Date.now()}-${counter}`;
 }
 
-export const PASSWORD = 'Rahasia123';
+export const PASSWORD = 'Rahasia123!';
 
 export async function verifiedRegistration(
   app: Express,
-  input: { username: string; email: string; phone: string; password: string },
+  input: { name?: string; username: string; email: string; phone: string; password: string },
 ) {
   const sent = await request(app)
     .post('/api/v1/auth/register/request-otp')
@@ -34,7 +34,11 @@ export async function verifiedRegistration(
     .post('/api/v1/auth/register/verify-otp')
     .send({ challengeId: sent.body.data.challengeId, code });
   if (verified.status !== 200) throw new Error(`OTP verification failed: ${verified.status}`);
-  return { ...input, verificationToken: verified.body.data.verificationToken as string };
+  return {
+    ...input,
+    name: input.name ?? 'Pengguna Uji',
+    verificationToken: verified.body.data.verificationToken as string,
+  };
 }
 
 export async function registerAgent(app: Express, email = uniqueEmail()) {

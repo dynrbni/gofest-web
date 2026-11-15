@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { api } from '@/lib/api';
 import { useDocumentTitle } from '@/lib/hooks';
 import { AuthShell } from './auth-shell';
+import { passwordSchema } from '@gofest/shared';
 
 export function ResetPasswordPage() {
   useDocumentTitle('Reset password');
@@ -23,10 +24,9 @@ export function ResetPasswordPage() {
     event.preventDefault();
     setError(null);
     const next: Record<string, string> = {};
-    if (password.length < 8) next.password = 'Password minimal 8 karakter';
-    else if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
-      next.password = 'Password harus mengandung huruf dan angka';
-    }
+    const parsedPassword = passwordSchema.safeParse(password);
+    if (!parsedPassword.success)
+      next.password = parsedPassword.error.issues[0]?.message ?? 'Password tidak valid';
     if (password !== confirm) next.confirm = 'Konfirmasi password tidak sama';
     setErrors(next);
     if (Object.keys(next).length > 0) return;
@@ -78,7 +78,7 @@ export function ResetPasswordPage() {
         <Field
           label="Password baru"
           htmlFor="reset-password"
-          hint="Minimal 8 karakter, mengandung huruf dan angka."
+          hint="Minimal 8 karakter, dengan huruf besar, huruf kecil, angka dan simbol."
           error={errors.password}
           required
         >

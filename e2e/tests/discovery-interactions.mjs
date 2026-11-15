@@ -128,7 +128,7 @@ try {
   wait('document.querySelector("#login-password").type === "password"');
   assert.equal(evaluate('document.querySelector("#login-password").type'), 'password');
   open('/register');
-  click('Send OTP code');
+  click('Continue');
   browser('wait', '--text', 'Enter a valid email');
   assert.ok(evaluate('document.querySelector("main").textContent.includes("Enter a valid email")'));
   browser('set', 'viewport', '390', '1000');

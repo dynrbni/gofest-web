@@ -7,6 +7,7 @@ export interface AuthContextValue {
   isAuthenticated: boolean;
   login: (input: { email: string; password: string; rememberMe?: boolean }) => Promise<AuthUser>;
   register: (input: {
+    name: string;
     username: string;
     email: string;
     verificationToken: string;

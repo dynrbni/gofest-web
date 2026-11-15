@@ -39,12 +39,21 @@ export const phoneSchema = z
     message: 'Nomor WhatsApp tidak valid',
   });
 
+export const PASSWORD_PATTERNS = {
+  uppercase: /[A-Z]/,
+  lowercase: /[a-z]/,
+  number: /[0-9]/,
+  symbol: /[^A-Za-z0-9\s]/,
+};
+
 export const passwordSchema = z
   .string()
   .min(8, 'Password minimal 8 karakter')
   .max(72, 'Password maksimal 72 karakter')
-  .regex(/[A-Za-z]/, 'Password harus mengandung huruf')
-  .regex(/[0-9]/, 'Password harus mengandung angka');
+  .regex(PASSWORD_PATTERNS.uppercase, 'Password harus mengandung huruf besar')
+  .regex(PASSWORD_PATTERNS.lowercase, 'Password harus mengandung huruf kecil')
+  .regex(PASSWORD_PATTERNS.number, 'Password harus mengandung angka')
+  .regex(PASSWORD_PATTERNS.symbol, 'Password harus mengandung simbol');
 
 export const slugSchema = z
   .string()
@@ -74,6 +83,7 @@ export const verifyRegistrationOtpSchema = z.object({
 });
 
 export const registerSchema = z.object({
+  name: z.string().trim().min(2, 'Nama lengkap minimal 2 karakter').max(80),
   username: usernameSchema,
   email: emailSchema,
   verificationToken: z.string().min(32).max(200),

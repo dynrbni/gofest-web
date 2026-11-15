@@ -85,7 +85,7 @@ paths:
                 email: { type: string, format: email }
       responses:
         '200':
-          description: Kode 6 digit masuk antrean email. Data berisi challengeId, expiresAt (10 menit), resendAt (60 detik); kode tidak dikembalikan.
+          description: Kode 6 digit masuk antrean email. Data berisi challengeId, expiresAt (10 menit), resendAt (60 detik) dan testMode; kode tidak dikembalikan. testMode hanya dapat aktif di development dengan console email.
         '409':
           description: Email sudah terdaftar.
         '429':
@@ -129,12 +129,13 @@ paths:
           application/json:
             schema:
               type: object
-              required: [username, email, phone, password, verificationToken]
+              required: [name, username, email, phone, password, verificationToken]
               properties:
                 username: { type: string, minLength: 3, maxLength: 24, pattern: '^[a-z0-9_]+$', example: nadia_prameswari }
+                name: { type: string, minLength: 2, maxLength: 80, example: Nadia Prameswari }
                 verificationToken: { type: string, minLength: 32, maxLength: 200 }
                 email: { type: string, format: email, example: nadia@example.com }
-                password: { type: string, minLength: 8, maxLength: 72, format: password }
+                password: { type: string, minLength: 8, maxLength: 72, format: password, description: 'Wajib huruf besar, huruf kecil, angka dan simbol selain spasi.' }
                 phone: { type: string, example: '081234567890' }
       responses:
         '201':

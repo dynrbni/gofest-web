@@ -20,9 +20,15 @@ async function main() {
       });
       const user = await prisma.user.findUnique({
         where: { email },
-        select: { username: true, emailVerifiedAt: true },
+        select: { name: true, username: true, emailVerifiedAt: true },
       });
-      console.log(JSON.stringify({ code: (message.payload as { code: string }).code, user }));
+      console.log(
+        JSON.stringify({
+          code: (message.payload as { code: string }).code,
+          user,
+          testMode: env.registrationTestOtp,
+        }),
+      );
     } else if (action === 'cleanup') {
       await prisma.user.deleteMany({ where: { email } });
       await prisma.registrationChallenge.deleteMany({ where: { email } });

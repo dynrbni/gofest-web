@@ -56,7 +56,7 @@ export async function requestRegistrationOtp(email: string) {
         },
         tx,
       );
-      return { challengeId, expiresAt, resendAt };
+      return { challengeId, expiresAt, resendAt, testMode: env.registrationTestOtp };
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
@@ -83,7 +83,10 @@ export async function verifyRegistrationOtp(challengeId: string, code: string) {
       },
       data: { attempts: { increment: 1 } },
     });
-    if (reserved.count !== 1 || !safeCompare(challenge.codeHash, otpHash(challenge.email, code)))
+    if (
+      reserved.count !== 1 ||
+      (!env.registrationTestOtp && !safeCompare(challenge.codeHash, otpHash(challenge.email, code)))
+    )
       return null;
     const verified = await tx.registrationChallenge.updateMany({
       where: { id: challengeId, verifiedAt: null, codeHash: challenge.codeHash },

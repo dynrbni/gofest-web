@@ -83,6 +83,7 @@ async function createSession(
 
 export async function register(
   input: {
+    name: string;
     username: string;
     email: string;
     phone?: string;
@@ -118,7 +119,7 @@ export async function register(
         );
       return tx.user.create({
         data: {
-          name: input.username,
+          name: input.name,
           username: input.username,
           email: input.email,
           phone: input.phone ?? null,

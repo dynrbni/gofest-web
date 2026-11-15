@@ -1,5 +1,13 @@
 # Progress
 
+## Form header and three-step registration, 2026-11-15
+
+- Followed the new reference: original logo plus flag/ID/EN language selector at the top of the form, left-aligned headings and one white form surface. Desktop mascot trio is retained; language control is shared with public navigation.
+- Reordered signup to Personal information → Create password → Email verification. Full name, unique username, required Indonesian phone and email come first; password remains in memory and OTP is requested only after valid personal information/password/consent. Final verification creates the account. Back navigation preserves values.
+- Added a live strength meter, visible requirement checklist and show/hide control. Shared signup/reset validation enforces 8–72 characters, uppercase, lowercase, digit and non-whitespace symbol; existing login passwords remain accepted.
+- Enabled arbitrary six-digit signup OTP only for explicitly opted-in development + console mail. The default is false, production rejects the flag, and SMTP uses real OTP. Local ignored API environment is opted in per the user's testing request.
+- Verification: 69 API tests across nine files, lint/type checks and both builds pass. Existing public 24 and discovery suites pass. Updated registration E2E verifies the three-step flow, strength/visibility controls, language switching, no normal-state scroll at five sizes, full-name persistence and arbitrary testing OTP. A subprocess check confirms production refuses the enabled testing flag.
+
 ## Mascot friends and verified registration, 2026-11-15
 
 - Added a transparent three-character illustration retaining the original otter and adding a sky-blue bunny and navy penguin. Original mascot/logo assets remain intact.

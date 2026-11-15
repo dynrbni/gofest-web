@@ -7,10 +7,11 @@ import { verifiedRegistration } from '../helpers';
 
 const app = createApp();
 const input = {
+  name: 'Pengguna Baru',
   username: 'pengguna_baru',
   email: 'baru@example.com',
   phone: '081234567890',
-  password: 'Rahasia123',
+  password: 'Rahasia123!',
 };
 async function sentCode(email = input.email) {
   const response = await request(app).post('/api/v1/auth/register/request-otp').send({ email });
@@ -30,10 +31,28 @@ function verify(challengeId: string, code: string) {
 }
 
 describe('registration email verification', () => {
+  it.each([
+    'Aa1!',
+    'abcdef1!',
+    'ABCDEF1!',
+    'Abcdefg!',
+    'Abcdef12',
+    'Abcdef1 ',
+    'A'.repeat(71) + 'a1!',
+  ])('rejects a password that does not meet every rule: %s', async (password) => {
+    const response = await request(app)
+      .post('/api/v1/auth/register')
+      .send({ ...input, password, verificationToken: 'x'.repeat(43) });
+    expect(response.status).toBe(422);
+    expect(
+      response.body.error.details.some((detail: { path: string }) => detail.path === 'password'),
+    ).toBe(true);
+  });
   it('queues a real six-digit email without exposing the code or creating a user', async () => {
     const { response, challengeId, code, outbox } = await sentCode('  BARU@EXAMPLE.COM  ');
     expect(code).toMatch(/^\d{6}$/);
     expect(response.body.data).not.toHaveProperty('code');
+    expect(response.body.data.testMode).toBe(false);
     expect(response.headers['set-cookie']).toBeUndefined();
     const challenge = await prisma.registrationChallenge.findUniqueOrThrow({
       where: { id: challengeId },
