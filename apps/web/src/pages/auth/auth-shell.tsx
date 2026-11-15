@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { BrandLogo } from '@/components/common/brand-logo';
+import { LanguageMenu } from '@/components/common/language-menu';
 import { useLanguage } from '@/lib/language';
 
 export function AuthShell({
@@ -18,7 +19,6 @@ export function AuthShell({
   const { t } = useLanguage();
   return (
     <main className={`auth-page${compact ? ' auth-page-compact' : ''}`}>
-      <BrandLogo className="mx-auto shrink-0" />
       <div className="auth-container">
         <div className="auth-mascot">
           <img
@@ -46,15 +46,16 @@ export function AuthShell({
           </div>
         </div>
         <section className="auth-form-panel" aria-labelledby="auth-heading">
-          <h1
-            id="auth-heading"
-            className="text-center text-2xl font-semibold tracking-tight sm:text-[28px]"
-          >
+          <div className="auth-form-header">
+            <BrandLogo />
+            <LanguageMenu variant="auth" />
+          </div>
+          <h1 id="auth-heading" className="text-2xl font-semibold tracking-tight sm:text-[28px]">
             {title}
           </h1>
-          <p className="mt-3 text-center text-sm leading-6 text-slate-600">{lede}</p>
-          {footer ? <div className="auth-switch">{footer}</div> : null}
+          <p className="mt-2 text-sm leading-6 text-slate-600">{lede}</p>
           <div className="auth-form-card">{children}</div>
+          {footer ? <div className="auth-switch">{footer}</div> : null}
         </section>
       </div>
     </main>

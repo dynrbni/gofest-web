@@ -2,8 +2,6 @@ import {
   ArrowRight,
   ChevronDown,
   Compass,
-  Globe,
-  Check,
   LayoutDashboard,
   Menu,
   Handshake,
@@ -31,6 +29,7 @@ import { useAuth } from '@/lib/auth';
 import { useCategories } from '@/lib/queries';
 import { cn } from '@/lib/utils';
 import { Logo } from '@/components/common/brand-logo';
+import { LanguageMenu } from '@/components/common/language-menu';
 
 function workspaceLink(roles: string[]) {
   if (roles.includes('ADMIN')) return { to: '/admin', label: 'Dashboard admin' };
@@ -229,35 +228,6 @@ function CategoryMenu() {
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
-  );
-}
-
-function LanguageMenu() {
-  const { language, setLanguage, t } = useLanguage();
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          className="flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-sm font-medium hover:bg-slate-50"
-          aria-label={t('Pilih bahasa', 'Choose language')}
-        >
-          <Globe className="size-4" aria-hidden />
-          <span>{language.toUpperCase()}</span>
-          <ChevronDown className="size-3.5" aria-hidden />
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-60 p-2">
-        <DropdownMenuItem onSelect={() => setLanguage('id')} className="min-h-12 gap-3">
-          <span aria-hidden>🇮🇩</span> Bahasa Indonesia{' '}
-          {language === 'id' ? <Check className="ml-auto size-4" aria-hidden /> : null}
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => setLanguage('en')} className="min-h-12 gap-3">
-          <span aria-hidden>🇬🇧</span> English{' '}
-          {language === 'en' ? <Check className="ml-auto size-4" aria-hidden /> : null}
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
   );
 }
 

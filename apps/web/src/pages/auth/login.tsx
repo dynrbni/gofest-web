@@ -64,7 +64,7 @@ export function LoginPage() {
 
   return (
     <AuthShell
-      title={t('Masuk ke Gofest', 'Log in to Gofest')}
+      title={t('Selamat datang kembali!', 'Welcome back!')}
       lede={t(
         'Masuk untuk membuka tiket dan melanjutkan rencana serumu.',
         'Log in to access your tickets and pick up where you left off.',
