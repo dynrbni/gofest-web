@@ -145,7 +145,9 @@ try {
   );
   browser('network', 'unroute');
   browser('find', 'role', 'button', 'click', '--name', 'Coba Lagi', '--exact');
-  ready();
+  wait(
+    'document.querySelector("#city-event-results")?.getAttribute("aria-busy") === "false" && !document.querySelector("main [role=alert]")',
+  );
   assert.equal(
     evaluate('document.querySelectorAll("main [role=alert]").length'),
     0,

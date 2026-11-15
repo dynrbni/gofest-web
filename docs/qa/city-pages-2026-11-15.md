@@ -14,5 +14,6 @@ The public events API accepts the validated `citySlug` parameter. It takes prece
 - PASS: city pages at 1440, 1024, 768, 390 and 320 pixels, with no horizontal overflow. Automated accessibility audits report zero violations for all five city pages and the directory.
 - PASS: `pnpm test:discovery` against the exported staged source, covering existing catalog filters, date selection/reset, navigation, language persistence, authentication form validation and the updated city link.
 - PASS: no browser runtime errors during normal city navigation.
+- PASS: both browser suites against the production web build, including successful loading of its bundled font. Retry verification waits for the completed recovery state.
 
 The staged-source check excludes unrelated local edits. No database migration or new image asset is required.
