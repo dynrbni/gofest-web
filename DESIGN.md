@@ -9,9 +9,10 @@ Referensi visual yang diimplementasikan ada di `docs/design/marketplace-referenc
 - Login/register serta pemulihan password memakai kanvas biru muda #F2F6FF di desktop, dengan trio maskot biru di kiri dan form putih di kanan. Logo asli dan pilihan bahasa ID/EN berada di baris atas form, mengikuti referensi Artatix pengguna. Judul dan label rata kiri; tautan pindah akun berada di bawah form tanpa tab Masuk/Daftar. Register memiliki tiga langkah: Data diri (nama lengkap, username, HP, email), Password, Verifikasi email. Nama lengkap dan username disimpan terpisah. Password menampilkan meter kekuatan, checklist lima persyaratan dan tombol show/hide. Pada mobile kanvas putih memprioritaskan form; ilustrasi ringkas disembunyikan hanya pada register dengan tinggi layar ≤740px supaya langkah normal tetap muat tanpa scroll. Error, pembesaran teks dan keyboard tetap boleh menambah tinggi halaman tanpa clipping.
 - Kartu kota memakai diorama 3D Monas, Gedung Sate, Tugu, Sura dan Baya, serta pura Denpasar. Lima kartu sejajar pada desktop besar, menjadi tiga/dua/satu kolom mengikuti lebar layar. Sel sprite selalu 108 × 180px (rasio 3:5) agar landmark tidak melebar mengikuti kartu. Warna underlay membedakan destinasi; hover/fokus memperjelas pilihan.
 - Banner memenuhi lebar viewport tanpa sudut atau gutter; tinggi desktop mengikuti rasio 3.2:1 dengan batas 380–620px, mobile 400px. Saat data tersedia, setiap slide menampilkan event nyata dan seluruh permukaannya menjadi tautan ke detail event tersebut. Foto konser editorial hanya dipakai saat tidak ada data acara. Caption putih menjaga judul terbaca, panah berada di tengah sisi kiri/kanan, dan indikator halaman tetap di bawah.
-- Screenshot LOKET dari pengguna menjadi referensi koreksi home: menu kategori lebar dan terpusat di bawah header utama, poster acara tanpa bingkai luar, kota/organizer di atas separator harga, serta lima kartu kota dalam satu baris desktop. GoFest tetap memakai merek dan konten API sendiri.
+- Screenshot LOKET dari pengguna menjadi referensi koreksi home: menu kategori lebar dan terpusat di bawah header utama, serta lima kartu kota dalam satu baris desktop. Bentuk kartu acara mengikuti koreksi Artatix terbaru di bawah. GoFest tetap memakai merek dan konten API sendiri.
 - Design Read: ENERGY 2 / RHYTHM 2 / MOTION 1. Banner foto menjadi fokus utama, baris poster membantu pemilihan acara, dan landmark mengenali destinasi. Biru mengidentifikasi tindakan; ikon megafon/pin menjelaskan kelompok konten; panah menunjukkan navigasi. Motion hanya pergantian slide dan feedback hover/fokus dengan reduced-motion serta kontrol jeda.
-- Kartu acara 16:9 menampilkan tanggal, judul, lokasi, harga, dan organizer. Status gratis, online, dan habis hanya tampil jika sesuai data.
+- Kartu acara mengikuti referensi Artatix terbaru: bingkai biru muda dengan radius 24px dan padding 12px, poster lebar 5:2, panel informasi putih, judul maksimal dua baris, tanggal dengan ikon kalender, harga, lalu pemisah putus-putus dan logo/nama kreator. Tautan event dan kreator terpisah. Foto memakai object-fit: cover tanpa distorsi; logo memakai contain. Gratis, online, habis dan selesai mengikuti data API. Home, katalog dan profil kreator memakai komponen yang sama.
+- Profil kreator memakai banner lebar 7:2 (maksimal tinggi 320px), logo bulat, nama, total event publik dan bulan/tahun bergabung. Tidak ada deskripsi atau label organizer tambahan. Tab Event Aktif memuat PUBLISHED yang belum berakhir; Event Lalu memuat COMPLETED serta PUBLISHED yang sudah berakhir. Total tidak menghitung draft/review/cancelled. Pagination 12 event per halaman. Logo dan banner dapat diunggah melalui pengaturan organisasi; jika banner belum ada, gunakan cover event publik terbaru atau permukaan biru muda kosong.
 - Detail acara mengikuti susunan Artatix pada screenshot: kanvas putih, judul/kategori/penyelenggara dan tab informasi di kiri; poster proporsional, tanggal, jam, lokasi serta harga awal di kanan. CTA **Pesan Sekarang** langsung menuju `/checkout/:eventSlug`; tidak ada pemilihan kategori tiket di halaman detail. Mobile menumpuk informasi dan memakai CTA bawah.
 - Checkout terpisah dari navigasi publik dan footer: header hanya logo asli Gofest dan bahasa. Bilah biru menunjukkan Pilih Kategori → Detail Pesanan → Metode Pembayaran → Pembayaran. Kategori/jumlah dipilih sebelum data pemesan; ringkasan kanan memakai harga dan promo dari server. Kembali antar tahap mempertahankan input. Pembayaran mengikuti provider yang tersedia tanpa logo/metode bank rekaan.
 - Tahap data checkout menampilkan judul, jadwal dan lokasi acara. Panel biru muda mengelompokkan pemesan dan setiap pemegang tiket; formulir putih menjaga keterbacaan. Pilihan jenis kelamin berbentuk tombol radio, telepon memakai dropdown negara yang dapat dicari, dan usia menentukan pilihan dokumen. Konfirmasi kontak/jumlah/total muncul sebelum order dibuat.
@@ -35,18 +36,18 @@ Arah desain ini mengikat seluruh halaman Gofest. Mengadopsi standar komersial in
 
 ## 1. Design Philosophy
 
-> Standar platform discovery & ticketing event modern: kanvas putih bersih, tipografi geometric sans-serif modern, kartu event komersial dengan poster tajam, date chip, harga jelas "Mulai dari Rp X", dan alur pemesanan sticky yang cepat dan responsif.
+> Standar platform discovery & ticketing event modern: kanvas putih bersih, tipografi geometric sans-serif modern, kartu event dengan poster lebar, tanggal dan harga jelas, dan alur pemesanan sticky yang cepat dan responsif.
 
 Gofest dirancang untuk kecepatan navigasi dan konversi pembelian tiket, dengan hierarki visual yang jelas, banner promosi heroik, dan interaksi yang solid tanpa elemen retro/kuno.
 
 ## 2. Prinsip Utama
 
 1. **Clean & High Contrast Canvas**: Kanvas putih bersih (`#FFFFFF` dan `#F8FAFC`) dengan border halus (`#E2E8F0`) dan tipografi tajam (`#0F172A`).
-2. **Poster Event Menjadi Pusat Perhatian**: Gambar cover poster event dengan rasio tajam (16:9 atau 4:5), sudut membulat modern (`rounded-xl`/`rounded-2xl`), dan efek hover halus (`hover:shadow-lg hover:-translate-y-1`).
+2. **Poster Event Menjadi Pusat Perhatian**: Gambar cover kartu 5:2 dengan sudut membulat dan hover border/shadow ringan tanpa perpindahan posisi. Halaman detail mempertahankan rasio poster aslinya.
 3. **Standar Komersial Loket / Artatix**:
    - Hero banner carousel dengan navigation dots & arrows untuk event unggulan / trending.
    - Category chips dengan ikon yang intuitif (Musik, Festival, Olahraga, Pameran, Workshop, Standup Comedy).
-   - Event card dengan date pill, city/venue dengan ikon lokasi, dan harga terformat jelas "Mulai dari Rp 150.000" atau "Gratis".
+   - Event card dengan tanggal berikon kalender, harga terformat jelas, serta logo dan tautan kreator di footer.
    - Sticky booking widget di event detail dan floating bottom purchase drawer di mobile.
 4. **Data Riil dari Database**: Seluruh data acara, kuota tiket, dan organizer terhubung langsung ke backend PostgreSQL.
 5. **Aksesibilitas & Standar Antislop**: Focus state yang jelas, kontras warna AA/AAA, ukuran tap target ramah sentuhan, dan transisi motion yang fungsional.
@@ -89,14 +90,14 @@ Gofest dirancang untuk kecepatan navigasi dan konversi pembelian tiket, dengan h
 - Overlay gradient, date badge, judul tebal, venue, harga awal, dan tombol "Beli Tiket".
 - Navigasi tombol panah kiri-kanan dan indicator dots.
 
-### Event Cards (Loket / Artatix Grid)
+### Event Cards (Artatix Grid)
 
-- Aspect ratio poster 16:9 atau 4:5 dengan rounded-xl.
-- Category badge mengambang di pojok poster.
-- Date dengan CalendarDays icon berwarna biru.
-- Judul 2 baris `line-clamp-2` dengan hover state warna brand.
-- Info lokasi (venue & kota) dengan ikon MapPin.
-- Footer kartu: "Mulai dari" dengan teks harga tebal.
+- Bingkai biru muda 24px, poster 5:2 dengan rounded-xl, dan panel informasi putih.
+- Badge status hanya jika online, gratis, habis atau selesai.
+- Tanggal dengan CalendarDays biru; event beberapa hari menampilkan rentang tanggal.
+- Judul dua baris `line-clamp-2`, harga semibold 600, dan separator putus-putus.
+- Footer berisi avatar bulat dan nama kreator dengan tautan sendiri.
+- Grid empat kolom desktop, dua tablet, satu pada ponsel sempit; tinggi kartu dalam baris sejajar.
 
 ### Event Detail
 

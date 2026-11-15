@@ -1,5 +1,13 @@
 # Progress
 
+## Creator profiles and shared event cards, 2026-11-15
+
+- Simplified public creator profiles to banner, circular logo, name, join month/year and total public events, following the supplied Artatix reference. Active/past tabs use real event status/end times, URL state and 12-item pagination; drafts/review/cancelled events are excluded from counts and history.
+- Replaced the shared home/catalog/creator event card with a soft blue rounded frame, wide 5:2 poster, white information surface, date/range, price and separate creator footer link. Missing artwork falls back without breaking navigation or layout.
+- Added nullable organizer banner storage and authenticated logo/banner upload, preview, save and removal in organizer settings. Both development and test databases received the additive migration without resetting data.
+- Verification: 90 API tests across 11 files, shared/API/web type checks and production builds pass. Public smoke: 24 route/viewport checks. Creator suite: five widths from 320 to 1440px, both tabs, reload, card anatomy, independent links, navigation and artwork failure states; zero automated accessibility violations or browser runtime errors. Discovery interactions pass. Real settings upload/save/remove was exercised and restored.
+- Preserved concurrent account/register edits, home partner-section removal and carousel edits outside this task's commits. Root lint has no errors; existing concurrent edits leave unused-variable warnings. See docs/qa/creator-profiles-2026-11-15.md for verification and deployment details.
+
 ## Buyer identity, per-ticket holders and confirmation, 2026-11-15
 
 - Stage-two heading now uses the event title with schedule/timezone and location. Added separate buyer/per-ticket holder panels, searchable country phone selectors, identity fields and gender radio buttons with birth date before document fields.
