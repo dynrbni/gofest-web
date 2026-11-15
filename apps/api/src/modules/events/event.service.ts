@@ -1,6 +1,7 @@
 import { Prisma } from '@prisma/client';
 import type { Request } from 'express';
 import type { EventListQuery } from '@gofest/shared';
+import { findEventCity } from '@gofest/shared';
 import { prisma } from '../../lib/prisma';
 import { env } from '../../config/env';
 import { writeAudit } from '../../lib/audit';
@@ -54,9 +55,7 @@ const summarySelect = {
   },
 } as const;
 
-function serializeSummary(
-  event: Prisma.EventGetPayload<{ select: typeof summarySelect }>,
-) {
+function serializeSummary(event: Prisma.EventGetPayload<{ select: typeof summarySelect }>) {
   const { ticketTypes, ...rest } = event;
   const prices = ticketTypes.map((ticket) => ticket.price);
   const isSoldOut =
@@ -92,7 +91,14 @@ export async function listPublicEvents(query: EventListQuery) {
   if (query.category) {
     conditions.push(Prisma.sql`c."slug" = ${query.category}`);
   }
-  if (query.city) {
+  if (query.citySlug) {
+    const city = findEventCity(query.citySlug);
+    if (!city) throw new NotFoundError('Kota tidak ditemukan', 'CITY_NOT_FOUND');
+    conditions.push(
+      Prisma.sql`e."type"::text = 'OFFLINE'`,
+      Prisma.sql`lower(btrim(e."city")) IN (${Prisma.join(city.aliases.map((alias) => alias.toLowerCase()))})`,
+    );
+  } else if (query.city) {
     conditions.push(Prisma.sql`coalesce(e."city", '') ILIKE ${`%${query.city}%`}`);
   }
   if (query.dateFrom) {
@@ -417,8 +423,7 @@ export async function updateEvent(
   }
 
   const effectiveType = input.type ?? current.type;
-  const effectiveVenue =
-    input.venueName !== undefined ? input.venueName : current.venueName;
+  const effectiveVenue = input.venueName !== undefined ? input.venueName : current.venueName;
   const effectiveAddress = input.address !== undefined ? input.address : current.address;
   const effectiveCity = input.city !== undefined ? input.city : current.city;
   if (effectiveType === 'OFFLINE' && (!effectiveVenue || !effectiveAddress || !effectiveCity)) {
@@ -431,10 +436,14 @@ export async function updateEvent(
   const effectiveSalesStart =
     input.salesStartAt !== undefined
       ? input.salesStartAt
-      : current.salesStartAt?.toISOString() ?? null;
+      : (current.salesStartAt?.toISOString() ?? null);
   const effectiveSalesEnd =
-    input.salesEndAt !== undefined ? input.salesEndAt : current.salesEndAt?.toISOString() ?? null;
-  if (effectiveSalesStart && effectiveSalesEnd && new Date(effectiveSalesEnd) <= new Date(effectiveSalesStart)) {
+    input.salesEndAt !== undefined ? input.salesEndAt : (current.salesEndAt?.toISOString() ?? null);
+  if (
+    effectiveSalesStart &&
+    effectiveSalesEnd &&
+    new Date(effectiveSalesEnd) <= new Date(effectiveSalesStart)
+  ) {
     throw new ConflictError(
       'Akhir penjualan harus setelah mulai penjualan',
       'INVALID_SALES_WINDOW',
@@ -516,7 +525,10 @@ export async function deleteEvent(eventId: string, organizerId: string, req: Req
 export async function submitEvent(eventId: string, organizerId: string, req: Request) {
   const event = await getOwnedEvent(eventId, organizerId);
   if (event.status !== 'DRAFT' && event.status !== 'REJECTED') {
-    throw new ConflictError('Event ini tidak dapat diajukan untuk publikasi', 'EVENT_NOT_SUBMITTABLE');
+    throw new ConflictError(
+      'Event ini tidak dapat diajukan untuk publikasi',
+      'EVENT_NOT_SUBMITTABLE',
+    );
   }
   if (event.ticketTypes.filter((ticket) => ticket.isActive).length === 0) {
     throw new ConflictError(

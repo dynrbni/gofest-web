@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { orderCustomerSchema } from './checkout';
+import { CITY_SLUGS } from './cities';
 import {
   DISCOUNT_TYPES,
   EVENT_STAFF_ROLES,
@@ -430,6 +431,7 @@ export const eventListQuerySchema = paginationSchema.extend({
   q: z.string().trim().max(120).optional(),
   category: z.string().trim().max(120).optional(),
   city: z.string().trim().max(80).optional(),
+  citySlug: z.enum(CITY_SLUGS).optional(),
   dateFrom: z.string().datetime({ offset: true }).optional(),
   dateTo: z.string().datetime({ offset: true }).optional(),
   price: z.enum(['all', 'free', 'paid']).default('all'),

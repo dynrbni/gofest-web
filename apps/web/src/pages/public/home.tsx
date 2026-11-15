@@ -1,15 +1,14 @@
-import { ArrowRight, MapPin, Ticket, ArrowUpRight, Megaphone } from 'lucide-react';
+import { ArrowRight, MapPin, Ticket, Megaphone } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { EventCard } from '@/components/common/event-presentation';
 import { EmptyState, ErrorState, LoadingState } from '@/components/common/states';
 import { EventCarousel } from '@/components/discovery/event-carousel';
+import { CityDestinations } from '@/components/discovery/city-destinations';
 import { useLanguage } from '@/lib/language';
 import { useDocumentTitle } from '@/lib/hooks';
 import { usePublicEvents } from '@/lib/queries';
 import { cn } from '@/lib/utils';
-
-const cities = ['', 'Jakarta', 'Bandung', 'Yogyakarta', 'Surabaya', 'Denpasar'];
 
 export function HomePage() {
   const { t } = useLanguage();
@@ -109,31 +108,11 @@ export function HomePage() {
               <MapPin className="size-6 shrink-0 text-blue-950" aria-hidden />
               {t('Jelajahi Event di Kotamu', 'Explore events in your city')}
             </h2>
-            <Link to="/events" className="text-link">
+            <Link to="/cities" className="text-link">
               {t('Lihat semua', 'View all')} <ArrowRight className="size-4" aria-hidden />
             </Link>
           </div>
-          <div className="city-destinations">
-            {cities.filter(Boolean).map((value, index) => (
-              <Link
-                to={`/events?city=${encodeURIComponent(value)}`}
-                key={value}
-                className="city-destination group"
-              >
-                <span className="city-name">
-                  {t('Kota', 'Explore')}
-                  <br />
-                  {value}
-                </span>
-                <ArrowUpRight className="relative z-10 mt-3 size-7 text-blue-600" aria-hidden />
-                <span
-                  className="city-landmark"
-                  style={{ backgroundPosition: `${index * 25}% center` }}
-                  aria-hidden
-                />
-              </Link>
-            ))}
-          </div>
+          <CityDestinations />
         </section>
       </div>
     </main>

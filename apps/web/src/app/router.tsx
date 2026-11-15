@@ -15,6 +15,10 @@ function lazyPage<Props extends object>(load: () => Promise<ComponentType<Props>
 
 const HomePage = lazyPage(() => import('@/pages/public/home').then((m) => m.HomePage));
 const EventsPage = lazyPage(() => import('@/pages/public/events').then((m) => m.EventsPage));
+const CityEventsPage = lazyPage(() =>
+  import('@/pages/public/city-events').then((m) => m.CityEventsPage),
+);
+const CitiesPage = lazyPage(() => import('@/pages/public/city-events').then((m) => m.CitiesPage));
 const EventDetailPage = lazyPage(() =>
   import('@/pages/public/event-detail').then((m) => m.EventDetailPage),
 );
@@ -183,6 +187,8 @@ export const router = createBrowserRouter([
         children: [
           { path: '/', element: <HomePage /> },
           { path: '/events', element: <EventsPage /> },
+          { path: '/cities', element: <CitiesPage /> },
+          { path: '/events/city/:citySlug', element: <CityEventsPage /> },
           { path: '/events/:slug', element: <EventDetailPage /> },
           { path: '/organizers/:slug', element: <OrganizerPublicPage /> },
           { path: '/ticket/:ticketCode', element: <TicketPage /> },

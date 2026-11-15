@@ -1,4 +1,4 @@
-import type { EventStatus, OrderStatus, PaginationMeta } from '@gofest/shared';
+import type { CitySlug, EventStatus, OrderStatus, PaginationMeta } from '@gofest/shared';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { api, apiPage } from './api';
 import type {
@@ -38,6 +38,16 @@ export function usePublicEvents(filters: EventFilters) {
     queryKey: ['public-events', filters],
     queryFn: () => apiPage<EventSummary>('/events', { query: { ...filters } }),
     placeholderData: keepPreviousData,
+  });
+}
+
+export function useCityEvents(citySlug: CitySlug, page: number) {
+  return useQuery({
+    queryKey: ['city-events', citySlug, page],
+    queryFn: () =>
+      apiPage<EventSummary>('/events', {
+        query: { citySlug, page, limit: 12, sort: 'starts_soon' },
+      }),
   });
 }
 

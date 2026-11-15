@@ -353,6 +353,10 @@ paths:
           description: Judul, organizer, kota, atau kategori.
         - { name: category, in: query, schema: { type: string }, description: Slug kategori. }
         - { name: city, in: query, schema: { type: string, maxLength: 80 } }
+        - name: citySlug
+          in: query
+          schema: { type: string, enum: [jakarta, bandung, yogyakarta, surabaya, denpasar] }
+          description: Halaman kota khusus. Mencocokkan nama kota dan aliasnya secara tepat, hanya event OFFLINE. Menggantikan filter city bila keduanya dikirim.
         - { name: dateFrom, in: query, schema: { type: string, format: date-time } }
         - { name: dateTo, in: query, schema: { type: string, format: date-time } }
         - { name: price, in: query, schema: { type: string, enum: [all, free, paid], default: all } }

@@ -202,9 +202,12 @@ try {
   }
   browser('set', 'viewport', '390', '1000');
   browser('find', 'role', 'link', 'click', '--name', 'Kota Denpasar', '--exact');
-  wait('new URLSearchParams(location.search).get("city") === "Denpasar"');
-  ready();
-  assert.equal(evaluate('new URLSearchParams(location.search).get("city")'), 'Denpasar');
+  wait('location.pathname === "/events/city/denpasar"');
+  wait('document.querySelector("#city-event-results")?.getAttribute("aria-busy") === "false"');
+  assert.equal(
+    evaluate('document.querySelector("h1").textContent'),
+    'Event Menarik di Kota Denpasar',
+  );
   assert.equal(evaluate('document.querySelectorAll("main [role=alert]").length'), 0);
   assert.deepEqual(browser('errors').errors, [], 'No browser runtime errors');
   process.stdout.write(
