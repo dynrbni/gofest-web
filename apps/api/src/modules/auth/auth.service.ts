@@ -1,9 +1,16 @@
 import type { Request } from 'express';
+import { Prisma } from '@prisma/client';
 import { prisma } from '../../lib/prisma';
 import { env } from '../../config/env';
 import { hashPassword, verifyPassword } from '../../lib/password';
 import { randomToken, sha256 } from '../../lib/crypto';
-import { ConflictError, ForbiddenError, NotFoundError, UnauthorizedError } from '../../lib/errors';
+import {
+  BadRequestError,
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  UnauthorizedError,
+} from '../../lib/errors';
 import { refreshTtlMs, signAccessToken } from '../../lib/tokens';
 import type { AuthUser } from '@gofest/shared';
 import { enqueueEmail } from '../notifications/email.service';
@@ -45,7 +52,11 @@ function toAuthUser(user: {
   };
 }
 
-async function createSession(userId: string, role: 'USER' | 'ADMIN', req: Request): Promise<SessionResult> {
+async function createSession(
+  userId: string,
+  role: 'USER' | 'ADMIN',
+  req: Request,
+): Promise<SessionResult> {
   const refreshToken = randomToken(48);
   const meta = requestMeta(req);
   await prisma.refreshSession.create({
@@ -71,22 +82,66 @@ async function createSession(userId: string, role: 'USER' | 'ADMIN', req: Reques
 }
 
 export async function register(
-  input: { name: string; email: string; phone?: string; password: string },
+  input: {
+    username: string;
+    email: string;
+    phone?: string;
+    password: string;
+    verificationToken: string;
+  },
   req: Request,
 ): Promise<SessionResult> {
   const existing = await prisma.user.findUnique({ where: { email: input.email } });
   if (existing) {
     throw new ConflictError('Email sudah terdaftar', 'EMAIL_ALREADY_REGISTERED');
   }
+  if (await prisma.user.findUnique({ where: { username: input.username } })) {
+    throw new ConflictError('Username sudah digunakan. Pilih username lain.', 'USERNAME_TAKEN');
+  }
   const passwordHash = await hashPassword(input.password);
-  const user = await prisma.user.create({
-    data: {
-      name: input.name,
-      email: input.email,
-      phone: input.phone ?? null,
-      passwordHash,
-    },
-  });
+  const user = await prisma
+    .$transaction(async (tx) => {
+      const now = new Date();
+      const proof = await tx.registrationChallenge.deleteMany({
+        where: {
+          email: input.email,
+          proofHash: sha256(input.verificationToken),
+          verifiedAt: { not: null },
+          proofExpiresAt: { gt: now },
+        },
+      });
+      if (proof.count !== 1)
+        throw new BadRequestError(
+          'Verifikasi email sudah berakhir. Minta kode baru untuk melanjutkan.',
+          undefined,
+          'REGISTRATION_VERIFICATION_REQUIRED',
+        );
+      return tx.user.create({
+        data: {
+          name: input.username,
+          username: input.username,
+          email: input.email,
+          phone: input.phone ?? null,
+          passwordHash,
+          emailVerifiedAt: now,
+        },
+      });
+    })
+    .catch((error: unknown) => {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        const target = error.meta?.target;
+        if (Array.isArray(target) && target.includes('username')) {
+          throw new ConflictError(
+            'Username sudah digunakan. Pilih username lain.',
+            'USERNAME_TAKEN',
+          );
+        }
+        if (Array.isArray(target) && target.includes('email')) {
+          throw new ConflictError('Email sudah terdaftar', 'EMAIL_ALREADY_REGISTERED');
+        }
+      }
+      throw error;
+    });
   return createSession(user.id, user.role, req);
 }
 
@@ -116,7 +171,11 @@ export async function refresh(rawToken: string | undefined, req: Request): Promi
   }
   const session = await prisma.refreshSession.findUnique({
     where: { tokenHash: sha256(rawToken) },
-    include: { user: { include: { organizerProfile: true, staffAssignments: { select: { id: true }, take: 1 } } } },
+    include: {
+      user: {
+        include: { organizerProfile: true, staffAssignments: { select: { id: true }, take: 1 } },
+      },
+    },
   });
   if (!session || session.expiresAt <= new Date()) {
     throw new UnauthorizedError('Sesi sudah berakhir. Silakan masuk lagi.', 'SESSION_EXPIRED');
@@ -182,7 +241,10 @@ export async function resetPassword(token: string, password: string): Promise<vo
     include: { user: true },
   });
   if (!record || record.usedAt || record.expiresAt <= new Date()) {
-    throw new NotFoundError('Token reset tidak valid atau sudah kedaluwarsa', 'INVALID_RESET_TOKEN');
+    throw new NotFoundError(
+      'Token reset tidak valid atau sudah kedaluwarsa',
+      'INVALID_RESET_TOKEN',
+    );
   }
   const passwordHash = await hashPassword(password);
   await prisma.$transaction([

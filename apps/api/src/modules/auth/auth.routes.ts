@@ -3,11 +3,18 @@ import {
   forgotPasswordSchema,
   loginSchema,
   registerSchema,
+  requestRegistrationOtpSchema,
+  verifyRegistrationOtpSchema,
   resetPasswordSchema,
   updateProfileSchema,
 } from '@gofest/shared';
 import { validate } from '../../middleware/validate';
-import { authLimiter, passwordResetLimiter } from '../../middleware/rate-limit';
+import {
+  authLimiter,
+  passwordResetLimiter,
+  registrationOtpLimiter,
+} from '../../middleware/rate-limit';
+import { requestRegistrationOtp, verifyRegistrationOtp } from './registration.service';
 import { requireAuth } from '../../middleware/auth';
 import {
   ACCESS_COOKIE,
@@ -31,10 +38,7 @@ import {
 
 export const authRouter = Router();
 
-function setSessionCookies(
-  res: Response,
-  session: { accessToken: string; refreshToken: string },
-) {
+function setSessionCookies(res: Response, session: { accessToken: string; refreshToken: string }) {
   res.cookie(ACCESS_COOKIE, session.accessToken, authCookieOptions(accessTtlMs()));
   res.cookie(REFRESH_COOKIE, session.refreshToken, authCookieOptions(refreshTtlMs()));
 }
@@ -43,6 +47,24 @@ function clearSessionCookies(res: Response) {
   res.clearCookie(ACCESS_COOKIE, clearCookieOptions());
   res.clearCookie(REFRESH_COOKIE, clearCookieOptions());
 }
+
+authRouter.post(
+  '/register/request-otp',
+  registrationOtpLimiter,
+  validate(requestRegistrationOtpSchema),
+  async (req, res) => {
+    return ok(res, await requestRegistrationOtp(req.body.email));
+  },
+);
+
+authRouter.post(
+  '/register/verify-otp',
+  authLimiter,
+  validate(verifyRegistrationOtpSchema),
+  async (req, res) => {
+    return ok(res, await verifyRegistrationOtp(req.body.challengeId, req.body.code));
+  },
+);
 
 authRouter.post('/register', authLimiter, validate(registerSchema), async (req, res) => {
   const session = await register(req.body, req);

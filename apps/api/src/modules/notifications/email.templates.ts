@@ -50,6 +50,17 @@ export function renderEmail(
   payload: Record<string, unknown>,
 ): { html: string; text: string } {
   switch (template) {
+    case 'REGISTRATION_OTP': {
+      const code = escapeHtml(payload.code);
+      const minutes = escapeHtml(payload.expiresMinutes ?? 10);
+      return {
+        html: layout(
+          'Verifikasi email Gofest',
+          `<p>Masukkan kode berikut di halaman pendaftaran Gofest:</p><p style="font-size:32px;font-weight:600;letter-spacing:8px;color:#0052CC;">${code}</p><p>Kode berlaku ${minutes} menit dan hanya dapat digunakan satu kali. Jangan bagikan kode ini kepada siapa pun.</p><p>Jika kamu tidak mendaftar di Gofest, abaikan email ini.</p>`,
+        ),
+        text: `Kode verifikasi Gofest: ${payload.code}. Berlaku ${minutes} menit, hanya sekali pakai. Jangan bagikan kode ini. Abaikan jika kamu tidak mendaftar.`,
+      };
+    }
     case 'PASSWORD_RESET': {
       const name = escapeHtml(payload.name ?? 'Pengguna Gofest');
       const resetUrl = String(payload.resetUrl ?? '');

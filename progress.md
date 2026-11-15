@@ -1,5 +1,13 @@
 # Progress
 
+## Mascot friends and verified registration, 2026-11-15
+
+- Added a transparent three-character illustration retaining the original otter and adding a sky-blue bunny and navy penguin. Original mascot/logo assets remain intact.
+- Replaced the long register form with Email → OTP → Profile → Password. Profile collects a unique normalized username and phone; password visibility, consent, previous-step navigation, edit email, resend countdown and recoverable error states remain usable.
+- OTP is server-enforced: six random digits, HMAC hash, ten-minute expiry, five attempts, atomic 60-second resend limit, expiring one-use proof bound to email and transactional proof consumption/account creation. User emailVerifiedAt is set only after verification; existing accounts remain usable. Migration applied to local development and test databases without resetting data.
+- Used the existing transactional email outbox and SMTP/console transport with a registration template. Local environment is console mail, so real inbox delivery still requires SMTP configuration; no browser OTP shortcut was added.
+- Verification: 56 API tests, lint, package type checks and both builds pass; 24 public route checks and discovery interactions pass. New end-to-end suite completes real registration, rejects a wrong code, checks validation/back navigation/session persistence and verifies all four normal steps fit five viewport sizes including 320×640px without scrolling. Automated auth accessibility checks pass.
+
 ## Blue mascot authentication, 2026-11-15
 
 - Created an original transparent blue otter concert mascot using the built-in imagegen tool, with headphones, festival wristband and ticket. Saved the 1254px PNG in public/assets; supplied Gofest logo remains unchanged.

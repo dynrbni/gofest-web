@@ -59,10 +59,25 @@ export const paginationSchema = z.object({
   limit: z.coerce.number().int().min(1).max(MAX_PAGE_SIZE).default(DEFAULT_PAGE_SIZE),
 });
 
+export const usernameSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .min(3, 'Username minimal 3 karakter')
+  .max(24, 'Username maksimal 24 karakter')
+  .regex(/^[a-z0-9_]+$/, 'Gunakan huruf, angka, atau underscore');
+
+export const requestRegistrationOtpSchema = z.object({ email: emailSchema });
+export const verifyRegistrationOtpSchema = z.object({
+  challengeId: z.string().cuid(),
+  code: z.string().regex(/^\d{6}$/, 'Masukkan 6 digit kode OTP'),
+});
+
 export const registerSchema = z.object({
-  name: z.string().trim().min(2).max(80),
+  username: usernameSchema,
   email: emailSchema,
-  phone: phoneSchema,
+  verificationToken: z.string().min(32).max(200),
+  phone: z.string().trim().min(1, 'Nomor telepon wajib diisi').pipe(phoneSchema),
   password: passwordSchema,
 });
 

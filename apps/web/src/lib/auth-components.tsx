@@ -39,8 +39,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const registerMutation = useMutation({
     mutationFn: async (input: {
-      name: string;
+      username: string;
       email: string;
+      verificationToken: string;
       phone?: string;
       password: string;
     }) => {

@@ -7,26 +7,28 @@ export function AuthShell({
   lede,
   children,
   footer,
+  compact = false,
 }: {
   title: string;
   lede: string;
   children: ReactNode;
   footer?: ReactNode;
+  compact?: boolean;
 }) {
   const { t } = useLanguage();
   return (
-    <main className="auth-page">
+    <main className={`auth-page${compact ? ' auth-page-compact' : ''}`}>
       <BrandLogo className="mx-auto shrink-0" />
       <div className="auth-container">
         <div className="auth-mascot">
           <img
-            src="/assets/gofest-mascot.png"
+            src="/assets/gofest-mascot-friends.png"
             alt={t(
-              'Maskot Gofest, berang-berang biru dengan headphone dan tiket konser',
-              'Gofest mascot, a blue otter wearing headphones and holding a concert ticket',
+              'Trio maskot Gofest: berang-berang, kelinci, dan penguin biru siap ke konser',
+              'Gofest mascot friends: a blue otter, bunny and penguin ready for a concert',
             )}
-            width={1254}
-            height={1254}
+            width={1536}
+            height={1024}
             className="auth-mascot-image"
             fetchPriority="high"
             draggable={false}

@@ -19,6 +19,7 @@
     "test": "pnpm --filter @gofest/api test",
     "test:browser": "node e2e/tests/marketplace-smoke.mjs",
     "test:discovery": "node e2e/tests/discovery-interactions.mjs",
+    "test:registration": "node e2e/tests/registration.mjs",
     "test:event-detail": "node e2e/tests/event-detail-carousel.mjs",
     "db:generate": "pnpm --filter @gofest/api db:generate",
     "db:check": "pnpm --filter @gofest/api db:check",

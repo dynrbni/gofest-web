@@ -1,4 +1,5 @@
 import request from 'supertest';
+import { randomUUID } from 'node:crypto';
 import type { Express } from 'express';
 import { prisma } from '../src/lib/prisma';
 
@@ -16,14 +17,36 @@ export function uniqueSlug(prefix = 'event') {
 
 export const PASSWORD = 'Rahasia123';
 
+export async function verifiedRegistration(
+  app: Express,
+  input: { username: string; email: string; phone: string; password: string },
+) {
+  const sent = await request(app)
+    .post('/api/v1/auth/register/request-otp')
+    .send({ email: input.email });
+  if (sent.status !== 200) throw new Error(`OTP request failed: ${sent.status}`);
+  const email = await prisma.emailNotification.findFirstOrThrow({
+    where: { to: input.email.toLowerCase(), template: 'REGISTRATION_OTP' },
+    orderBy: { createdAt: 'desc' },
+  });
+  const { code } = email.payload as { code: string };
+  const verified = await request(app)
+    .post('/api/v1/auth/register/verify-otp')
+    .send({ challengeId: sent.body.data.challengeId, code });
+  if (verified.status !== 200) throw new Error(`OTP verification failed: ${verified.status}`);
+  return { ...input, verificationToken: verified.body.data.verificationToken as string };
+}
+
 export async function registerAgent(app: Express, email = uniqueEmail()) {
   const agent = request.agent(app);
-  const response = await agent.post('/api/v1/auth/register').send({
-    name: 'Pengguna Uji',
-    email,
-    phone: '081234567890',
-    password: PASSWORD,
-  });
+  const response = await agent.post('/api/v1/auth/register').send(
+    await verifiedRegistration(app, {
+      username: `uji_${randomUUID().replaceAll('-', '').slice(0, 16)}`,
+      email,
+      phone: '081234567890',
+      password: PASSWORD,
+    }),
+  );
   if (response.status !== 201) {
     throw new Error(`Register gagal: ${response.status} ${JSON.stringify(response.body)}`);
   }
@@ -113,19 +136,17 @@ export async function addTicketType(
   eventId: string,
   overrides: Record<string, unknown> = {},
 ) {
-  const response = await agent
-    .post(`/api/v1/organizer/events/${eventId}/ticket-types`)
-    .send({
-      name: 'Tiket Reguler',
-      description: 'Akses masuk area utama.',
-      price: 150_000,
-      quotaTotal: 50,
-      minPerOrder: 1,
-      maxPerOrder: 5,
-      isActive: true,
-      sortOrder: 0,
-      ...overrides,
-    });
+  const response = await agent.post(`/api/v1/organizer/events/${eventId}/ticket-types`).send({
+    name: 'Tiket Reguler',
+    description: 'Akses masuk area utama.',
+    price: 150_000,
+    quotaTotal: 50,
+    minPerOrder: 1,
+    maxPerOrder: 5,
+    isActive: true,
+    sortOrder: 0,
+    ...overrides,
+  });
   if (response.status !== 201) {
     throw new Error(
       `Create ticket type gagal: ${response.status} ${JSON.stringify(response.body)}`,
@@ -141,7 +162,10 @@ export async function publishEvent(eventId: string) {
   });
 }
 
-export async function setupPublishedEvent(app: Express, ticketOverrides: Record<string, unknown> = {}) {
+export async function setupPublishedEvent(
+  app: Express,
+  ticketOverrides: Record<string, unknown> = {},
+) {
   const organizer = await setupOrganizer(app);
   const category = await seedCategory();
   const { event } = await createEvent(organizer.agent, category.id);

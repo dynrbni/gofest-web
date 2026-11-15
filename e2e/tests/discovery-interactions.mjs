@@ -128,11 +128,9 @@ try {
   wait('document.querySelector("#login-password").type === "password"');
   assert.equal(evaluate('document.querySelector("#login-password").type'), 'password');
   open('/register');
-  click('Create account');
-  browser('wait', '--text', 'Please accept the terms');
-  assert.ok(
-    evaluate('document.querySelector("main").textContent.includes("Please accept the terms")'),
-  );
+  click('Send OTP code');
+  browser('wait', '--text', 'Enter a valid email');
+  assert.ok(evaluate('document.querySelector("main").textContent.includes("Enter a valid email")'));
   browser('set', 'viewport', '390', '1000');
   open('/events');
   click('Open menu');

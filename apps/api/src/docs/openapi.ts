@@ -69,10 +69,59 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEnvelope'
 
+  /auth/register/request-otp:
+    post:
+      tags: [Auth]
+      summary: Meminta kode verifikasi email pendaftaran
+      operationId: requestRegistrationOtp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+      responses:
+        '200':
+          description: Kode 6 digit masuk antrean email. Data berisi challengeId, expiresAt (10 menit), resendAt (60 detik); kode tidak dikembalikan.
+        '409':
+          description: Email sudah terdaftar.
+        '429':
+          description: Batas kirim ulang atau permintaan tercapai.
+        '422':
+          description: Email tidak valid.
+
+  /auth/register/verify-otp:
+    post:
+      tags: [Auth]
+      summary: Memverifikasi kode OTP pendaftaran
+      operationId: verifyRegistrationOtp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [challengeId, code]
+              properties:
+                challengeId: { type: string }
+                code: { type: string, pattern: '^[0-9]{6}$' }
+      responses:
+        '200':
+          description: Data berisi email, verificationToken sekali pakai dan expiresAt (15 menit). Belum membuat akun atau sesi.
+        '400':
+          description: Kode salah, kedaluwarsa, terpakai, atau batas 5 percobaan tercapai.
+        '429':
+          description: Batas permintaan tercapai.
+        '422':
+          description: Format permintaan tidak valid.
+
   /auth/register:
     post:
       tags: [Auth]
-      summary: Membuat akun baru
+      summary: Membuat akun baru setelah verifikasi email
       operationId: register
       requestBody:
         required: true
@@ -80,12 +129,13 @@ paths:
           application/json:
             schema:
               type: object
-              required: [name, email, password]
+              required: [username, email, phone, password, verificationToken]
               properties:
-                name: { type: string, minLength: 2, maxLength: 120, example: Nadia Prameswari }
+                username: { type: string, minLength: 3, maxLength: 24, pattern: '^[a-z0-9_]+$', example: nadia_prameswari }
+                verificationToken: { type: string, minLength: 32, maxLength: 200 }
                 email: { type: string, format: email, example: nadia@example.com }
                 password: { type: string, minLength: 8, maxLength: 72, format: password }
-                phone: { type: string, nullable: true, example: '081234567890' }
+                phone: { type: string, example: '081234567890' }
       responses:
         '201':
           description: Akun dibuat dan sesi aktif. Cookie access_token dan refresh_token dikirim.
@@ -98,7 +148,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/AuthResponse'
         '409':
-          description: Email sudah terdaftar (EMAIL_ALREADY_REGISTERED).
+          description: Email atau username sudah terdaftar (EMAIL_ALREADY_REGISTERED / USERNAME_TAKEN).
           content:
             application/json:
               schema:

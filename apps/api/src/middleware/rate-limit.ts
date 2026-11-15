@@ -35,6 +35,12 @@ export const passwordResetLimiter = rateLimit({
   limit: 5,
 });
 
+export const registrationOtpLimiter = rateLimit({
+  ...base,
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+});
+
 export const checkoutLimiter = rateLimit({
   ...base,
   windowMs: 60 * 1000,
