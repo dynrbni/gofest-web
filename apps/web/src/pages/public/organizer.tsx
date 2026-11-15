@@ -1,23 +1,33 @@
-import { ArrowLeft, CalendarDays, Ticket } from 'lucide-react';
-import { Link, useParams } from 'react-router-dom';
-import { EventCard } from '@/components/common/event-presentation';
+import { ArrowLeft } from 'lucide-react';
+import { useState } from 'react';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { EventCard, OrganizerAvatar } from '@/components/common/event-presentation';
+import { Pagination } from '@/components/common/pagination';
 import { EmptyState, ErrorState, LoadingState } from '@/components/common/states';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { assetUrl } from '@/lib/assets';
 import { useDocumentTitle } from '@/lib/hooks';
+import { useLanguage } from '@/lib/language';
 import { usePublicOrganizer } from '@/lib/queries';
 
 export function OrganizerPublicPage() {
   const { slug } = useParams();
-  const query = usePublicOrganizer(slug);
+  const [params, setParams] = useSearchParams();
+  const period = params.get('period') === 'past' ? 'past' : 'active';
+  const rawPage = Number(params.get('page') ?? 1);
+  const page = Number.isSafeInteger(rawPage) && rawPage > 0 ? rawPage : 1;
+  const query = usePublicOrganizer(slug, { period, page });
   const organizer = query.data?.organizer;
-  useDocumentTitle(organizer?.organizationName ?? 'Profil organizer');
-  if (query.isLoading)
+  const [failedBanner, setFailedBanner] = useState<string | null>(null);
+  const { t, language } = useLanguage();
+  useDocumentTitle(organizer?.organizationName ?? t('Profil kreator', 'Creator profile'));
+  if (query.isLoading || (query.isPlaceholderData && organizer?.slug !== slug))
     return (
       <main className="container py-10">
-        <LoadingState rows={4} label="Memuat profil organizer" />
+        <LoadingState rows={4} label="Memuat profil kreator" />
       </main>
     );
-  if (query.isError || !organizer)
+  if ((query.isError && !organizer) || !organizer)
     return (
       <main className="container max-w-3xl py-14">
         <Link to="/events" className="text-link">
@@ -28,11 +38,11 @@ export function OrganizerPublicPage() {
           className="mt-5"
           error={query.error}
           onRetry={() => void query.refetch()}
-          title="Profil organizer tidak dapat dibuka"
+          title="Profil kreator tidak dapat dibuka"
         />
       </main>
     );
-  const logo = assetUrl(organizer.logoKey);
+  const banner = assetUrl(organizer.bannerKey ?? organizer.fallbackBannerKey);
   const events = organizer.events ?? [];
   const eventOrganizer = {
     id: organizer.id,
@@ -41,64 +51,136 @@ export function OrganizerPublicPage() {
     logoKey: organizer.logoKey,
     status: organizer.status,
   };
+  const counts = organizer.eventCounts ?? { active: 0, past: 0, total: 0 };
+  function changePeriod(value: string) {
+    const next = new URLSearchParams(params);
+    next.delete('page');
+    if (value === 'past') next.set('period', 'past');
+    else next.delete('period');
+    setParams(next, { preventScrollReset: true });
+  }
+  function changePage(nextPage: number) {
+    const next = new URLSearchParams(params);
+    if (nextPage === 1) next.delete('page');
+    else next.set('page', String(nextPage));
+    setParams(next, { preventScrollReset: true });
+    document
+      .getElementById('creator-events')
+      ?.scrollIntoView({ block: 'start', behavior: 'instant' });
+  }
   return (
-    <main className="container py-8 sm:py-10">
-      <Link to="/events" className="text-link">
-        <ArrowLeft className="size-4" aria-hidden />
-        Jelajah acara
-      </Link>
-      <header className="relative mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white">
-        <div className="h-24 bg-blue-950 sm:h-32">
-          <div className="flex h-full items-center justify-end px-8">
-            <Ticket className="size-16 -rotate-12 text-blue-300/30" aria-hidden />
-          </div>
-        </div>
-        <div className="relative flex flex-col gap-5 px-6 pb-7 sm:flex-row sm:items-end sm:px-8">
-          <div className="-mt-10 flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-4 border-white bg-blue-600 text-3xl font-semibold text-white">
-            {logo ? (
-              <img src={logo} alt="" className="h-full w-full object-cover" />
-            ) : (
-              organizer.organizationName.charAt(0)
-            )}
-          </div>
-          <div className="min-w-0 pt-3">
-            <p className="text-xs font-medium text-blue-700">Organizer Gofest</p>
-            <h1 className="mt-2 text-2xl font-semibold sm:text-3xl">
-              {organizer.organizationName}
-            </h1>
-            {organizer.description ? (
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
-                {organizer.description}
-              </p>
+    <main className="bg-slate-50/70 pb-12 pt-7 sm:pt-10">
+      <div className="container">
+        <header>
+          <div className="creator-cover relative w-full aspect-[7/2] max-h-80 min-h-32 overflow-hidden rounded-2xl bg-blue-100">
+            {banner && banner !== failedBanner ? (
+              <img
+                src={banner}
+                alt=""
+                width={1600}
+                height={460}
+                onError={() => setFailedBanner(banner)}
+                className="h-full w-full object-cover"
+              />
             ) : null}
-            <p className="mt-4 flex items-center gap-2 text-xs text-slate-500">
-              <CalendarDays className="size-4" aria-hidden />
-              {events.length} acara tersedia
-            </p>
           </div>
-        </div>
-      </header>
-      <section className="mt-10">
-        <h2 className="section-title">Acara dari {organizer.organizationName}</h2>
-        {events.length ? (
-          <div className="event-grid mt-6 grid gap-5 min-[480px]:grid-cols-2 lg:grid-cols-4">
-            {events.map((event) => (
-              <EventCard event={{ ...event, organizer: eventOrganizer }} key={event.id} />
-            ))}
+          <div className="mt-6 flex items-start gap-5 sm:gap-8">
+            <OrganizerAvatar
+              name={organizer.organizationName}
+              logoKey={organizer.logoKey}
+              className="size-20 bg-white text-3xl sm:size-32 sm:text-4xl"
+            />
+            <div className="min-w-0 flex-1">
+              <h1 className="break-words text-2xl font-semibold leading-tight tracking-tight sm:text-3xl">
+                {organizer.organizationName}
+              </h1>
+              <dl className="mt-5 flex flex-wrap gap-x-8 gap-y-4 text-sm sm:mt-6">
+                <div>
+                  <dt className="text-slate-600">{t('Total Event', 'Total Events')}</dt>
+                  <dd className="mt-2 text-xl font-medium tabular-nums sm:text-2xl">
+                    {counts.total}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-slate-600">{t('Bergabung pada', 'Joined')}</dt>
+                  <dd className="mt-2 text-base font-medium sm:text-xl">
+                    {new Intl.DateTimeFormat(language === 'en' ? 'en-US' : 'id-ID', {
+                      month: 'long',
+                      year: 'numeric',
+                    }).format(new Date(organizer.createdAt))}
+                  </dd>
+                </div>
+              </dl>
+            </div>
           </div>
-        ) : (
-          <EmptyState
-            className="mt-6"
-            title="Belum ada acara publik"
-            description="Acara terbaru akan muncul di sini setelah diterbitkan oleh organizer."
-            action={
-              <Link to="/events" className="primary-action">
-                Lihat acara lainnya
-              </Link>
-            }
-          />
-        )}
-      </section>
+        </header>
+        <section
+          id="creator-events"
+          className="mt-8 scroll-mt-28 sm:mt-10"
+          aria-label={t('Event kreator', 'Creator events')}
+        >
+          <Tabs value={period} onValueChange={changePeriod}>
+            <TabsList
+              className="h-auto bg-blue-50 p-1"
+              aria-label={t('Periode event kreator', 'Creator event period')}
+            >
+              <TabsTrigger value="active" className="min-h-11 px-4">
+                {t('Event Aktif', 'Active Events')}{' '}
+                <span className="ml-2 text-xs text-slate-600">{counts.active}</span>
+              </TabsTrigger>
+              <TabsTrigger value="past" className="min-h-11 px-4">
+                {t('Event Lalu', 'Past Events')}{' '}
+                <span className="ml-2 text-xs text-slate-600">{counts.past}</span>
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value={period} className="mt-6" aria-busy={query.isFetching}>
+              <h2 className="sr-only">
+                {period === 'active'
+                  ? t('Event aktif', 'Active events')
+                  : t('Event lalu', 'Past events')}{' '}
+                {organizer.organizationName}
+              </h2>
+              {query.isFetching && query.isPlaceholderData ? (
+                <LoadingState rows={4} label="Memuat event kreator" />
+              ) : query.isError ? (
+                <ErrorState error={query.error} onRetry={() => void query.refetch()} />
+              ) : events.length ? (
+                <div className="event-grid grid gap-5 min-[480px]:grid-cols-2 lg:grid-cols-4">
+                  {events.map((event) => (
+                    <EventCard event={{ ...event, organizer: eventOrganizer }} key={event.id} />
+                  ))}
+                </div>
+              ) : (
+                <EmptyState
+                  title={
+                    period === 'active'
+                      ? t('Belum ada event aktif', 'No active events')
+                      : t('Belum ada event lalu', 'No past events')
+                  }
+                  description={
+                    period === 'active'
+                      ? t(
+                          'Event baru kreator ini akan muncul di sini setelah diterbitkan.',
+                          'New events will appear here once published.',
+                        )
+                      : t(
+                          'Event yang sudah selesai akan ditampilkan di sini.',
+                          'Completed events will appear here.',
+                        )
+                  }
+                />
+              )}
+              {!query.isPlaceholderData ? (
+                <Pagination
+                  meta={organizer.eventsPagination}
+                  onPageChange={changePage}
+                  className="mt-6"
+                />
+              ) : null}
+            </TabsContent>
+          </Tabs>
+        </section>
+      </div>
     </main>
   );
 }

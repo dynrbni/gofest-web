@@ -408,7 +408,7 @@ export function EventsPage() {
               )}
             >
               {events.map((event) => (
-                <EventCard key={event.id} event={event} layout="grid" />
+                <EventCard key={event.id} event={event} />
               ))}
             </div>
             <div className="mt-9">

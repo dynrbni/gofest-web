@@ -260,25 +260,13 @@
     @apply border-blue-600 bg-blue-600 text-white hover:bg-blue-700 hover:text-white;
   }
   .event-card {
-    @apply h-full min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-1 hover:border-blue-200;
+    @apply h-full min-w-0 overflow-hidden rounded-3xl border border-transparent bg-blue-50 p-3 transition-[box-shadow,border-color] duration-200 hover:border-blue-200;
   }
   .event-card:hover {
-    box-shadow: 0 8px 24px rgb(16 36 71 / 9%);
+    box-shadow: 0 6px 20px rgb(16 36 71 / 6%);
   }
   .event-card:focus-within {
     @apply ring-2 ring-blue-600 ring-offset-2;
-  }
-  .event-card-row {
-    @apply h-auto;
-  }
-  .event-card-discovery {
-    @apply overflow-visible rounded-none border-0 hover:translate-y-0;
-  }
-  .event-card-discovery:hover {
-    box-shadow: none;
-  }
-  .event-card-discovery .event-poster {
-    @apply rounded-lg;
   }
   .poster-label {
     @apply absolute left-3 top-3 rounded-md px-2 py-1 text-[11px] font-medium;

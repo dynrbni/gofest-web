@@ -75,7 +75,7 @@ export function HomePage() {
                 )}
               >
                 {events.map((event) => (
-                  <EventCard key={event.id} event={event} layout="discovery" />
+                  <EventCard key={event.id} event={event} />
                 ))}
               </div>
             )}

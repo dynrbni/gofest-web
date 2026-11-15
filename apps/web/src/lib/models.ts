@@ -5,6 +5,7 @@ import type {
   EventType,
   OrderStatus,
   OrganizerStatus,
+  PaginationMeta,
   PaymentStatus,
   PlatformFeeType,
   TicketStatus,
@@ -113,6 +114,10 @@ export interface StaffAssignment {
 }
 
 export interface OrganizerProfile {
+  bannerKey?: string | null;
+  fallbackBannerKey?: string | null;
+  eventCounts?: { active: number; past: number; total: number };
+  eventsPagination?: PaginationMeta;
   id: string;
   userId?: string;
   organizationName: string;

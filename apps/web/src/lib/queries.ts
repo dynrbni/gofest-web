@@ -49,10 +49,17 @@ export function usePublicEvent(slug: string | undefined) {
   });
 }
 
-export function usePublicOrganizer(slug: string | undefined) {
+export function usePublicOrganizer(
+  slug: string | undefined,
+  filters: { period?: 'active' | 'past'; page?: number } = {},
+) {
   return useQuery({
-    queryKey: ['public-organizer', slug],
-    queryFn: () => api<{ organizer: OrganizerProfile }>(`/organizers/${encodeURIComponent(slug!)}`),
+    queryKey: ['public-organizer', slug, filters],
+    placeholderData: keepPreviousData,
+    queryFn: () =>
+      api<{ organizer: OrganizerProfile }>(`/organizers/${encodeURIComponent(slug!)}`, {
+        query: filters,
+      }),
     enabled: Boolean(slug),
   });
 }
