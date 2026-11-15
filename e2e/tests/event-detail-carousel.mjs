@@ -229,9 +229,32 @@ try {
     assert.equal(browser('a11y').counts.violations, 0, `Buyer accessibility at ${width}px`);
     if (width === 1440 && event.isDemo) {
       browser('fill', '#checkout-email', `checkout-qa-${Date.now()}@example.com`);
-      browser('check', 'input[type=checkbox]');
+      browser('fill', '#checkout-phone', '+6281234567890');
+      browser('select', '#checkout-identityType', 'KTP');
+      browser('fill', '#checkout-identityNumber', '3171000000000001');
+      for (let index = 0; index < chosen.minPerOrder; index += 1) {
+        browser('check', `[aria-label="Detail Pesanan – ${index + 1}"] input[type=checkbox]`);
+        browser('check', `input[name="holder-${index}-gender"][value=MALE]`);
+        // Native date segments require a complete date value rather than text insertion.
+        evaluate(
+          `(() => { const input = document.querySelector('#holder-${index}-birthDate'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, '1995-01-01'); input.dispatchEvent(new Event('input', { bubbles: true })); input.dispatchEvent(new Event('change', { bubbles: true })); })()`,
+        );
+      }
+      browser('check', '[aria-labelledby=terms-heading] input[type=checkbox]');
       wait('!document.querySelector("button[type=submit]").disabled');
       click('Lanjut ke Pembayaran');
+      browser('wait', '[role=dialog]');
+      assert.equal(
+        evaluate('location.pathname'),
+        `/checkout/${event.slug}`,
+        'Confirmation opens before creating the order',
+      );
+      click('Edit Data');
+      wait('!document.querySelector("[role=dialog]")');
+      assert.equal(evaluate('document.querySelector("#checkout-name").value'), 'Checkout QA');
+      click('Lanjut ke Pembayaran');
+      browser('wait', '[role=dialog]');
+      click('Saya Mengerti');
       wait('location.pathname.startsWith("/order/")');
       browser('wait', '#payment-heading');
       assert.equal(

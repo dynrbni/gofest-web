@@ -2,7 +2,12 @@ import { Prisma } from '@prisma/client';
 import type { Request } from 'express';
 import type { z } from 'zod';
 import QRCode from 'qrcode';
-import type { createOrderSchema, orderAccessSchema, quoteOrderSchema } from '@gofest/shared';
+import type {
+  CheckoutDetails,
+  createOrderSchema,
+  orderAccessSchema,
+  quoteOrderSchema,
+} from '@gofest/shared';
 import { env } from '../../config/env';
 import { prisma } from '../../lib/prisma';
 import {
@@ -183,7 +188,13 @@ interface LockedCoupon {
 }
 
 function assertEventOnSale(
-  event: { status: string; startsAt: Date; endsAt: Date; salesStartAt: Date | null; salesEndAt: Date | null },
+  event: {
+    status: string;
+    startsAt: Date;
+    endsAt: Date;
+    salesStartAt: Date | null;
+    salesEndAt: Date | null;
+  },
   now: Date,
 ) {
   if (event.status !== 'PUBLISHED') {
@@ -263,7 +274,13 @@ export async function quoteOrder(input: QuoteOrderInput, req: Request) {
   const byId = new Map(tickets.map((ticket) => [ticket.id, ticket]));
 
   let subtotal = 0;
-  const lines: Array<{ ticketTypeId: string; name: string; quantity: number; unitPrice: number; lineTotal: number }> = [];
+  const lines: Array<{
+    ticketTypeId: string;
+    name: string;
+    quantity: number;
+    unitPrice: number;
+    lineTotal: number;
+  }> = [];
   for (const item of input.items) {
     const ticket = byId.get(item.ticketTypeId)!;
     if (!ticket.isActive) {
@@ -327,7 +344,10 @@ export async function quoteOrder(input: QuoteOrderInput, req: Request) {
         },
       });
       if (used >= coupon.maxPerUser) {
-        throw new ConflictError('Kode promo sudah dipakai untuk pembelian lain', 'COUPON_USER_LIMIT');
+        throw new ConflictError(
+          'Kode promo sudah dipakai untuk pembelian lain',
+          'COUPON_USER_LIMIT',
+        );
       }
     }
     discount = computeDiscount(coupon, subtotal, now);
@@ -359,7 +379,10 @@ export async function createOrder(input: CreateOrderInput, req: Request) {
     });
     if (existing) {
       if (existing.buyerEmail !== input.buyerEmail) {
-        throw new ConflictError('Idempotency key sudah dipakai untuk order lain', 'IDEMPOTENCY_CONFLICT');
+        throw new ConflictError(
+          'Idempotency key sudah dipakai untuk order lain',
+          'IDEMPOTENCY_CONFLICT',
+        );
       }
       return {
         order: serializeOrder(existing),
@@ -485,10 +508,7 @@ export async function createOrder(input: CreateOrderInput, req: Request) {
               releasedAt: null,
               ...(req.auth
                 ? {
-                    OR: [
-                      { userId: req.auth.userId },
-                      { email: input.buyerEmail },
-                    ],
+                    OR: [{ userId: req.auth.userId }, { email: input.buyerEmail }],
                   }
                 : { email: input.buyerEmail }),
             },
@@ -521,7 +541,17 @@ export async function createOrder(input: CreateOrderInput, req: Request) {
           eventId: event.id,
           buyerName: input.buyerName,
           buyerEmail: input.buyerEmail,
-          buyerPhone: input.buyerPhone ?? null,
+          buyerPhone: input.buyerPhone,
+          checkoutDetails: {
+            buyer: {
+              name: input.buyerName,
+              email: input.buyerEmail,
+              phone: input.buyerPhone,
+              identityType: input.buyerIdentityType,
+              identityNumber: input.buyerIdentityNumber,
+            },
+            attendees: input.attendees,
+          },
           subtotal,
           discount,
           platformFee,
@@ -678,7 +708,10 @@ export async function getOrderTicketQr(orderCode: string, ticketId: string, req:
 export async function regenerateTicketQr(orderCode: string, ticketId: string, req: Request) {
   const order = await getOrderForAccess(orderCode, req);
   if (order.status !== 'PAID') {
-    throw new ConflictError('QR hanya dapat diperbarui untuk order yang sudah dibayar', 'ORDER_NOT_PAID');
+    throw new ConflictError(
+      'QR hanya dapat diperbarui untuk order yang sudah dibayar',
+      'ORDER_NOT_PAID',
+    );
   }
   const ticket = await prisma.ticket.findFirst({
     where: { id: ticketId, orderId: order.id },
@@ -707,7 +740,10 @@ export async function regenerateTicketQr(orderCode: string, ticketId: string, re
   });
   if (changed.count !== 1) {
     await removePrivateObject(newKey);
-    throw new ConflictError('Tiket berubah saat QR diperbarui. Coba lagi.', 'TICKET_NOT_REGENERATABLE');
+    throw new ConflictError(
+      'Tiket berubah saat QR diperbarui. Coba lagi.',
+      'TICKET_NOT_REGENERATABLE',
+    );
   }
 
   await removePrivateObject(ticket.qrImageKey);
@@ -849,6 +885,7 @@ export async function fulfillOrder(orderId: string, options: FulfillOptions) {
     return { alreadyPaid: true, ticketCount: 0 };
   }
 
+  const customerDetails = order.checkoutDetails as unknown as CheckoutDetails | null;
   const prepared: Array<{
     orderItemId: string;
     ticketTypeId: string;
@@ -880,8 +917,14 @@ export async function fulfillOrder(orderId: string, options: FulfillOptions) {
           ticketCode: humanCode('TKT', 8),
           qrTokenHash: sha256(token),
           qrImageKey,
-          holderName: order.buyerName,
-          holderEmail: order.buyerEmail,
+          holderName:
+            customerDetails?.attendees.find(
+              (person) => person.ticketTypeId === item.ticketTypeId && person.position === index,
+            )?.name ?? order.buyerName,
+          holderEmail:
+            customerDetails?.attendees.find(
+              (person) => person.ticketTypeId === item.ticketTypeId && person.position === index,
+            )?.email ?? order.buyerEmail,
           eventSnapshot: order.eventSnapshot as Prisma.InputJsonValue,
           ticketTypeSnapshot: {
             name: item.ticketNameSnapshot,
@@ -899,7 +942,10 @@ export async function fulfillOrder(orderId: string, options: FulfillOptions) {
       if (!status) throw new NotFoundError('Order tidak ditemukan', 'ORDER_NOT_FOUND');
       if (status === 'PAID') return { alreadyPaid: true, ticketCount: 0 };
       if (status !== 'PENDING_PAYMENT' && status !== 'PAYMENT_REVIEW') {
-        throw new ConflictError('Order ini tidak dapat diterbitkan tiketnya', 'ORDER_NOT_FULFILLABLE');
+        throw new ConflictError(
+          'Order ini tidak dapat diterbitkan tiketnya',
+          'ORDER_NOT_FULFILLABLE',
+        );
       }
 
       const ticketIds = [...new Set(order.items.map((item) => item.ticketTypeId))].sort();
@@ -1100,10 +1146,7 @@ export async function releaseExpiredOrders(limit = 50): Promise<number> {
   return released;
 }
 
-export async function processVerifiedPayment(
-  event: VerifiedPaymentEvent,
-  providerName = 'mock',
-) {
+export async function processVerifiedPayment(event: VerifiedPaymentEvent, providerName = 'mock') {
   const order = await prisma.order.findUnique({
     where: { orderCode: event.orderCode },
     include: { payments: true },

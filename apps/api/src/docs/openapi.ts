@@ -2288,12 +2288,20 @@ components:
 
     CreateOrderInput:
       type: object
-      required: [eventId, buyerName, buyerEmail, items, acceptTerms, idempotencyKey]
+      required: [eventId, buyerName, buyerEmail, buyerPhone, buyerIdentityType, buyerIdentityNumber, attendees, items, acceptTerms, idempotencyKey]
       properties:
         eventId: { type: string }
         buyerName: { type: string, minLength: 2, maxLength: 120 }
         buyerEmail: { type: string, format: email }
-        buyerPhone: { type: string, example: '081234567890' }
+        buyerPhone: { type: string, example: '+6281234567890', description: Nomor internasional yang dinormalisasi ke E.164. }
+        buyerIdentityType: { type: string, enum: [KTP, SIM, PASSPORT, STUDENT_CARD] }
+        buyerIdentityNumber: { type: string, minLength: 3, maxLength: 50 }
+        attendees:
+          type: array
+          minItems: 1
+          maxItems: 500
+          description: Tepat satu pemegang untuk setiap posisi tiket yang dipesan.
+          items: { $ref: '#/components/schemas/CheckoutTicketHolder' }
         couponCode: { type: string, maxLength: 24 }
         items:
           type: array
@@ -2307,6 +2315,20 @@ components:
               quantity: { type: integer, minimum: 1, maximum: 50 }
         acceptTerms: { type: boolean, enum: [true] }
         idempotencyKey: { type: string, minLength: 8, maxLength: 100 }
+
+    CheckoutTicketHolder:
+      type: object
+      required: [ticketTypeId, position, name, email, phone, gender, birthDate, identityType, identityNumber]
+      properties:
+        ticketTypeId: { type: string }
+        position: { type: integer, minimum: 0, maximum: 49 }
+        name: { type: string, minLength: 2, maxLength: 120 }
+        email: { type: string, format: email }
+        phone: { type: string, example: '+6581234567' }
+        gender: { type: string, enum: [MALE, FEMALE] }
+        birthDate: { type: string, format: date, description: 'Tanggal lahir aktual, tidak boleh di masa depan. Usia dihitung saat pemesanan dalam zona Asia/Jakarta.' }
+        identityType: { type: string, enum: [KTP, SIM, PASSPORT, STUDENT_CARD], description: 'Pemegang berusia di bawah 17 tahun hanya boleh menggunakan PASSPORT atau STUDENT_CARD.' }
+        identityNumber: { type: string, minLength: 3, maxLength: 50 }
 
     OrderItem:
       type: object

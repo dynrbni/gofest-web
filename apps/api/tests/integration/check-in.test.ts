@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { createApp } from '../../src/app';
 import { prisma } from '../../src/lib/prisma';
 import {
+  checkoutCustomerDetails,
   registerAgent,
   setupOrganizer,
   setupPublishedEvent,
@@ -28,6 +29,7 @@ async function issueFreeTicket(
 ): Promise<IssuedTicket> {
   const response = await organizer.agent.post('/api/v1/orders').send({
     eventId,
+    ...checkoutCustomerDetails([{ ticketTypeId, quantity: 1 }], 'Penonton Uji'),
     buyerName: 'Penonton Uji',
     buyerEmail: uniqueEmail('tiket'),
     buyerPhone: '081234567890',
@@ -36,7 +38,9 @@ async function issueFreeTicket(
     idempotencyKey: randomUUID(),
   });
   if (response.status !== 201 || response.body.data.order.status !== 'PAID') {
-    throw new Error(`Gagal menerbitkan tiket uji: ${response.status} ${JSON.stringify(response.body)}`);
+    throw new Error(
+      `Gagal menerbitkan tiket uji: ${response.status} ${JSON.stringify(response.body)}`,
+    );
   }
   const order = response.body.data.order;
   return {
@@ -63,10 +67,7 @@ async function addCheckInStaff(
   return staff;
 }
 
-async function scan(
-  agent: ReturnType<typeof request.agent>,
-  payload: Record<string, unknown>,
-) {
+async function scan(agent: ReturnType<typeof request.agent>, payload: Record<string, unknown>) {
   return agent.post('/api/v1/check-in/scan').send(payload);
 }
 
@@ -256,6 +257,7 @@ describe('ticket scan', () => {
     const { organizer, event, ticketType } = await setupPublishedEvent(app, { price: 0 });
     const checkout = await organizer.agent.post('/api/v1/orders').send({
       eventId: event.id,
+      ...checkoutCustomerDetails([{ ticketTypeId: ticketType.id, quantity: 1 }], 'Penonton QR'),
       buyerName: 'Penonton QR',
       buyerEmail: uniqueEmail('qr'),
       buyerPhone: '081234567890',
@@ -276,8 +278,7 @@ describe('ticket scan', () => {
     expect(regenerated.body.data.qrUrl).toContain('/qr');
     expect(regenerated.body.data.qrUrl).toContain('token=');
 
-    const qr = await request(app)
-      .get(regenerated.body.data.qrUrl as string);
+    const qr = await request(app).get(regenerated.body.data.qrUrl as string);
     expect(qr.status).toBe(200);
     expect(qr.headers['content-type']).toContain('image/png');
 

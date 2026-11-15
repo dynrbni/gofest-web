@@ -321,6 +321,7 @@ model Order {
   couponId        String?
   idempotencyKey  String?     @unique
   eventSnapshot   Json
+  checkoutDetails Json?
   expiresAt       DateTime    @db.Timestamptz(3)
   paidAt          DateTime?   @db.Timestamptz(3)
   cancelledAt     DateTime?   @db.Timestamptz(3)

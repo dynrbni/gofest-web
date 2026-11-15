@@ -1,15 +1,20 @@
+import { createOrderSchema, ageOnDate } from '@gofest/shared';
+import type { z } from 'zod';
+import { CheckoutCustomerFields, CustomerPanel } from './checkout-customer-fields';
+import { emptyHolder, type PersonDraft, type HolderDraft } from './checkout-customer-model';
+import { CheckoutConfirmation } from './checkout-confirmation';
 import { ArrowLeft, ArrowRight, Minus, Plus, Ticket } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { EventPoster } from '@/components/common/event-presentation';
 import { PurchaseSteps } from '@/components/layout/checkout-layout';
-import { ErrorState, Field, InlineError, LoadingState } from '@/components/common/states';
+import { ErrorState, InlineError, LoadingState } from '@/components/common/states';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { api, fieldErrors, ApiError } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { formatDateLong, formatIDR, formatTime } from '@/lib/format';
+import { formatIDR, formatEventWhen, formatTimeZoneLabel } from '@/lib/format';
 import { useDebouncedValue, useDocumentTitle } from '@/lib/hooks';
 import type { Order } from '@/lib/models';
 import { usePublicEvent } from '@/lib/queries';
@@ -45,11 +50,16 @@ export function CheckoutPage() {
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [initialized, setInitialized] = useState(false);
   const [step, setStep] = useState<1 | 2>(1);
-  const [buyer, setBuyer] = useState({
+  const [buyer, setBuyer] = useState<PersonDraft>({
     name: user?.name ?? '',
     email: user?.email ?? '',
     phone: user?.phone ?? '',
+    identityType: '',
+    identityNumber: '',
   });
+  const [holders, setHolders] = useState<Record<string, HolderDraft>>({});
+  const [copied, setCopied] = useState<Record<string, boolean>>({});
+  const [confirmation, setConfirmation] = useState<z.infer<typeof createOrderSchema> | null>(null);
   const [couponInput, setCouponInput] = useState('');
   const [couponCode, setCouponCode] = useState('');
   const [accepted, setAccepted] = useState(false);
@@ -72,6 +82,30 @@ export function CheckoutPage() {
         .map(([ticketTypeId, quantity]) => ({ ticketTypeId, quantity })),
     [quantities],
   );
+  const slots = selectedItems.flatMap((item) =>
+    Array.from({ length: item.quantity }, (_, position) => ({
+      ticketTypeId: item.ticketTypeId,
+      position,
+      key: `${item.ticketTypeId}:${position}`,
+    })),
+  );
+  function holderFor(key: string): HolderDraft {
+    const original = holders[key] ?? emptyHolder;
+    if (!copied[key]) return original;
+    const person = { ...original, ...buyer };
+    if (
+      ageOnDate(person.birthDate) !== null &&
+      ageOnDate(person.birthDate)! < 17 &&
+      (person.identityType === 'KTP' || person.identityType === 'SIM')
+    )
+      return { ...person, identityType: '', identityNumber: '' };
+    return person;
+  }
+  const attendees = slots.map((slot) => ({
+    ...holderFor(slot.key),
+    ticketTypeId: slot.ticketTypeId,
+    position: slot.position,
+  }));
   const totalQuantity = selectedItems.reduce((sum, item) => sum + item.quantity, 0);
   const localSubtotal = selectedItems.reduce((sum, item) => {
     const ticket = ticketTypes.find((entry) => entry.id === item.ticketTypeId);
@@ -173,21 +207,37 @@ export function CheckoutPage() {
     )
       return;
     setError(null);
+    const parsed = createOrderSchema.safeParse({
+      eventId: event.id,
+      buyerName: buyer.name,
+      buyerEmail: buyer.email,
+      buyerPhone: buyer.phone,
+      buyerIdentityType: buyer.identityType,
+      buyerIdentityNumber: buyer.identityNumber,
+      attendees,
+      couponCode: couponCode || undefined,
+      items: selectedItems,
+      acceptTerms: accepted,
+      idempotencyKey: idempotencyKey.current,
+    });
     const next: Record<string, string> = {};
-    if (buyer.name.trim().length < 2) next.buyerName = 'Nama minimal 2 karakter';
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyer.email.trim()))
-      next.buyerEmail = 'Format email tidak valid';
-    if (
-      buyer.phone.trim() &&
-      !/^(\+62|62|0)8[1-9][0-9]{6,12}$/.test(buyer.phone.replace(/[\s-]/g, ''))
-    ) {
-      next.buyerPhone = 'Nomor WhatsApp tidak valid';
-    }
-    if (totalQuantity === 0) next.items = 'Pilih minimal satu tiket';
-    if (!accepted) next.terms = 'Kamu perlu menyetujui syarat pembelian';
+    if (!parsed.success)
+      for (const issue of parsed.error.issues)
+        next[issue.path.join('.')] ??=
+          issue.path[0] === 'acceptTerms'
+            ? 'Kamu perlu menyetujui syarat pembelian'
+            : issue.message;
     setErrors(next);
-    if (Object.keys(next).length > 0) return;
+    if (!parsed.success) {
+      requestAnimationFrame(() => document.getElementById('customer-validation')?.focus());
+      return;
+    }
+    setConfirmation(parsed.data);
+  }
 
+  async function createConfirmedOrder() {
+    if (!confirmation || submitting) return;
+    setError(null);
     setSubmitting(true);
     try {
       const result = await api<{
@@ -197,16 +247,7 @@ export function CheckoutPage() {
         paymentRequired: boolean;
       }>('/orders', {
         method: 'POST',
-        body: {
-          eventId: event.id,
-          buyerName: buyer.name.trim(),
-          buyerEmail: buyer.email.trim(),
-          buyerPhone: buyer.phone.trim() || undefined,
-          couponCode: couponCode || undefined,
-          items: selectedItems,
-          acceptTerms: true,
-          idempotencyKey: idempotencyKey.current,
-        },
+        body: confirmation,
       });
       sessionStorage.setItem(`gofest-order-token:${result.order.orderCode}`, result.accessToken);
       toast.success(result.reused ? 'Pesanan sebelumnya dibuka kembali' : 'Pesanan dibuat');
@@ -215,6 +256,7 @@ export function CheckoutPage() {
       setError(caught);
       setErrors(fieldErrors(caught));
       if (caught instanceof ApiError && caught.code === 'TICKET_SOLD_OUT') {
+        setConfirmation(null);
         void eventQuery.refetch();
       }
     } finally {
@@ -298,11 +340,18 @@ export function CheckoutPage() {
           tabIndex={-1}
           className="mt-4 text-2xl font-semibold tracking-tight sm:text-3xl"
         >
-          {step === 1 ? 'Pilih kategori tiket' : 'Detail pesanan'}
+          {step === 1 ? 'Pilih kategori tiket' : event.title}
         </h1>
         <p className="mt-2 text-sm leading-6 text-slate-600">
-          {event.title} · {formatDateLong(event.startsAt, event.timezone)} ·{' '}
-          {formatTime(event.startsAt, event.timezone)}
+          {step === 1 ? `${event.title} · ` : ''}
+          {formatEventWhen(event.startsAt, event.endsAt, event.timezone)} ·{' '}
+          {formatTimeZoneLabel(event.timezone)}
+        </p>
+        <p className="mt-1 text-sm leading-6 text-slate-600">
+          {event.type === 'ONLINE'
+            ? 'Acara online'
+            : [event.venueName, event.address, event.city].filter(Boolean).join(', ') ||
+              'Lokasi menyusul'}
         </p>
         <form
           onSubmit={onSubmit}
@@ -441,86 +490,124 @@ export function CheckoutPage() {
               </>
             ) : (
               <>
-                <section
-                  aria-labelledby="buyer-heading"
-                  className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6"
-                >
-                  <h2
-                    id="buyer-heading"
-                    className="border-b border-slate-100 pb-3 text-base font-semibold text-slate-900"
+                {Object.keys(errors).length ? (
+                  <div
+                    id="customer-validation"
+                    tabIndex={-1}
+                    role="alert"
+                    className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700"
                   >
-                    Data pemesan
-                  </h2>
-                  <p className="mt-2 text-xs text-slate-500">
-                    Tiket dan konfirmasi pesanan dikirim ke email ini. Nama pada tiket mengikuti
-                    data pembeli.
-                  </p>
-                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                    <Field
-                      label="Nama lengkap"
-                      htmlFor="checkout-name"
-                      error={errors.buyerName}
-                      required
-                    >
-                      <Input
-                        id="checkout-name"
-                        autoComplete="name"
-                        value={buyer.name}
-                        onChange={(changeEvent) =>
-                          setBuyer((current) => ({ ...current, name: changeEvent.target.value }))
-                        }
-                        className="h-11 rounded-xl border-slate-200 bg-slate-50 focus:bg-white"
-                      />
-                    </Field>
-                    <Field
-                      label="Email"
-                      htmlFor="checkout-email"
-                      error={errors.buyerEmail}
-                      required
-                    >
-                      <Input
-                        id="checkout-email"
-                        type="email"
-                        autoComplete="email"
-                        value={buyer.email}
-                        onChange={(changeEvent) =>
-                          setBuyer((current) => ({ ...current, email: changeEvent.target.value }))
-                        }
-                        className="h-11 rounded-xl border-slate-200 bg-slate-50 focus:bg-white"
-                      />
-                    </Field>
-                    <Field
-                      label="Nomor WhatsApp / HP"
-                      htmlFor="checkout-phone"
-                      hint="Opsional. Nomor yang dapat dihubungi terkait pesanan."
-                      error={errors.buyerPhone}
-                    >
-                      <Input
-                        id="checkout-phone"
-                        inputMode="tel"
-                        autoComplete="tel"
-                        value={buyer.phone}
-                        onChange={(changeEvent) =>
-                          setBuyer((current) => ({ ...current, phone: changeEvent.target.value }))
-                        }
-                        className="h-11 rounded-xl border-slate-200 bg-slate-50 focus:bg-white"
-                      />
-                    </Field>
+                    Periksa kembali kolom yang ditandai sebelum melanjutkan.
                   </div>
+                ) : null}
+                <CustomerPanel title="Data Pemesan">
+                  <CheckoutCustomerFields
+                    person={buyer}
+                    onChange={(person) =>
+                      setBuyer({
+                        name: person.name,
+                        email: person.email,
+                        phone: person.phone,
+                        identityType: person.identityType,
+                        identityNumber: person.identityNumber,
+                      })
+                    }
+                    prefix="checkout"
+                    errors={{
+                      name: errors.buyerName,
+                      email: errors.buyerEmail,
+                      phone: errors.buyerPhone,
+                      identityType: errors.buyerIdentityType,
+                      identityNumber: errors.buyerIdentityNumber,
+                    }}
+                  />
                   {!user ? (
-                    <p className="mt-4 text-xs text-slate-500">
+                    <p className="mt-4 text-xs leading-5 text-slate-600">
                       Kamu memesan sebagai tamu.{' '}
                       <Link
                         to={`/login?next=${encodeURIComponent(`/checkout/${event.slug}`)}`}
-                        className="font-medium text-blue-600 underline underline-offset-4"
+                        className="font-medium text-blue-700 underline"
                       >
                         Masuk ke akun
                       </Link>{' '}
-                      untuk menyimpan tiket langsung di akunmu.
+                      untuk menyimpan tiket di akunmu.
                     </p>
                   ) : null}
-                </section>
-
+                </CustomerPanel>
+                {slots.map((slot, index) => {
+                  const person = holderFor(slot.key);
+                  const ticket = ticketTypes.find((entry) => entry.id === slot.ticketTypeId);
+                  const prefix = `holder-${index}`;
+                  return (
+                    <CustomerPanel
+                      key={slot.key}
+                      title={`Detail Pesanan – ${index + 1}`}
+                      attendee
+                      action={
+                        <label className="flex min-h-11 cursor-pointer items-center gap-2 text-xs leading-5 text-slate-600">
+                          <input
+                            type="checkbox"
+                            className="size-4 shrink-0 accent-blue-600"
+                            checked={Boolean(copied[slot.key])}
+                            onChange={(event) => {
+                              if (!event.target.checked)
+                                setHolders((current) => ({ ...current, [slot.key]: person }));
+                              setCopied((current) => ({
+                                ...current,
+                                [slot.key]: event.target.checked,
+                              }));
+                            }}
+                          />
+                          Samakan dengan data pemesan
+                        </label>
+                      }
+                    >
+                      <p className="mb-4 rounded-xl bg-blue-100/60 px-4 py-3 text-sm font-medium text-blue-900">
+                        {ticket?.name} · Tiket {slot.position + 1}
+                      </p>
+                      <CheckoutCustomerFields
+                        holder
+                        person={person}
+                        onChange={(next) => {
+                          if (
+                            next.birthDate !== person.birthDate &&
+                            ageOnDate(next.birthDate) !== null &&
+                            ageOnDate(next.birthDate)! < 17 &&
+                            (next.identityType === 'KTP' || next.identityType === 'SIM')
+                          )
+                            next = { ...next, identityType: '', identityNumber: '' };
+                          setHolders((current) => ({ ...current, [slot.key]: next }));
+                          setCopied((current) => ({
+                            ...current,
+                            [slot.key]:
+                              Boolean(current[slot.key]) &&
+                              (
+                                [
+                                  'name',
+                                  'email',
+                                  'phone',
+                                  'identityType',
+                                  'identityNumber',
+                                ] as const
+                              ).every((field) => next[field] === buyer[field]),
+                          }));
+                        }}
+                        prefix={prefix}
+                        errors={Object.fromEntries(
+                          [
+                            'name',
+                            'email',
+                            'phone',
+                            'gender',
+                            'birthDate',
+                            'identityType',
+                            'identityNumber',
+                          ].map((field) => [field, errors[`attendees.${index}.${field}`]]),
+                        )}
+                      />
+                    </CustomerPanel>
+                  );
+                })}
                 <section
                   aria-labelledby="coupon-heading"
                   className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6"
@@ -601,8 +688,8 @@ export function CheckoutPage() {
                       . Tiket berlaku sah sesuai aturan organizer.
                     </span>
                   </label>
-                  {errors.terms ? (
-                    <p className="mt-2 text-xs font-medium text-rose-600">{errors.terms}</p>
+                  {errors.acceptTerms ? (
+                    <p className="mt-2 text-xs font-medium text-rose-600">{errors.acceptTerms}</p>
                   ) : null}
                 </section>
               </>
@@ -731,6 +818,17 @@ export function CheckoutPage() {
           </aside>
         </form>
       </main>
+      <CheckoutConfirmation
+        purchase={confirmation}
+        onClose={() => {
+          setConfirmation(null);
+          setError(null);
+        }}
+        onConfirm={() => void createConfirmedOrder()}
+        busy={submitting}
+        error={error}
+        total={quote?.total ?? localSubtotal}
+      />
     </>
   );
 }

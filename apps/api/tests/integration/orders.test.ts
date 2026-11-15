@@ -7,6 +7,7 @@ import { hmacSha256 } from '../../src/lib/crypto';
 import { prisma } from '../../src/lib/prisma';
 import { releaseExpiredOrders } from '../../src/modules/orders/order.service';
 import {
+  checkoutCustomerDetails,
   setupOrganizer,
   setupPublishedEvent,
   uniqueEmail,
@@ -19,7 +20,7 @@ function checkoutPayload(
   ticketTypeId: string,
   overrides: Record<string, unknown> = {},
 ) {
-  return {
+  const payload = {
     eventId,
     buyerName: 'Budi Santoso',
     buyerEmail: uniqueEmail('buyer'),
@@ -29,6 +30,10 @@ function checkoutPayload(
     idempotencyKey: randomUUID(),
     ...overrides,
   };
+  return {
+    ...checkoutCustomerDetails(payload.items, payload.buyerName, payload.buyerEmail),
+    ...payload,
+  };
 }
 
 function signedWebhook(payload: Record<string, unknown>, secret = env.PAYMENT_WEBHOOK_SECRET) {
@@ -36,10 +41,7 @@ function signedWebhook(payload: Record<string, unknown>, secret = env.PAYMENT_WE
   return { raw, signature: hmacSha256(secret, raw) };
 }
 
-async function postWebhook(
-  payload: Record<string, unknown>,
-  signature: string,
-) {
+async function postWebhook(payload: Record<string, unknown>, signature: string) {
   return request(app)
     .post('/api/v1/webhooks/payments/mock')
     .set('Content-Type', 'application/json')
@@ -95,12 +97,8 @@ describe('order checkout', () => {
     });
 
     const [first, second] = await Promise.all([
-      organizer.agent
-        .post('/api/v1/orders')
-        .send(checkoutPayload(event.id, ticketType.id)),
-      organizer.agent
-        .post('/api/v1/orders')
-        .send(checkoutPayload(event.id, ticketType.id)),
+      organizer.agent.post('/api/v1/orders').send(checkoutPayload(event.id, ticketType.id)),
+      organizer.agent.post('/api/v1/orders').send(checkoutPayload(event.id, ticketType.id)),
     ]);
 
     const statuses = [first.status, second.status].sort();
@@ -151,6 +149,93 @@ describe('order checkout', () => {
       where: { eventId_code: { eventId: event.id, code: 'MALAM10' } },
     });
     expect(coupon.redeemedCount).toBe(1);
+  });
+});
+
+describe('checkout customer details', () => {
+  it.each(['KTP', 'SIM'])(
+    'rejects an underage %s holder at the API boundary',
+    async (identityType) => {
+      const { organizer, event, ticketType } = await setupPublishedEvent(app);
+      const payload = checkoutPayload(event.id, ticketType.id);
+      payload.attendees[0] = { ...payload.attendees[0]!, identityType, birthDate: '2015-01-01' };
+      const response = await organizer.agent.post('/api/v1/orders').send(payload);
+      expect(response.status).toBe(422);
+      expect(
+        response.body.error.details.some(
+          (detail: { path: string }) => detail.path === 'attendees.0.identityType',
+        ),
+      ).toBe(true);
+      expect(await prisma.order.count({ where: { eventId: event.id } })).toBe(0);
+    },
+  );
+
+  it('requires buyer identity and complete holder data before reserving stock', async () => {
+    const { organizer, event, ticketType } = await setupPublishedEvent(app);
+    const payload = checkoutPayload(event.id, ticketType.id);
+    const missing = await organizer.agent
+      .post('/api/v1/orders')
+      .send({ ...payload, buyerIdentityType: undefined, attendees: [] });
+    expect(missing.status).toBe(422);
+    const duplicated = await organizer.agent.post('/api/v1/orders').send({
+      ...payload,
+      items: [{ ticketTypeId: ticketType.id, quantity: 2 }],
+      attendees: [payload.attendees[0], payload.attendees[0]],
+    });
+    expect(duplicated.status).toBe(422);
+    expect(
+      (await prisma.ticketType.findUniqueOrThrow({ where: { id: ticketType.id } }))
+        .quantityReserved,
+    ).toBe(0);
+  });
+
+  it('persists per-ticket identities and issues tickets to their individual holders', async () => {
+    const { organizer, event, ticketType } = await setupPublishedEvent(app, { price: 0 });
+    const payload = checkoutPayload(event.id, ticketType.id, {
+      items: [{ ticketTypeId: ticketType.id, quantity: 2 }],
+      buyerPhone: '+65 8123 4567',
+    });
+    payload.attendees[0] = {
+      ...payload.attendees[0]!,
+      name: 'Alya Pelajar',
+      email: 'alya@example.com',
+      identityType: 'STUDENT_CARD',
+      identityNumber: 'SISWA-1234',
+      birthDate: '2015-01-01',
+      gender: 'FEMALE',
+    };
+    payload.attendees[1] = {
+      ...payload.attendees[1]!,
+      name: 'Bima Paspor',
+      email: 'bima@example.com',
+      identityType: 'PASSPORT',
+      identityNumber: 'P1234567',
+      birthDate: '2014-01-01',
+    };
+    const response = await organizer.agent.post('/api/v1/orders').send(payload);
+    expect(response.status).toBe(201);
+    const order = response.body.data.order;
+    expect(order.status).toBe('PAID');
+    expect(order.buyerPhone).toBe('+6581234567');
+    expect(order.tickets.map((ticket: { holderName: string }) => ticket.holderName).sort()).toEqual(
+      ['Alya Pelajar', 'Bima Paspor'],
+    );
+    const stored = await prisma.order.findUniqueOrThrow({ where: { id: order.id } });
+    expect(stored.checkoutDetails).toMatchObject({
+      buyer: { identityType: 'KTP', identityNumber: payload.buyerIdentityNumber },
+      attendees: [{ name: 'Alya Pelajar', birthDate: '2015-01-01' }, { name: 'Bima Paspor' }],
+    });
+    expect(
+      await prisma.ticket.findMany({ where: { orderId: order.id }, select: { holderEmail: true } }),
+    ).toEqual(
+      expect.arrayContaining([
+        { holderEmail: 'alya@example.com' },
+        { holderEmail: 'bima@example.com' },
+      ]),
+    );
+    expect(JSON.stringify(response.body)).not.toContain('SISWA-1234');
+    expect(JSON.stringify(response.body)).not.toContain('birthDate');
+    expect(order.checkoutDetails).toBeUndefined();
   });
 });
 
@@ -313,9 +398,7 @@ describe('payment webhook', () => {
     expect(qr.headers['content-type']).toContain('image/png');
     expect(qr.body.subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a');
 
-    const withoutToken = await request(app).get(
-      `/api/v1/orders/${order.orderCode}/tickets`,
-    );
+    const withoutToken = await request(app).get(`/api/v1/orders/${order.orderCode}/tickets`);
     expect(withoutToken.status).toBe(401);
     expect(withoutToken.body.error.code).toBe('ORDER_ACCESS_DENIED');
   });
@@ -406,9 +489,7 @@ describe('ticket page access', () => {
       .query({ token: 'token-yang-salah' });
     expect(wrongToken.status).toBe(401);
 
-    const detail = await request(app)
-      .get(`/api/v1/tickets/${ticket.ticketCode}`)
-      .query({ token });
+    const detail = await request(app).get(`/api/v1/tickets/${ticket.ticketCode}`).query({ token });
     expect(detail.status).toBe(200);
     expect(detail.body.data.ticket.holderName).toBe('Budi Santoso');
     expect(detail.body.data.ticket.qrUrl).toContain('token=');

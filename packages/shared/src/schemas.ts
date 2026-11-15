@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { orderCustomerSchema } from './checkout';
 import {
   DISCOUNT_TYPES,
   EVENT_STAFF_ROLES,
@@ -349,30 +350,50 @@ export const couponUpdateSchema = couponBaseSchema
   .extend({ validFrom: optionalDateTimeOrNull, validUntil: optionalDateTimeOrNull })
   .superRefine(refineCoupon);
 
-export const createOrderSchema = z.object({
-  eventId: z.string().min(1),
-  buyerName: z.string().trim().min(2).max(120),
-  buyerEmail: emailSchema,
-  buyerPhone: phoneSchema,
-  couponCode: z
-    .string()
-    .trim()
-    .toUpperCase()
-    .max(24)
-    .optional()
-    .transform((value) => value || undefined),
-  items: z
-    .array(
-      z.object({
-        ticketTypeId: z.string().min(1),
-        quantity: z.coerce.number().int().min(1).max(50),
-      }),
-    )
-    .min(1)
-    .max(10),
-  acceptTerms: z.literal(true),
-  idempotencyKey: z.string().trim().min(8).max(100),
-});
+export const createOrderSchema = z
+  .object({
+    eventId: z.string().min(1),
+    ...orderCustomerSchema.shape,
+    couponCode: z
+      .string()
+      .trim()
+      .toUpperCase()
+      .max(24)
+      .optional()
+      .transform((value) => value || undefined),
+    items: z
+      .array(
+        z.object({
+          ticketTypeId: z.string().min(1),
+          quantity: z.coerce.number().int().min(1).max(50),
+        }),
+      )
+      .min(1)
+      .max(10),
+    acceptTerms: z.literal(true),
+    idempotencyKey: z.string().trim().min(8).max(100),
+  })
+  .superRefine((order, ctx) => {
+    const expected = new Set(
+      order.items.flatMap((item) =>
+        Array.from({ length: item.quantity }, (_, position) => `${item.ticketTypeId}:${position}`),
+      ),
+    );
+    const supplied = new Set(
+      order.attendees.map((person) => `${person.ticketTypeId}:${person.position}`),
+    );
+    if (
+      expected.size !== supplied.size ||
+      supplied.size !== order.attendees.length ||
+      [...expected].some((key) => !supplied.has(key))
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['attendees'],
+        message: 'Data pemegang tiket harus sesuai dengan kategori dan jumlah tiket yang dipesan',
+      });
+    }
+  });
 
 export const orderAccessSchema = z.object({
   email: emailSchema,

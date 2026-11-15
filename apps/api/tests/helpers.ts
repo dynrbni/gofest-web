@@ -177,3 +177,27 @@ export async function setupPublishedEvent(
   await publishEvent(event.id);
   return { organizer, category, event, ticketType };
 }
+
+export function checkoutCustomerDetails(
+  items: Array<{ ticketTypeId: string; quantity: number }>,
+  name = 'Budi Santoso',
+  email = 'holder@example.com',
+) {
+  return {
+    buyerIdentityType: 'KTP',
+    buyerIdentityNumber: '3171000000000001',
+    attendees: items.flatMap((item) =>
+      Array.from({ length: item.quantity }, (_, position) => ({
+        ticketTypeId: item.ticketTypeId,
+        position,
+        name,
+        email,
+        phone: '+6281234567890',
+        identityType: 'KTP',
+        identityNumber: '3171000000000001',
+        gender: 'MALE',
+        birthDate: '1995-01-01',
+      })),
+    ),
+  };
+}

@@ -7,6 +7,7 @@ import { hmacSha256 } from '../../src/lib/crypto';
 import { prisma } from '../../src/lib/prisma';
 import { releaseExpiredOrders } from '../../src/modules/orders/order.service';
 import {
+  checkoutCustomerDetails,
   addTicketType,
   createEvent,
   registerAgent,
@@ -32,7 +33,7 @@ function checkoutPayload(
   ticketTypeId: string,
   overrides: Record<string, unknown> = {},
 ) {
-  return {
+  const payload = {
     eventId,
     buyerName: 'Pembeli Review',
     buyerEmail: uniqueEmail('review'),
@@ -41,6 +42,10 @@ function checkoutPayload(
     acceptTerms: true,
     idempotencyKey: randomUUID(),
     ...overrides,
+  };
+  return {
+    ...checkoutCustomerDetails(payload.items, payload.buyerName, payload.buyerEmail),
+    ...payload,
   };
 }
 
