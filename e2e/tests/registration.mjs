@@ -35,12 +35,18 @@ function layout(step) {
   ]) {
     browser('set', 'viewport', String(width), String(height));
     const bounds = evaluate(
-      `({overflow:document.documentElement.scrollWidth>innerWidth+1,scroll:document.documentElement.scrollHeight>innerHeight+1,step:document.querySelector('li[aria-current="step"]')?.textContent,mascot:document.querySelector('.auth-mascot-image')?.getBoundingClientRect().width>0,logo:!!document.querySelector('.auth-form-header img[src="/assets/gofest-logo.png"]'),language:!!document.querySelector('.auth-form-header button')})`,
+      `({overflow:document.documentElement.scrollWidth>innerWidth+1,scroll:document.documentElement.scrollHeight>innerHeight+1,step:document.querySelector('#auth-heading')?.textContent,mascot:document.querySelector('.auth-mascot-image[data-active=true]')?.getBoundingClientRect().width>0,logo:!!document.querySelector('.auth-form-header img[src="/assets/gofest-logo.png"]'),language:!!document.querySelector('.auth-form-header button')})`,
     );
     assert.equal(bounds.overflow, false, `${step}: horizontal overflow at ${width}`);
     assert.equal(bounds.scroll, false, `${step}: vertical scroll at ${width}x${height}`);
-    assert.ok(bounds.step.includes(step));
-    if (width >= 768) assert.equal(bounds.mascot, true, 'Desktop keeps mascot at left');
+    const headings = {
+      'Data diri': 'Selamat datang di Gofest!',
+      Password: 'Buat password',
+      Verifikasi: 'Verifikasi email',
+    };
+    assert.equal(bounds.step, headings[step]);
+    if (width >= 768)
+      assert.equal(bounds.mascot, true, 'Desktop keeps the registration mascot at right');
     assert.equal(bounds.logo, true);
     assert.equal(bounds.language, true);
     if ([390, 1440].includes(width))
@@ -67,7 +73,7 @@ try {
   assert.equal(evaluate('document.querySelector("#register-name").value'), 'Nadia Pengguna');
   assert.equal(
     evaluate('document.querySelector("#auth-heading").textContent'),
-    'Create your Gofest account',
+    'Welcome to Gofest!',
   );
   click('Choose language');
   browser('find', 'role', 'menuitem', 'click', '--name', 'Bahasa Indonesia', '--exact');
@@ -152,6 +158,14 @@ try {
   browser('wait', '--fn', '!document.querySelector("[role=menu]")');
   browser('wait', '--fn', 'document.querySelector("#auth-heading").textContent==="Welcome back!"');
   assert.equal(browser('a11y').counts.violations, 0, 'Login header accessibility');
+  await evaluate(`fetch('/api/v1/auth/logout', { method: 'POST' })`);
+  browser('reload');
+  browser('wait', '#login-email');
+  browser('fill', '#login-email', email);
+  browser('fill', '#login-password', 'QaSignup123!Long');
+  click('Log in');
+  browser('wait', '--url', '**/account');
+  browser('wait', 'main h1');
   assert.deepEqual(browser('errors').errors, []);
   process.stdout.write(
     `PASS personal information → strong password → final OTP → authenticated account; ${queued.testMode ? 'arbitrary testing OTP accepted' : 'real OTP enforced'}, language switch, strength states, visibility, validation, back navigation, persistence, accessibility and fifteen responsive step checks.\n`,

@@ -135,7 +135,20 @@ try {
     for (const width of [320, 1440]) {
       browser('set', 'viewport', String(width), '900');
       open(path);
-      assert.ok(audit().pages.includes(path), `${path}: page skeleton appears at ${width}px`);
+      if (['/login', '/register', '/forgot-password'].includes(path)) {
+        assert.equal(
+          audit().pages.includes(path),
+          false,
+          `${path}: auth forms render without a runtime skeleton`,
+        );
+        assert.equal(
+          audit().routes.includes(path),
+          false,
+          `${path}: auth routes skip the loading overlay`,
+        );
+      } else {
+        assert.ok(audit().pages.includes(path), `${path}: page skeleton appears at ${width}px`);
+      }
       assert.equal(audit().moving, false, 'Reduced motion disables every skeleton animation');
       assert.equal(audit().interactive, false, 'Skeletons expose no fake interactive controls');
       assert.equal(audit().overflow, false, `${path}: skeleton fits ${width}px`);
@@ -152,9 +165,10 @@ try {
   ready();
   link('Masuk');
   ready();
-  assert.ok(
+  assert.equal(
     audit().routes.includes('/login'),
-    'Returning to a cached page still shows the transition',
+    false,
+    'Switching auth forms never shows a route skeleton',
   );
   assert.deepEqual(browser('errors').errors, [], 'No browser runtime errors');
 

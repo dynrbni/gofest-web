@@ -24,6 +24,7 @@
     "test:loading": "node e2e/tests/loading.mjs",
     "test:creators": "node e2e/tests/creator-profile.mjs",
     "test:registration": "node e2e/tests/registration.mjs",
+    "test:auth-transitions": "node e2e/tests/auth-transitions.mjs",
     "test:event-detail": "node e2e/tests/event-detail-carousel.mjs",
     "db:generate": "pnpm --filter @gofest/api db:generate",
     "db:check": "pnpm --filter @gofest/api db:check",

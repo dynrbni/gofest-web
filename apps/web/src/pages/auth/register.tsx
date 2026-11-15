@@ -75,7 +75,10 @@ export function RegisterPage() {
     verification: t('Verifikasi email', 'Verify your email'),
   };
   const ledes = {
-    personal: t('Silahkan isi data diri kamu untuk melanjutkan pendaftaran akunmu.', 'Please fill in your personal information to continue your account registration.'),
+    personal: t(
+      'Silahkan isi data diri kamu untuk melanjutkan pendaftaran akunmu.',
+      'Please fill in your personal information to continue your account registration.',
+    ),
     password: t(
       'Gunakan password yang kuat untuk akunmu.',
       'Choose a strong password for your account.',
@@ -234,7 +237,6 @@ export function RegisterPage() {
 
   return (
     <AuthShell
-      compact
       title={titles[step]}
       lede={ledes[step]}
       footer={
@@ -244,7 +246,6 @@ export function RegisterPage() {
         </>
       }
     >
-      
       <form onSubmit={onSubmit} className="space-y-3" noValidate aria-busy={submitting}>
         {step === 'personal' ? (
           <PersonalInformationFields

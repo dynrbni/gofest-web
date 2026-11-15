@@ -5,6 +5,11 @@ import { BrandLogo } from '@/components/common/brand-logo';
 import { AuthProvider, RequireAuth } from '@/lib/auth';
 import { CheckoutLayout } from '@/components/layout/checkout-layout';
 import { PublicLayout } from '@/components/layout/public-layout';
+import { AuthLayout } from '@/pages/auth/auth-layout';
+import { LoginPage } from '@/pages/auth/login';
+import { RegisterPage } from '@/pages/auth/register';
+import { ForgotPasswordPage } from '@/pages/auth/forgot-password';
+import { ResetPasswordPage } from '@/pages/auth/reset-password';
 
 function lazyPage<Props extends object>(load: () => Promise<ComponentType<Props>>) {
   return lazy(async () => ({ default: await load() }));
@@ -37,14 +42,6 @@ const OrderPage = lazyPage(() => import('@/pages/public/order').then((m) => m.Or
 const TicketPage = lazyPage(() => import('@/pages/public/ticket').then((m) => m.TicketPage));
 const TermsPage = lazyPage(() => import('@/pages/public/legal').then((m) => m.TermsPage));
 const PrivacyPage = lazyPage(() => import('@/pages/public/legal').then((m) => m.PrivacyPage));
-const LoginPage = lazyPage(() => import('@/pages/auth/login').then((m) => m.LoginPage));
-const RegisterPage = lazyPage(() => import('@/pages/auth/register').then((m) => m.RegisterPage));
-const ForgotPasswordPage = lazyPage(() =>
-  import('@/pages/auth/forgot-password').then((m) => m.ForgotPasswordPage),
-);
-const ResetPasswordPage = lazyPage(() =>
-  import('@/pages/auth/reset-password').then((m) => m.ResetPasswordPage),
-);
 const AccountOverviewPage = lazyPage(() =>
   import('@/pages/account/overview').then((m) => m.AccountOverviewPage),
 );
@@ -185,10 +182,15 @@ export const router = createBrowserRouter([
           { path: '/order/:orderCode', element: <OrderPage /> },
         ],
       },
-      { path: '/login', element: <LoginPage /> },
-      { path: '/register', element: <RegisterPage /> },
-      { path: '/forgot-password', element: <ForgotPasswordPage /> },
-      { path: '/reset-password', element: <ResetPasswordPage /> },
+      {
+        element: <AuthLayout />,
+        children: [
+          { path: '/login', element: <LoginPage /> },
+          { path: '/register', element: <RegisterPage /> },
+          { path: '/forgot-password', element: <ForgotPasswordPage /> },
+          { path: '/reset-password', element: <ResetPasswordPage /> },
+        ],
+      },
       {
         element: <PublicLayout />,
         children: [

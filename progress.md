@@ -1,5 +1,13 @@
 # Progress
 
+## Auth column swap and mascot poses, 2026-11-16
+
+- Added two identity-preserving mascot pose assets using built-in imagegen: a welcoming otter/bunny/penguin group for login, and a high-five group for register. Original brand PNG and previous mascot assets remain unchanged. Asset paths, exact prompts and provenance are in docs/design/auth-mascot-poses.md.
+- A persistent AuthLayout holds the form and illustration slots. Login places form right; register places form left. Native 560ms animations swap columns, preserve current positions during interrupted switches and cancel on resize. Form content fades in; ready decoded mascot images crossfade. Mobile keeps a single form column and reduced motion skips animation.
+- Auth forms are eagerly available in the same bundle and skip the forced 320ms route skeleton. Existing boot/public loading states remain; login/register switching does not mount a route/image skeleton or replace the shared layout.
+- Registration fields, password validation/strength/visibility, final OTP, language, recovery and real login remain functional. Existing registration tests now use current visible step headings; loading tests reflect the requested auth exception.
+- Verification: five-width auth transition/frame/accessibility suite, full registration plus login, public loading suite and 24 public route checks pass. Shared/API/web types, scoped ESLint and the web build pass. See docs/qa/auth-transitions-2026-11-16.md. Pending white auth canvas/form-box removal is incorporated; unrelated checkout-field edits remain untouched.
+
 ## Mobile layout tuning and skeleton loading, 15 November 2026
 
 - Replaced the PageLoading spinner with responsive skeleton compositions, added full-site reload/navigation transitions, image placeholders, HTML boot skeleton and reduced-motion support.
