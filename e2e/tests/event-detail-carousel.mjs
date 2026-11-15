@@ -21,7 +21,9 @@ const open = (path) => {
   browser('wait', 'main h1');
 };
 const finishAnimations = () =>
-  evaluate('document.getAnimations().forEach(animation => animation.finish())');
+  evaluate(
+    'document.getAnimations().forEach(animation => { try { if (animation.effect?.getComputedTiming()?.endTime !== Infinity) animation.finish(); } catch {} })',
+  );
 
 try {
   browser('set', 'viewport', '1440', '1000');

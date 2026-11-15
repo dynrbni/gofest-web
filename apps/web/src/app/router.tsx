@@ -1,19 +1,26 @@
 import { Outlet, ScrollRestoration, createBrowserRouter } from 'react-router-dom';
-import { lazy, Suspense, type ComponentType } from 'react';
-import { PageLoading } from '@/components/common/states';
+import { lazy, type ComponentType } from 'react';
+import { RouteTransition } from '@/components/common/route-transition';
 import { BrandLogo } from '@/components/common/brand-logo';
 import { AuthProvider, RequireAuth } from '@/lib/auth';
 import { CheckoutLayout } from '@/components/layout/checkout-layout';
 import { PublicLayout } from '@/components/layout/public-layout';
-import { AccountLayout } from '@/pages/account/account-layout';
-import { OrganizerShell } from '@/pages/organizer/organizer-shell';
-import { AdminShell } from '@/pages/admin/admin-shell';
 
 function lazyPage<Props extends object>(load: () => Promise<ComponentType<Props>>) {
   return lazy(async () => ({ default: await load() }));
 }
 
 const HomePage = lazyPage(() => import('@/pages/public/home').then((m) => m.HomePage));
+const AccountTicketsPage = lazyPage(() =>
+  import('@/pages/account/tickets').then((m) => m.AccountTicketsPage),
+);
+const AccountLayout = lazyPage(() =>
+  import('@/pages/account/account-layout').then((m) => m.AccountLayout),
+);
+const OrganizerShell = lazyPage(() =>
+  import('@/pages/organizer/organizer-shell').then((m) => m.OrganizerShell),
+);
+const AdminShell = lazyPage(() => import('@/pages/admin/admin-shell').then((m) => m.AdminShell));
 const EventsPage = lazyPage(() => import('@/pages/public/events').then((m) => m.EventsPage));
 const CityEventsPage = lazyPage(() =>
   import('@/pages/public/city-events').then((m) => m.CityEventsPage),
@@ -116,9 +123,9 @@ function RootLayout() {
   return (
     <AuthProvider>
       <ScrollRestoration />
-      <Suspense fallback={<PageLoading />}>
+      <RouteTransition>
         <Outlet />
-      </Suspense>
+      </RouteTransition>
     </AuthProvider>
   );
 }
@@ -204,6 +211,7 @@ export const router = createBrowserRouter([
             children: [
               { index: true, element: <AccountOverviewPage /> },
               { path: 'orders', element: <AccountOrdersPage /> },
+              { path: 'tickets', element: <AccountTicketsPage /> },
               { path: 'orders/:id', element: <AccountOrderDetailPage /> },
               { path: 'profile', element: <AccountProfilePage /> },
             ],

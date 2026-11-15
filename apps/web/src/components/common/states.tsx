@@ -3,43 +3,72 @@ import type { ReactNode } from 'react';
 import { errorMessage } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
-import { BrandLogo } from '@/components/common/brand-logo';
+import { useLocation } from 'react-router-dom';
+import { EventGridSkeleton, PageSkeleton, SiteSkeleton } from './page-skeleton';
 
 export function LoadingState({
   label = 'Memuat data',
   rows = 3,
   className,
+  variant = 'list',
 }: {
   label?: string;
   rows?: number;
   className?: string;
+  variant?: 'list' | 'events' | 'table';
 }) {
   return (
-    <div className={cn('space-y-4', className)} role="status" aria-live="polite">
+    <div className={cn('space-y-4', className)} role="status" aria-live="polite" aria-busy="true">
       <span className="sr-only">{label}</span>
-      {Array.from({ length: rows }).map((_, index) => (
-        <div
-          key={index}
-          className="flex items-center gap-4 rounded-xl border border-slate-100 bg-white p-4 shadow-2xs"
-        >
-          <Skeleton className="h-20 w-24 shrink-0 rounded-lg bg-slate-100" />
-          <div className="w-full space-y-2.5">
-            <Skeleton className="h-3.5 w-28 bg-slate-100" />
-            <Skeleton className="h-5 w-3/4 bg-slate-100" />
-            <Skeleton className="h-3.5 w-1/2 bg-slate-100" />
+      {variant === 'events' ? (
+        <EventGridSkeleton count={rows} />
+      ) : (
+        Array.from({ length: rows }).map((_, index) => (
+          <div
+            key={index}
+            aria-hidden
+            className="flex items-center gap-4 rounded-xl border border-slate-100 bg-white p-4 shadow-2xs"
+          >
+            {variant === 'list' ? (
+              <Skeleton className="h-20 w-24 shrink-0 rounded-lg bg-slate-100" />
+            ) : null}
+            <div
+              className={cn(
+                'w-full',
+                variant === 'table' ? 'grid grid-cols-3 items-center gap-4' : 'space-y-2.5',
+              )}
+            >
+              <Skeleton className="h-3.5 w-full max-w-28 bg-slate-100" />
+              <Skeleton className="h-5 w-3/4 bg-slate-100" />
+              <Skeleton className="h-3.5 w-1/2 bg-slate-100" />
+            </div>
           </div>
-        </div>
-      ))}
+        ))
+      )}
     </div>
   );
 }
 
-export function PageLoading({ label = 'Memuat halaman' }: { label?: string }) {
+export function PageLoading({
+  label = 'Memuat halaman',
+  fullPage = false,
+}: {
+  label?: string;
+  fullPage?: boolean;
+}) {
+  const { pathname } = useLocation();
   return (
-    <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4" role="status">
-      <BrandLogo className="mb-2" />
-      <div className="h-10 w-10 animate-spin rounded-full border-[3px] border-slate-200 border-t-blue-600" />
-      <p className="text-sm font-medium text-slate-500">{label}</p>
+    <div
+      className="min-h-[60vh]"
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+      data-page-loading
+    >
+      <span className="sr-only">{label}</span>
+      <div aria-hidden>
+        {fullPage ? <SiteSkeleton pathname={pathname} /> : <PageSkeleton pathname={pathname} />}
+      </div>
     </div>
   );
 }

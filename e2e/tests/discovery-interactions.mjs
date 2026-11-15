@@ -19,82 +19,25 @@ const wait = (code) => browser('wait', '--fn', code);
 const open = (path) => {
   browser('open', new URL(path, base).href);
   browser('wait', 'main h1');
+  wait('!document.querySelector("[data-route-loading], [data-page-loading]")');
 };
 const ready = () =>
   wait('document.querySelector("#event-results")?.getAttribute("aria-busy") === "false"');
-const centeredCategoryMenu = () => {
-  const bounds = evaluate(`(() => {
-    const rect = document.querySelector('.category-mega-menu').getBoundingClientRect();
-    return { center: rect.left + rect.width / 2, viewport: innerWidth, left: rect.left, right: rect.right };
-  })()`);
-  assert.ok(Math.abs(bounds.center - bounds.viewport / 2) < 1, 'Category menu is centered');
-  assert.ok(bounds.left >= 0 && bounds.right <= bounds.viewport, 'Category menu fits viewport');
-};
-
 try {
   browser('set', 'viewport', '1440', '1000');
   open('/events');
   ready();
   const initialCards = evaluate('document.querySelectorAll(".event-card").length');
   assert.ok(initialCards > 0, 'Published seed events are required');
-  click('Kategori');
-  browser('wait', '.category-mega-menu');
-  centeredCategoryMenu();
-  assert.equal(browser('a11y').counts.violations, 0, 'Category menu accessibility');
-  browser('press', 'Escape');
-  wait('!document.querySelector(".category-menu-trigger[data-state=open]")');
-  click('Film');
+  open('/');
+  browser('wait', 'nav[aria-label="Pilih kategori"]');
+  assert.equal(evaluate('document.querySelectorAll("header .category-menu-trigger").length'), 0);
+  browser('click', 'nav[aria-label="Pilih kategori"] a[href="/events?category=film"]');
   wait('new URLSearchParams(location.search).get("category") === "film"');
   ready();
   assert.equal(evaluate('new URLSearchParams(location.search).get("category")'), 'film');
-  browser('select', 'select[aria-label="Lokasi acara"]', 'Bandung');
-  wait('new URLSearchParams(location.search).get("city") === "Bandung"');
-  ready();
-  assert.equal(evaluate('new URLSearchParams(location.search).get("city")'), 'Bandung');
-  assert.ok(
-    evaluate(
-      '[...document.querySelectorAll(".event-card")].every(card => card.textContent.includes("Bandung"))',
-    ),
-  );
-  browser('select', 'select[aria-label="Harga tiket"]', 'free');
-  wait('new URLSearchParams(location.search).get("price") === "free"');
-  ready();
-  assert.equal(
-    evaluate('new URLSearchParams(location.search).get("category")'),
-    'film',
-    'Price change preserves category',
-  );
-  assert.equal(
-    evaluate('new URLSearchParams(location.search).get("city")'),
-    'Bandung',
-    'Price change preserves city',
-  );
-  click('Reset');
-  wait('location.search === ""');
-  ready();
-  assert.equal(evaluate('location.search'), '');
-  assert.equal(evaluate('document.querySelectorAll(".event-card").length'), initialCards);
-  click('Semua tanggal');
-  // The CLI's native date fill leaves date inputs empty on this browser engine.
-  evaluate(`for (const [id, value] of [['events-date-from', '2026-12-01'], ['events-date-to', '2026-12-31']]) {
-    const input = document.getElementById(id);
-    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, value);
-    input.dispatchEvent(new Event('input', { bubbles: true }));
-    input.dispatchEvent(new Event('change', { bubbles: true }));
-  }`);
-  wait('document.getElementById("events-date-to").getAttribute("value") === "2026-12-31"');
-  click('Terapkan');
-  wait('new URLSearchParams(location.search).has("dateFrom")');
-  ready();
-  assert.equal(
-    evaluate('new URLSearchParams(location.search).get("dateFrom")'),
-    '2026-11-30T17:00:00.000Z',
-  );
-  assert.equal(
-    evaluate('new URLSearchParams(location.search).get("dateTo")'),
-    '2026-12-31T16:59:59.000Z',
-  );
-  click('Reset');
+  assert.equal(evaluate('document.querySelectorAll("main select").length'), 0);
+  click('Semua acara');
   wait('location.search === ""');
   ready();
   click('Pilih bahasa');
@@ -108,14 +51,11 @@ try {
   browser('reload');
   browser('wait', 'main h1');
   assert.equal(evaluate('document.documentElement.lang'), 'en', 'Language persists after reload');
-  browser('click', 'footer a[href="/events?price=free"]');
-  wait('new URLSearchParams(location.search).get("price") === "free"');
+  browser('find', 'role', 'link', 'click', '--name', 'Music', '--exact');
+  wait('new URLSearchParams(location.search).get("category") === "musik"');
   ready();
-  wait(`document.querySelector('select[aria-label="Ticket price"]')?.value === 'free'`);
-  assert.equal(
-    evaluate(`document.querySelector('select[aria-label="Ticket price"]')?.value`),
-    'free',
-  );
+  wait(`document.querySelector('.catalog-category-active')?.textContent.includes('Music')`);
+  assert.equal(evaluate('new URLSearchParams(location.search).get("category")'), 'musik');
   open('/login');
   click('Log in');
   browser('wait', '--text', 'Enter your email');
@@ -135,17 +75,15 @@ try {
   open('/events');
   click('Open menu');
   browser('wait', '#mobile-navigation');
-  click('Categories');
-  browser('wait', '.category-mega-menu');
-  centeredCategoryMenu();
-  assert.equal(browser('a11y').counts.violations, 0, 'Mobile category menu accessibility');
+  assert.equal(evaluate('document.querySelectorAll("header .category-menu-trigger").length'), 0);
+  assert.equal(browser('a11y').counts.violations, 0, 'Mobile navigation accessibility');
   assert.equal(evaluate('document.documentElement.scrollWidth > innerWidth + 1'), false);
-  browser('press', 'Escape');
   click('Choose language');
   browser('find', 'role', 'menuitem', 'click', '--name', 'Bahasa Indonesia', '--exact');
   wait('document.documentElement.lang === "id"');
   assert.equal(evaluate('document.documentElement.lang'), 'id');
   open('/');
+  evaluate('document.getElementById("cities-heading").scrollIntoView()');
   browser('wait', '.city-destination');
   assert.equal(evaluate('document.querySelectorAll(".city-destination").length'), 5);
   browser('wait', '.hero-slide-current .hero-banner-link[href^="/events/"]');
@@ -155,19 +93,26 @@ try {
     'No stop button',
   );
   const initialSlide = evaluate(
-    'document.querySelector(".hero-slide-current .hero-title").textContent',
+    'document.querySelector(".hero-slide-current .hero-banner-link").getAttribute("href")',
   );
   click('Sorotan berikutnya');
   assert.notEqual(
-    evaluate('document.querySelector(".hero-slide-current .hero-title").textContent'),
+    evaluate(
+      'document.querySelector(".hero-slide-current .hero-banner-link").getAttribute("href")',
+    ),
     initialSlide,
   );
   click('Sorotan sebelumnya');
   assert.equal(
-    evaluate('document.querySelector(".hero-slide-current .hero-title").textContent'),
+    evaluate(
+      'document.querySelector(".hero-slide-current .hero-banner-link").getAttribute("href")',
+    ),
     initialSlide,
   );
   click('Lihat sorotan 2');
+  wait(
+    `document.querySelector('button[aria-label="Lihat sorotan 2"]').getAttribute('aria-pressed') === 'true'`,
+  );
   assert.equal(
     evaluate(
       `document.querySelector('button[aria-label="Lihat sorotan 2"]').getAttribute('aria-pressed')`,
@@ -211,7 +156,7 @@ try {
   assert.equal(evaluate('document.querySelectorAll("main [role=alert]").length'), 0);
   assert.deepEqual(browser('errors').errors, [], 'No browser runtime errors');
   process.stdout.write(
-    'PASS centered category menus, full-width banners and city proportions at five widths, carousel controls, city/price/date filters, reset, free navigation, ID/English persistence, auth validation, password visibility, city links, zero browser errors.\n',
+    'PASS homepage categories, mobile navigation, full-width banners and city proportions at five widths, carousel controls, category-only catalog, music navigation, ID/English persistence, auth validation, password visibility, city links, zero browser errors.\n',
   );
 } finally {
   browser('close');

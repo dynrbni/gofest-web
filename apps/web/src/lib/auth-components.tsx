@@ -4,6 +4,7 @@ import { useMemo, type ReactNode } from 'react';
 import { useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { api, ApiError } from './api';
 import { AuthContext, useAuth, type AuthContextValue } from './auth-context';
+import { PageLoading } from '@/components/common/states';
 
 async function loadMe(): Promise<AuthUser | null> {
   try {
@@ -107,12 +108,7 @@ export function RequireAuth({
   const navigate = useNavigate();
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-warm-border border-t-vermilion" />
-        <span className="sr-only">Memeriksa sesi</span>
-      </div>
-    );
+    return <PageLoading label="Memeriksa sesi" />;
   }
 
   if (!user) {

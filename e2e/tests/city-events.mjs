@@ -29,13 +29,16 @@ const open = (path) => {
   browser('wait', 'main h1');
 };
 const ready = () =>
-  wait('document.querySelector("#city-event-results")?.getAttribute("aria-busy") === "false"');
+  wait(
+    '!document.querySelector("[data-route-loading]") && document.querySelector("#city-event-results")?.getAttribute("aria-busy") === "false"',
+  );
 const heading = () =>
   evaluate('document.querySelector("main h1").textContent.replace(/\\s+/g, " ").trim()');
 
 try {
   browser('set', 'viewport', '1440', '1000');
   open('/');
+  evaluate('document.getElementById("cities-heading").scrollIntoView()');
   browser('wait', '.city-destination');
   assert.deepEqual(
     evaluate(

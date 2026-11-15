@@ -1,4 +1,4 @@
-import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useState, type CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { assetUrl } from '@/lib/assets';
@@ -6,6 +6,7 @@ import { useReducedMotion } from '@/lib/hooks';
 import type { EventSummary } from '@/lib/models';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/lib/language';
+import { LoadingImage } from '@/components/common/loading-image';
 
 function BannerSlide({ event }: { event?: EventSummary }) {
   const { t } = useLanguage();
@@ -20,11 +21,12 @@ function BannerSlide({ event }: { event?: EventSummary }) {
       }
       draggable={false}
     >
-      <img
+      <LoadingImage
         src={assetUrl(event?.coverKey) ?? '/images/concert-crowd.webp'}
         alt=""
         className="hero-image"
         fetchPriority="high"
+        loading="eager"
         width={1920}
         height={600}
         draggable={false}
@@ -33,24 +35,6 @@ function BannerSlide({ event }: { event?: EventSummary }) {
         }}
       />
       <div className="hero-shade" />
-      <div className="hero-copy">
-        <p className="hero-caption-meta">
-          {event
-            ? `${event.category.name} · ${event.type === 'ONLINE' ? 'Online' : (event.city ?? 'Indonesia')}`
-            : t(
-                'Konser, festival, dan pengalaman baru',
-                'Concerts, festivals, and new experiences',
-              )}
-        </p>
-        <h2 className="hero-title">
-          {event?.title ??
-            t('Ada cerita seru di setiap pertemuan.', 'Great stories start with getting together.')}
-        </h2>
-        <span className="hero-action">
-          {event ? t('Lihat acara', 'View event') : t('Jelajah acara', 'Explore events')}
-          <ArrowRight className="size-4" aria-hidden />
-        </span>
-      </div>
     </Link>
   );
 }

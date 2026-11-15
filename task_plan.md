@@ -27,3 +27,13 @@ Redesign the existing ticketing application around Loket-style event discovery, 
 - Clean main branch at b627b47.
 - Lint has no errors and six pre-existing warnings. Typecheck passes.
 - Web on localhost:5173 and API on localhost:4000 are available.
+
+## Skeleton loading and lazy loading, 15 November 2026
+
+- [x] Audit loading states, route splitting, existing design and local edits.
+- [x] Replace PageLoading with responsive skeleton layouts and add a brief full-site transition on reload/navigation.
+- [x] Add image placeholders, reduced-motion support, deferred city content and lazy workspace shells.
+- [x] Verify browser loading/navigation/error states, mobile layout, lint, types, tests and builds.
+- [x] Hide mascot otter illustration on mobile auth screens and tune mobile navbar height.
+- [x] Commit and push verified changes to origin/main.
+

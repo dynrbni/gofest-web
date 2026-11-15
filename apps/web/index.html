@@ -13,9 +13,88 @@
       content="Temukan konser, festival, workshop, dan pengalaman baru di Gofest. Pilih acara favoritmu dan pesan tiket secara online."
     />
     <title>Gofest</title>
+    <style>
+      .boot-loading {
+        max-width: 1200px;
+        margin: auto;
+        padding: 24px;
+      }
+      .boot-loading span {
+        display: block;
+        border-radius: 12px;
+        background: #e8effa;
+        animation: boot-pulse 1.8s ease-in-out infinite;
+      }
+      .boot-header {
+        display: flex;
+        gap: 24px;
+        margin-bottom: 32px;
+      }
+      .boot-header span:first-child {
+        width: 128px;
+        height: 40px;
+      }
+      .boot-header span:last-child {
+        flex: 1;
+        height: 40px;
+      }
+      .boot-loading .boot-banner {
+        height: clamp(240px, 32vw, 460px);
+      }
+      .boot-loading .boot-title {
+        width: 50%;
+        height: 28px;
+        margin: 32px 0 24px;
+      }
+      .boot-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 20px;
+      }
+      .boot-grid span {
+        height: 260px;
+      }
+      .boot-label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+      }
+      @keyframes boot-pulse {
+        50% {
+          opacity: 0.45;
+        }
+      }
+      @media (max-width: 767px) {
+        .boot-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+      @media (max-width: 479px) {
+        .boot-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .boot-loading span {
+          animation: none;
+        }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="boot-loading" role="status" aria-busy="true">
+        <p class="boot-label">Memuat halaman</p>
+        <div aria-hidden="true">
+          <div class="boot-header"><span></span><span></span></div>
+          <span class="boot-banner"></span>
+          <span class="boot-title"></span>
+          <div class="boot-grid"><span></span><span></span><span></span><span></span></div>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

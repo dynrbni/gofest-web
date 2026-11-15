@@ -13,7 +13,7 @@ import { Link, useParams } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import { toast } from 'sonner';
 import { EventPoster } from '@/components/common/event-presentation';
-import { ErrorState, LoadingState } from '@/components/common/states';
+import { ErrorState, PageLoading } from '@/components/common/states';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatDateLong, formatIDR, formatTime, formatTimeZoneLabel } from '@/lib/format';
 import { useDocumentTitle } from '@/lib/hooks';
@@ -25,11 +25,7 @@ export function EventDetailPage() {
   const event = eventQuery.data?.event;
   useDocumentTitle(event?.title ?? 'Detail acara');
   if (eventQuery.isLoading)
-    return (
-      <main className="container py-10">
-        <LoadingState rows={4} label="Memuat detail acara" />
-      </main>
-    );
+    return <PageLoading label="Memuat detail acara" />;
   if (eventQuery.isError || !event)
     return (
       <main className="container max-w-2xl py-14">

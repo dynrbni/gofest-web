@@ -9,7 +9,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner';
 import { EventPoster } from '@/components/common/event-presentation';
 import { PurchaseSteps } from '@/components/layout/checkout-layout';
-import { ErrorState, InlineError, LoadingState } from '@/components/common/states';
+import { ErrorState, InlineError, PageLoading } from '@/components/common/states';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { api, fieldErrors, ApiError } from '@/lib/api';
@@ -265,11 +265,7 @@ export function CheckoutPage() {
   }
 
   if (eventQuery.isLoading) {
-    return (
-      <main className="container py-10">
-        <LoadingState rows={4} label="Memuat checkout" />
-      </main>
-    );
+    return <PageLoading label="Memuat checkout" />;
   }
 
   if (eventQuery.isError || !event) {

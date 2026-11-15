@@ -8,6 +8,7 @@ import { dateParts, formatIDR } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/lib/language';
 import { OverflowMarquee } from './overflow-marquee';
+import { LoadingImage } from './loading-image';
 
 export function EventPoster({
   title,
@@ -34,7 +35,7 @@ export function EventPoster({
       className={cn('event-poster relative aspect-[16/9] overflow-hidden bg-blue-950', className)}
     >
       {src && failedSrc !== src ? (
-        <img
+        <LoadingImage
           src={src}
           alt={`Poster ${title}`}
           width={800}
@@ -94,13 +95,13 @@ export function OrganizerAvatar({
   return (
     <span
       className={cn(
-        'flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-base font-medium text-blue-800',
+        'relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-base font-medium text-blue-800',
         className,
       )}
       aria-hidden
     >
       {source && source !== failedSource ? (
-        <img
+        <LoadingImage
           src={source}
           alt=""
           width={128}
@@ -205,29 +206,6 @@ export function EventCard({ event }: { event: EventSummary }) {
           />
         </Link>
       </div>
-      {titleOverflows || creatorOverflows ? (
-        <button
-          type="button"
-          className="event-marquee-control absolute right-5 top-5 z-10 flex size-11 items-center justify-center rounded-full bg-white text-blue-800 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
-          aria-label={
-            textPaused
-              ? t('Lanjutkan teks bergerak', 'Resume scrolling text')
-              : t('Jeda teks bergerak', 'Pause scrolling text')
-          }
-          title={
-            textPaused
-              ? t('Lanjutkan teks bergerak', 'Resume scrolling text')
-              : t('Jeda teks bergerak', 'Pause scrolling text')
-          }
-          onClick={() => setTextPaused((value) => !value)}
-        >
-          {textPaused ? (
-            <Play className="size-4" aria-hidden />
-          ) : (
-            <Pause className="size-4" aria-hidden />
-          )}
-        </button>
-      ) : null}
     </article>
   );
 }

@@ -1,14 +1,22 @@
-import { ArrowRight, MapPin, Ticket, Megaphone } from 'lucide-react';
-import { useState } from 'react';
+import { ArrowRight, MapPin, Megaphone } from 'lucide-react';
+import { lazy, Suspense, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { EventCard } from '@/components/common/event-presentation';
-import { EmptyState, ErrorState, LoadingState } from '@/components/common/states';
+import { EmptyState, ErrorState, LoadingState, PageLoading } from '@/components/common/states';
 import { EventCarousel } from '@/components/discovery/event-carousel';
-import { CityDestinations } from '@/components/discovery/city-destinations';
+import { EventCategories } from '@/components/discovery/event-categories';
+import { CitySkeleton } from '@/components/common/page-skeleton';
+import { DeferredSection } from '@/components/common/deferred-section';
 import { useLanguage } from '@/lib/language';
 import { useDocumentTitle } from '@/lib/hooks';
 import { usePublicEvents } from '@/lib/queries';
 import { cn } from '@/lib/utils';
+
+const CityDestinations = lazy(() =>
+  import('@/components/discovery/city-destinations').then((module) => ({
+    default: module.CityDestinations,
+  })),
+);
 
 export function HomePage() {
   const { t } = useLanguage();
@@ -24,6 +32,8 @@ export function HomePage() {
     city: city || undefined,
   });
   const events = eventsQuery.data?.data ?? [];
+
+  if (heroQuery.isLoading) return <PageLoading label={t('Memuat beranda', 'Loading home')} />;
 
   return (
     <main id="main-content" className="discovery-page">
@@ -47,7 +57,7 @@ export function HomePage() {
           </div>
           <div className="mt-6" aria-busy={eventsQuery.isFetching}>
             {eventsQuery.isLoading ? (
-              <LoadingState rows={4} label="Memuat pilihan acara" />
+              <LoadingState variant="events" rows={4} label="Memuat pilihan acara" />
             ) : eventsQuery.isError ? (
               <ErrorState error={eventsQuery.error} onRetry={() => void eventsQuery.refetch()} />
             ) : events.length === 0 ? (
@@ -80,28 +90,7 @@ export function HomePage() {
             )}
           </div>
         </section>
-        <section className="creator-banner" aria-labelledby="creator-heading">
-          <div className="flex items-start gap-4 sm:items-center">
-            <span className="hidden size-14 shrink-0 items-center justify-center rounded-2xl bg-white text-blue-700 sm:flex">
-              <Ticket className="size-7" aria-hidden />
-            </span>
-            <div>
-              <h2 id="creator-heading" className="text-xl font-semibold sm:text-2xl">
-                {t('Punya ide acara? Waktunya jadi nyata.', 'An event in mind? Make it happen.')}
-              </h2>
-              <p className="mt-2 text-sm text-slate-600">
-                {t(
-                  'Buat acara, atur penjualan tiket, dan sambut penontonmu di Gofest.',
-                  'Create your event, manage ticket sales, and welcome your audience on Gofest.',
-                )}
-              </p>
-            </div>
-          </div>
-          <Link to="/organizer/apply" className="primary-action shrink-0">
-            {t('Jadi Partner Kami', 'Partner with us')}{' '}
-            <ArrowRight className="size-4" aria-hidden />
-          </Link>
-        </section>
+        <EventCategories />
         <section className="py-10 sm:py-14" aria-labelledby="cities-heading">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <h2 id="cities-heading" className="section-title flex items-center gap-3">
@@ -112,7 +101,11 @@ export function HomePage() {
               {t('Lihat semua', 'View all')} <ArrowRight className="size-4" aria-hidden />
             </Link>
           </div>
-          <CityDestinations />
+          <DeferredSection fallback={<CitySkeleton />}>
+            <Suspense fallback={<CitySkeleton />}>
+              <CityDestinations />
+            </Suspense>
+          </DeferredSection>
         </section>
       </div>
     </main>

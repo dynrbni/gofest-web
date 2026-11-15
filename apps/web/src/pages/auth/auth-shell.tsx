@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { BrandLogo } from '@/components/common/brand-logo';
 import { LanguageMenu } from '@/components/common/language-menu';
 import { useLanguage } from '@/lib/language';
+import { LoadingImage } from '@/components/common/loading-image';
 
 export function AuthShell({
   title,
@@ -20,8 +21,8 @@ export function AuthShell({
   return (
     <main className={`auth-page${compact ? ' auth-page-compact' : ''}`}>
       <div className="auth-container">
-        <div className="auth-mascot">
-          <img
+        <div className="auth-mascot relative hidden md:flex">
+          <LoadingImage
             src="/assets/gofest-mascot-friends.png"
             alt={t(
               'Trio maskot Gofest: berang-berang, kelinci, dan penguin biru siap ke konser',
@@ -31,6 +32,7 @@ export function AuthShell({
             height={1024}
             className="auth-mascot-image"
             fetchPriority="high"
+            loading="eager"
             draggable={false}
           />
           <div className="hidden md:block">

@@ -4,7 +4,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { PurchaseSteps } from '@/components/layout/checkout-layout';
 import { OrderStatusBadge, TicketStatusBadge } from '@/components/common/status-badge';
-import { ErrorState, LoadingState } from '@/components/common/states';
+import { ErrorState, PageLoading } from '@/components/common/states';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { api, errorMessage } from '@/lib/api';
@@ -105,11 +105,7 @@ export function OrderPage() {
   }
 
   if (orderQuery.isLoading) {
-    return (
-      <main className="container max-w-4xl py-10">
-        <LoadingState rows={4} label="Memuat pesanan" />
-      </main>
-    );
+    return <PageLoading label="Memuat pesanan" />;
   }
 
   if (accessDenied) {

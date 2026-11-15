@@ -1,5 +1,14 @@
 # Redesign findings
 
+## Skeleton loading audit, 15 November 2026
+
+- Route pages already use React.lazy. Workspace shells were eagerly imported; they now load on demand.
+- PageLoading was a centered spinner and data placeholders used one generic list shape. Added page-specific home, catalog, detail, creator, auth, checkout, workspace and document skeletons, plus event-grid/table variants.
+- A 320ms route transition covers site chrome while keeping content mounted so requests start immediately. Actual requests retain their own loading/error states after this short transition.
+- Home city content now waits until it approaches the viewport; native image lazy loading remains on posters/avatars, while hero and auth artwork stay eager. Image placeholders settle on success and failure.
+- Initial HTML includes a lightweight skeleton before JavaScript loads. All skeleton animation respects reduced motion.
+- Pre-existing uncommitted changes in home, carousel, registration and account layout are preserved and excluded from this task's commit. Their removed JSX left unused imports/constants, cleaned up where necessary for verification.
+
 - Existing app supports public events, guest checkout, orders, digital tickets, auth, buyer account, organizer event/ticket/coupon/order/staff management, check-in, and administration.
 - Current public pages have inconsistent styling and oversized dark hero. Backend contains four published demo events with cover images.
 - Current footer and authentication screen advertise unintegrated bank and wallet payments. README identifies payment as a development mock provider.

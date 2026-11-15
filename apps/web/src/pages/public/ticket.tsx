@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { BrandLogo } from '@/components/common/brand-logo';
 import { TicketStatusBadge } from '@/components/common/status-badge';
-import { ErrorState, LoadingState } from '@/components/common/states';
+import { ErrorState, PageLoading } from '@/components/common/states';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { api, ApiError, errorMessage } from '@/lib/api';
@@ -57,11 +57,7 @@ export function TicketPage() {
   }
 
   if (ticketQuery.isLoading) {
-    return (
-      <main className="container max-w-3xl py-10">
-        <LoadingState rows={3} label="Memuat tiket" />
-      </main>
-    );
+    return <PageLoading label="Memuat tiket" />;
   }
 
   if (accessDenied) {

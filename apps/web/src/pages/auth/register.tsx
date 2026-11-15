@@ -26,7 +26,6 @@ interface Verification {
   verificationToken: string;
   expiresAt: string;
 }
-const steps: Step[] = ['personal', 'password', 'verification'];
 const personalSchema = registerSchema.pick({
   name: true,
   username: true,
@@ -71,12 +70,12 @@ export function RegisterPage() {
     : 0;
   const expired = challenge ? now >= Date.parse(challenge.expiresAt) : false;
   const titles = {
-    personal: t('Buat akun Gofest', 'Create your Gofest account'),
+    personal: t('Selamat datang di Gofest!', 'Welcome to Gofest!'),
     password: t('Buat password', 'Create a password'),
     verification: t('Verifikasi email', 'Verify your email'),
   };
   const ledes = {
-    personal: t('Lengkapi informasi pribadimu.', 'Enter your personal information.'),
+    personal: t('Silahkan isi data diri kamu untuk melanjutkan pendaftaran akunmu.', 'Please fill in your personal information to continue your account registration.'),
     password: t(
       'Gunakan password yang kuat untuk akunmu.',
       'Choose a strong password for your account.',
@@ -86,7 +85,6 @@ export function RegisterPage() {
       `Enter the 6-digit code for ${form.email}.`,
     ),
   };
-  const stepLabels = [t('Data diri', 'Personal info'), 'Password', t('Verifikasi', 'Verification')];
 
   function change(key: keyof typeof form, value: string) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -246,20 +244,7 @@ export function RegisterPage() {
         </>
       }
     >
-      <ol
-        className="mb-4 grid grid-cols-3 gap-2 text-center text-xs"
-        aria-label={t('Langkah pendaftaran', 'Registration steps')}
-      >
-        {steps.map((item, index) => (
-          <li
-            key={item}
-            aria-current={step === item ? 'step' : undefined}
-            className={`border-t-2 pt-2 ${index <= steps.indexOf(step) ? 'border-blue-600 text-blue-700' : 'border-slate-200 text-slate-500'}`}
-          >
-            {index + 1}. {stepLabels[index]}
-          </li>
-        ))}
-      </ol>
+      
       <form onSubmit={onSubmit} className="space-y-3" noValidate aria-busy={submitting}>
         {step === 'personal' ? (
           <PersonalInformationFields

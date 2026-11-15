@@ -1,22 +1,23 @@
 import { NavLink } from 'react-router-dom';
-import { Settings, Ticket, User } from 'lucide-react';
+import { ReceiptText, Ticket, User } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 import { RouteContent } from '@/components/common/route-content';
+import { useLanguage } from '@/lib/language';
 
-const tabs = [
-  { to: '/account', label: 'Ringkasan', icon: User, end: true },
-  { to: '/account/orders', label: 'Tiket & pesanan', icon: Ticket, end: false },
-  { to: '/account/profile', label: 'Pengaturan profil', icon: Settings, end: false },
-];
 export function AccountLayout() {
   const { user } = useAuth();
+  const { t } = useLanguage();
+  const tabs = [
+    { to: '/account/profile', label: t('Profil Saya', 'My Profile'), icon: User },
+    { to: '/account/orders', label: t('Transaksi Saya', 'My Transactions'), icon: ReceiptText },
+    { to: '/account/tickets', label: t('Tiket Saya', 'My Tickets'), icon: Ticket },
+  ];
   return (
     <main className="bg-slate-50/60">
       <div className="container max-w-6xl py-8 sm:py-10">
         <header className="account-welcome">
           <div>
-            <p className="text-xs font-medium text-blue-700">Akun Gofest</p>
             <h1 className="mt-2 text-2xl font-semibold sm:text-3xl">
               Halo, {user?.name ?? 'teman Gofest'}!
             </h1>
@@ -36,7 +37,6 @@ export function AccountLayout() {
             <NavLink
               key={tab.to}
               to={tab.to}
-              end={tab.end}
               className={({ isActive }) =>
                 cn(
                   'flex min-h-12 shrink-0 items-center gap-2 border-b-2 px-1 text-sm font-medium transition-colors',

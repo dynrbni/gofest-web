@@ -1,5 +1,12 @@
 # Progress
 
+## Mobile layout tuning and skeleton loading, 15 November 2026
+
+- Replaced the PageLoading spinner with responsive skeleton compositions, added full-site reload/navigation transitions, image placeholders, HTML boot skeleton and reduced-motion support.
+- Lazy-load workspace shells and below-fold home city content; retain eager loading for prominent hero/auth imagery.
+- Adjusted mobile navbar height to 64px (`h-16`) to eliminate flattened header appearance on mobile viewports.
+- Hid mascot otter illustration on mobile auth viewports (`hidden md:flex`) to streamline the mobile login and authentication experience.
+
 ## Overflow-only event card marquees, 2026-11-15
 
 - Event titles and creator names now use a single-line marquee only when their measured text width exceeds available space. Short labels remain static; dates, prices and creator footers keep aligned positions. ResizeObserver handles responsive widths/font changes and IntersectionObserver pauses offscreen text.

@@ -112,6 +112,7 @@ function CityEventListing({ city }: { city: EventCity }) {
           </h2>
           {query.isLoading ? (
             <LoadingState
+              variant="events"
               rows={4}
               label={t(`Memuat acara di ${city.name}`, `Loading events in ${city.name}`)}
             />

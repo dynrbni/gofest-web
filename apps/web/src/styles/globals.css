@@ -385,19 +385,13 @@
     scrollbar-width: thin;
   }
   .catalog-category {
-    @apply flex min-w-28 flex-1 flex-col items-center gap-3 border-b-[3px] border-transparent px-3 pb-5 pt-2 text-center text-sm font-medium text-slate-600 transition-colors hover:bg-blue-50 hover:text-blue-700;
+    @apply flex w-24 shrink-0 sm:w-28 flex-col items-center gap-3 border-b-[3px] border-transparent px-2 pb-5 pt-2 text-center text-sm font-medium text-slate-600 transition-colors hover:bg-blue-50 hover:text-blue-700;
   }
   .catalog-category-active {
     @apply border-blue-600 bg-blue-50/60 font-medium text-blue-700;
   }
   .category-scroll {
-    @apply absolute top-10 z-10 flex size-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:border-blue-500 hover:text-blue-700;
-  }
-  .category-scroll-left {
-    left: 0;
-  }
-  .category-scroll-right {
-    right: 0;
+    @apply flex size-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:border-blue-500 hover:text-blue-700 disabled:opacity-40 disabled:pointer-events-none;
   }
   .catalog-filters {
     @apply my-6 flex flex-wrap items-center gap-2 sm:gap-4;
@@ -418,7 +412,7 @@
     @apply mx-auto grid w-full max-w-[1080px] flex-1 content-center items-center gap-5 py-5 md:grid-cols-2 md:gap-10 md:py-12 lg:gap-20;
   }
   .auth-mascot {
-    @apply flex flex-col items-center text-center;
+    @apply hidden md:flex flex-col items-center text-center;
   }
   .auth-mascot-image {
     @apply h-28 w-44 object-contain sm:h-32 sm:w-52 md:mb-5 md:h-auto md:w-full md:max-w-[480px];
@@ -689,12 +683,12 @@
     padding-right: 12px;
     font-size: 12px;
   }
-  .public-header > .container {
-    height: auto;
+  .public-header > .container.flex {
+    height: 64px;
     min-height: 64px;
     gap: 12px;
   }
-  .public-header > .container:has(.header-search) {
+  .public-header > .container:not(.flex) {
     min-height: 0;
   }
   input:not([type='checkbox']):not([type='radio']),

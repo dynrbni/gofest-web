@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { EventCard, OrganizerAvatar } from '@/components/common/event-presentation';
 import { Pagination } from '@/components/common/pagination';
-import { EmptyState, ErrorState, LoadingState } from '@/components/common/states';
+import { EmptyState, ErrorState, LoadingState, PageLoading } from '@/components/common/states';
+import { LoadingImage } from '@/components/common/loading-image';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { assetUrl } from '@/lib/assets';
 import { useDocumentTitle } from '@/lib/hooks';
@@ -22,11 +23,7 @@ export function OrganizerPublicPage() {
   const { t, language } = useLanguage();
   useDocumentTitle(organizer?.organizationName ?? t('Profil kreator', 'Creator profile'));
   if (query.isLoading || (query.isPlaceholderData && organizer?.slug !== slug))
-    return (
-      <main className="container py-10">
-        <LoadingState rows={4} label="Memuat profil kreator" />
-      </main>
-    );
+    return <PageLoading label="Memuat profil kreator" />;
   if ((query.isError && !organizer) || !organizer)
     return (
       <main className="container max-w-3xl py-14">
@@ -74,11 +71,12 @@ export function OrganizerPublicPage() {
         <header>
           <div className="creator-cover relative w-full aspect-[7/2] max-h-80 min-h-32 overflow-hidden rounded-2xl bg-blue-100">
             {banner && banner !== failedBanner ? (
-              <img
+              <LoadingImage
                 src={banner}
                 alt=""
                 width={1600}
                 height={460}
+                loading="eager"
                 onError={() => setFailedBanner(banner)}
                 className="h-full w-full object-cover"
               />
@@ -141,7 +139,7 @@ export function OrganizerPublicPage() {
                 {organizer.organizationName}
               </h2>
               {query.isFetching && query.isPlaceholderData ? (
-                <LoadingState rows={4} label="Memuat event kreator" />
+                <LoadingState variant="events" rows={4} label="Memuat event kreator" />
               ) : query.isError ? (
                 <ErrorState error={query.error} onRetry={() => void query.refetch()} />
               ) : events.length ? (
