@@ -104,6 +104,7 @@ const ticketAccessSelect = {
       id: true,
       title: true,
       slug: true,
+      status: true,
       startsAt: true,
       endsAt: true,
       timezone: true,
@@ -126,9 +127,7 @@ async function loadTicketForAccess(ticketCode: string, req: Request) {
   if (!ticket) throw new NotFoundError('Tiket tidak ditemukan', 'TICKET_NOT_FOUND');
 
   const token = accessTokenFromRequest(req);
-  const tokenMatches = token
-    ? safeCompare(sha256(token), ticket.order.accessTokenHash)
-    : false;
+  const tokenMatches = token ? safeCompare(sha256(token), ticket.order.accessTokenHash) : false;
   const allowed =
     req.auth?.role === 'ADMIN' ||
     (Boolean(req.auth) && ticket.order.userId === req.auth!.userId) ||
@@ -169,6 +168,12 @@ export async function getTicketByCode(ticketCode: string, req: Request) {
 
 export async function getTicketQrByCode(ticketCode: string, req: Request) {
   const { ticket } = await loadTicketForAccess(ticketCode, req);
+  if (!['PAID', 'PARTIALLY_REFUNDED', 'REFUND_PENDING'].includes(ticket.order.status)) {
+    throw new ConflictError('QR hanya tersedia untuk tiket yang telah dibayar', 'TICKET_UNPAID');
+  }
+  if (ticket.event.status === 'CANCELLED') {
+    throw new ConflictError('Event ini telah dibatalkan', 'TICKET_INVALID');
+  }
   if (ticket.status === 'CANCELLED' || ticket.status === 'REFUNDED') {
     throw new ConflictError('Tiket ini sudah tidak berlaku', 'TICKET_INVALID');
   }

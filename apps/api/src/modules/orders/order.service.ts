@@ -30,7 +30,7 @@ export type CreateOrderInput = z.infer<typeof createOrderSchema>;
 export type OrderAccessInput = z.infer<typeof orderAccessSchema>;
 export type QuoteOrderInput = z.infer<typeof quoteOrderSchema>;
 
-const orderInclude = {
+export const orderInclude = {
   event: {
     select: {
       id: true,
