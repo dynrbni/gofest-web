@@ -308,6 +308,7 @@ export function CheckoutPage() {
     setErrors({});
     requestAnimationFrame(() => {
       document.getElementById('checkout-heading')?.focus();
+      document.querySelector('.checkout-page')?.scrollTo({ top: 0, behavior: 'instant' });
       window.scrollTo({ top: 0, behavior: 'instant' });
     });
   }
@@ -315,7 +316,7 @@ export function CheckoutPage() {
   return (
     <>
       <PurchaseSteps active={step} />
-      <main className="container py-7 sm:py-10">
+      <main className="checkout-page container py-5 sm:py-10">
         {step === 1 ? (
           <Link to={`/events/${event.slug}`} className="text-link text-sm">
             <ArrowLeft className="size-4" aria-hidden />
@@ -351,7 +352,7 @@ export function CheckoutPage() {
         </p>
         <form
           onSubmit={onSubmit}
-          className="mt-7 grid items-start gap-7 lg:grid-cols-[minmax(0,1fr)_minmax(300px,32%)] lg:gap-8"
+          className="checkout-form mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(300px,32%)] lg:gap-8"
           noValidate
         >
           <div className="min-w-0 space-y-6">
@@ -366,6 +367,7 @@ export function CheckoutPage() {
                   timezone={event.timezone}
                   className="rounded-2xl"
                   imageClassName="object-contain"
+                  priority
                   sizes="(min-width: 1024px) 800px, 95vw"
                 />
                 <section aria-labelledby="tickets-heading">
@@ -692,7 +694,7 @@ export function CheckoutPage() {
             )}
           </div>
           <aside
-            className="min-w-0 rounded-2xl bg-blue-50 p-4 lg:sticky lg:top-6 sm:p-5"
+            className="checkout-summary min-w-0 rounded-2xl bg-blue-50 p-4 lg:sticky lg:top-6 sm:p-5"
             aria-labelledby="checkout-summary-heading"
           >
             <div className="rounded-xl bg-white p-4 sm:p-5">
@@ -774,29 +776,47 @@ export function CheckoutPage() {
 
                 {quoteError ? <InlineError error={quoteError} /> : null}
                 {error ? <InlineError error={error} /> : null}
-                {step === 1 ? (
-                  <Button
-                    type="button"
-                    onClick={(clickEvent) => {
-                      clickEvent.preventDefault();
-                      changeStep(2);
-                    }}
-                    disabled={!quoteReady}
-                    className="mt-3 min-h-12 w-full rounded-xl"
-                  >
-                    Lanjutkan
-                    <ArrowRight className="size-4" aria-hidden />
-                  </Button>
-                ) : (
-                  <Button
-                    type="submit"
-                    disabled={submitting || !quoteReady}
-                    className="mt-3 min-h-12 w-full rounded-xl"
-                  >
-                    {submitting ? 'Memproses pesanan...' : 'Lanjut ke Pembayaran'}
-                    <ArrowRight className="size-4" aria-hidden />
-                  </Button>
-                )}
+                <div className="checkout-action">
+                  <div className="checkout-action-total" aria-live="polite">
+                    <p className="text-xs text-slate-600">
+                      {totalQuantity ? `${totalQuantity} tiket · Total` : 'Harga mulai dari'}
+                    </p>
+                    <p className="mt-1 font-semibold text-blue-700 tabular-nums">
+                      {totalQuantity
+                        ? quoteLoading
+                          ? 'Menghitung...'
+                          : formatIDR(quote?.total ?? localSubtotal)
+                        : priceFrom === 0
+                          ? 'Gratis'
+                          : priceFrom !== null
+                            ? formatIDR(priceFrom)
+                            : 'Belum tersedia'}
+                    </p>
+                  </div>
+                  {step === 1 ? (
+                    <Button
+                      type="button"
+                      onClick={(clickEvent) => {
+                        clickEvent.preventDefault();
+                        changeStep(2);
+                      }}
+                      disabled={!quoteReady}
+                      className="mt-3 min-h-12 w-full rounded-xl"
+                    >
+                      Lanjutkan
+                      <ArrowRight className="size-4" aria-hidden />
+                    </Button>
+                  ) : (
+                    <Button
+                      type="submit"
+                      disabled={submitting || !quoteReady}
+                      className="mt-3 min-h-12 w-full rounded-xl"
+                    >
+                      {submitting ? 'Memproses pesanan...' : 'Lanjut ke Pembayaran'}
+                      <ArrowRight className="size-4" aria-hidden />
+                    </Button>
+                  )}
+                </div>
                 {totalQuantity === 0 ? (
                   <p className="text-xs leading-5 text-slate-500">
                     {sellable.length

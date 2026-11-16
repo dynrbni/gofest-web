@@ -90,8 +90,12 @@ try {
     for (let index = 0; index < 2; index += 1) {
       browser('check', `[aria-label="Detail Pesanan – ${index + 1}"] input[type=checkbox]`);
       browser(
-        'check',
-        `input[name="holder-${index}-gender"][value=${index === 0 ? 'FEMALE' : 'MALE'}]`,
+        'scrollintoview',
+        `label:has(input[name="holder-${index}-gender"][value=${index === 0 ? 'FEMALE' : 'MALE'}])`,
+      );
+      browser(
+        'click',
+        `label:has(input[name="holder-${index}-gender"][value=${index === 0 ? 'FEMALE' : 'MALE'}])`,
       );
       date(`holder-${index}-birthDate`, index === 0 ? '2015-01-01' : '1995-01-01');
       if (index === 0) {

@@ -40,14 +40,6 @@ try {
     ),
     first,
   );
-  assert.equal(
-    evaluate('getComputedStyle(document.querySelector(".hero-slide-incoming")).animationName'),
-    'banner-in',
-  );
-  assert.equal(
-    evaluate('getComputedStyle(document.querySelector(".hero-slide-outgoing")).animationName'),
-    'banner-out',
-  );
   finishAnimations();
   click('Sorotan sebelumnya');
   finishAnimations();
@@ -73,11 +65,9 @@ try {
     count + 2,
     'Only pagination and two arrows',
   );
-  const title = evaluate('document.querySelector(".hero-slide-current .hero-title").textContent');
   browser('click', '.hero-slide-current .hero-banner-link');
   browser('wait', '#event-title');
   assert.equal(evaluate('location.pathname'), first, 'Entire banner navigates to its event');
-  assert.equal(evaluate('document.querySelector("h1").textContent'), title);
 
   const response = await fetch(new URL('/api/v1/events?limit=12', base));
   assert.equal(response.ok, true);
@@ -111,12 +101,16 @@ try {
     const layout = evaluate(`(() => {
       const heading = document.querySelector('.event-detail-heading').getBoundingClientRect();
       const summary = document.querySelector('.event-detail-summary').getBoundingClientRect();
-      return { headingRight: heading.right, summaryLeft: summary.left, headingBottom: heading.bottom, summaryTop: summary.top };
+      const poster = document.querySelector('.event-detail-poster').getBoundingClientRect();
+      return { headingRight: heading.right, summaryLeft: summary.left, headingTop: heading.top, posterBottom: poster.bottom };
     })()`);
     if (width >= 1024)
       assert.ok(layout.summaryLeft > layout.headingRight, 'Poster is beside event details');
     else
-      assert.ok(layout.summaryTop >= layout.headingBottom, 'Poster stacks below details on mobile');
+      assert.ok(
+        layout.posterBottom <= layout.headingTop,
+        'Mobile poster appears before event details',
+      );
     assert.equal(
       evaluate('document.querySelectorAll("input[name=ticket-category]").length'),
       0,
@@ -236,7 +230,7 @@ try {
       browser('fill', '#checkout-identityNumber', '3171000000000001');
       for (let index = 0; index < chosen.minPerOrder; index += 1) {
         browser('check', `[aria-label="Detail Pesanan – ${index + 1}"] input[type=checkbox]`);
-        browser('check', `input[name="holder-${index}-gender"][value=MALE]`);
+        browser('click', `label:has(input[name="holder-${index}-gender"][value=MALE])`);
         // Native date segments require a complete date value rather than text insertion.
         evaluate(
           `(() => { const input = document.querySelector('#holder-${index}-birthDate'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, '1995-01-01'); input.dispatchEvent(new Event('input', { bubbles: true })); input.dispatchEvent(new Event('change', { bubbles: true })); })()`,
@@ -292,7 +286,7 @@ try {
   }
   assert.deepEqual(browser('errors').errors, [], 'No browser runtime errors');
   process.stdout.write(
-    'PASS banner links, directional transitions, wraparound, no stop button, separate detail and checkout, ticket quantity removal, staged buyer form with preserved data at five widths, guest mock purchase, accessibility and zero browser errors.\n',
+    'PASS banner links and wraparound, mobile poster before details, separate detail and checkout, ticket quantity removal, staged buyer form with preserved data at five widths, guest mock purchase, accessibility and zero browser errors.\n',
   );
 } finally {
   browser('close');

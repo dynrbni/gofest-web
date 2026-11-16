@@ -12,7 +12,7 @@ import {
 import { Link, useParams } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import { toast } from 'sonner';
-import { EventPoster } from '@/components/common/event-presentation';
+import { EventPoster, OrganizerAvatar } from '@/components/common/event-presentation';
 import { ErrorState, PageLoading } from '@/components/common/states';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatDateLong, formatIDR, formatTime, formatTimeZoneLabel } from '@/lib/format';
@@ -24,8 +24,7 @@ export function EventDetailPage() {
   const eventQuery = usePublicEvent(slug);
   const event = eventQuery.data?.event;
   useDocumentTitle(event?.title ?? 'Detail acara');
-  if (eventQuery.isLoading)
-    return <PageLoading label="Memuat detail acara" />;
+  if (eventQuery.isLoading) return <PageLoading label="Memuat detail acara" />;
   if (eventQuery.isError || !event)
     return (
       <main className="container max-w-2xl py-14">
@@ -101,14 +100,48 @@ export function EventDetailPage() {
           >
             {event.title}
           </h1>
-          <p className="mt-7 text-sm text-slate-500">Penyelenggara</p>
+          <section className="mt-6" aria-labelledby="event-metadata-heading">
+            <h2 id="event-metadata-heading" className="text-lg font-semibold">
+              Detail Acara
+            </h2>
+            <div className="mt-4 space-y-4 text-sm leading-6">
+              <p className="flex items-start gap-3">
+                <CalendarDays className="mt-0.5 size-5 shrink-0 text-blue-600" aria-hidden />
+                <span>
+                  {formatDateLong(event.startsAt, event.timezone)}
+                  {formatDateLong(event.startsAt, event.timezone) !==
+                  formatDateLong(event.endsAt, event.timezone)
+                    ? ` – ${formatDateLong(event.endsAt, event.timezone)}`
+                    : ''}
+                </span>
+              </p>
+              <p className="flex items-start gap-3">
+                <Clock className="mt-0.5 size-5 shrink-0 text-blue-600" aria-hidden />
+                <span>
+                  {formatTime(event.startsAt, event.timezone)} –{' '}
+                  {formatTime(event.endsAt, event.timezone)} · {formatTimeZoneLabel(event.timezone)}
+                </span>
+              </p>
+              <p className="flex items-start gap-3">
+                {event.type === 'ONLINE' ? (
+                  <Globe2 className="mt-0.5 size-5 shrink-0 text-blue-600" aria-hidden />
+                ) : (
+                  <MapPin className="mt-0.5 size-5 shrink-0 text-blue-600" aria-hidden />
+                )}
+                <span>{location}</span>
+              </p>
+            </div>
+          </section>
+          <p className="mt-6 text-sm text-slate-500">Penyelenggara</p>
           <Link
             to={`/organizers/${event.organizer.slug}`}
             className="mt-3 inline-flex items-center gap-3 hover:text-blue-700"
           >
-            <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-blue-50 text-lg font-medium text-blue-700">
-              {event.organizer.organizationName.charAt(0)}
-            </span>
+            <OrganizerAvatar
+              name={event.organizer.organizationName}
+              logoKey={event.organizer.logoKey}
+              className="size-11"
+            />
             <span className="text-sm font-medium">{event.organizer.organizationName}</span>
             {event.organizer.status === 'ACTIVE' ? (
               <CheckCircle2
@@ -138,38 +171,13 @@ export function EventDetailPage() {
             city={event.city}
             timezone={event.timezone}
             sizes="(min-width: 1024px) 540px, 95vw"
-            className="rounded-2xl"
+            className="event-detail-poster rounded-2xl"
             imageClassName="object-contain"
+            priority
           />
-          <section className="mt-6" aria-labelledby="event-metadata-heading">
-            <h2 id="event-metadata-heading" className="text-lg font-semibold">
-              Detail Acara
-            </h2>
-            <div className="mt-4 space-y-4 text-sm leading-6">
-              <p className="flex items-start gap-3">
-                <CalendarDays className="mt-0.5 size-5 shrink-0 text-blue-600" aria-hidden />
-                {formatDateLong(event.startsAt, event.timezone)}
-                {formatDateLong(event.startsAt, event.timezone) !==
-                formatDateLong(event.endsAt, event.timezone)
-                  ? ` – ${formatDateLong(event.endsAt, event.timezone)}`
-                  : ''}
-              </p>
-              <p className="flex items-start gap-3">
-                <Clock className="mt-0.5 size-5 shrink-0 text-blue-600" aria-hidden />
-                {formatTime(event.startsAt, event.timezone)} –{' '}
-                {formatTime(event.endsAt, event.timezone)} · {formatTimeZoneLabel(event.timezone)}
-              </p>
-              <p className="flex items-start gap-3">
-                {event.type === 'ONLINE' ? (
-                  <Globe2 className="mt-0.5 size-5 shrink-0 text-blue-600" aria-hidden />
-                ) : (
-                  <MapPin className="mt-0.5 size-5 shrink-0 text-blue-600" aria-hidden />
-                )}
-                {location}
-              </p>
-            </div>
-          </section>
-          <div className="event-summary-card mt-7 flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-blue-50 p-5 sm:p-6">
+          <div
+            className={`event-summary-card mt-7 flex-wrap items-center justify-between gap-4 rounded-2xl bg-blue-50 p-5 sm:p-6 ${canBook ? 'hidden lg:flex' : 'flex'}`}
+          >
             <div>
               <p className="text-sm text-slate-600">Harga mulai dari</p>
               <p className="mt-1 text-xl font-semibold tabular-nums">{priceLabel}</p>
@@ -235,15 +243,13 @@ export function EventDetailPage() {
           </Tabs>
         </article>
       </div>
-      {canBook ? (
-        <div className="mobile-booking">
-          <div>
-            <p className="text-xs text-slate-500">Mulai dari</p>
-            <p className="mt-1 font-semibold tabular-nums">{priceLabel}</p>
-          </div>
-          {bookingButton}
+      <div className="mobile-booking" role="region" aria-label="Pemesanan tiket">
+        <div>
+          <p className="text-xs text-slate-500">Harga mulai dari</p>
+          <p className="mt-1 font-semibold tabular-nums">{priceLabel}</p>
         </div>
-      ) : null}
+        {bookingButton}
+      </div>
     </main>
   );
 }

@@ -1,4 +1,4 @@
-import { CalendarDays, Pause, Play, Ticket } from 'lucide-react';
+import { CalendarDays, Ticket } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -16,6 +16,7 @@ export function EventPoster({
   category,
   className,
   imageClassName,
+  priority = false,
   sizes = '(min-width: 1024px) 320px, 90vw',
 }: {
   title: string;
@@ -26,6 +27,7 @@ export function EventPoster({
   timezone?: string;
   className?: string;
   imageClassName?: string;
+  priority?: boolean;
   sizes?: string;
 }) {
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
@@ -40,7 +42,8 @@ export function EventPoster({
           alt={`Poster ${title}`}
           width={800}
           height={450}
-          loading="lazy"
+          loading={priority ? 'eager' : 'lazy'}
+          fetchPriority={priority ? 'high' : undefined}
           sizes={sizes}
           onError={() => setFailedSrc(src)}
           className={cn(
@@ -119,9 +122,6 @@ export function OrganizerAvatar({
 
 export function EventCard({ event }: { event: EventSummary }) {
   const { t } = useLanguage();
-  const [titleOverflows, setTitleOverflows] = useState(false);
-  const [creatorOverflows, setCreatorOverflows] = useState(false);
-  const [textPaused, setTextPaused] = useState(false);
   const dateFormatter = new Intl.DateTimeFormat('id-ID', {
     day: '2-digit',
     month: 'long',
@@ -163,11 +163,7 @@ export function EventCard({ event }: { event: EventSummary }) {
         </div>
         <div className="event-card-information mt-3 flex min-w-0 flex-1 flex-col rounded-t-2xl bg-white px-4 pt-4">
           <h3 className="min-w-0 text-base font-semibold leading-6 transition-colors group-hover:text-blue-700">
-            <OverflowMarquee
-              text={event.title}
-              paused={textPaused}
-              onOverflowChange={setTitleOverflows}
-            />
+            <OverflowMarquee text={event.title} />
           </h3>
           <p className="mt-3 flex min-h-10 items-start gap-2 text-sm leading-6 text-slate-600">
             <CalendarDays className="mt-0.5 size-5 shrink-0 text-blue-600" aria-hidden />
@@ -198,12 +194,7 @@ export function EventCard({ event }: { event: EventSummary }) {
             name={event.organizer.organizationName}
             logoKey={event.organizer.logoKey}
           />
-          <OverflowMarquee
-            text={event.organizer.organizationName}
-            paused={textPaused}
-            onOverflowChange={setCreatorOverflows}
-            className="flex-1"
-          />
+          <OverflowMarquee text={event.organizer.organizationName} className="flex-1" />
         </Link>
       </div>
     </article>

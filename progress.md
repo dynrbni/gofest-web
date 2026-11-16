@@ -1,5 +1,12 @@
 # Progress
 
+## Mobile discovery, event detail and checkout, 2026-11-16
+
+- Converted home event/category/city collections to horizontal shelves below 768px. Removed the 400px mobile hero height in favor of landscape proportions; kept desktop grids.
+- Mobile detail places its landscape poster first, followed by metadata and organizer; booking price/action remain reachable at the bottom. Checkout uses compact numbered progress and a reserved action area below its scrolling form.
+- Verified discovery across eight widths, detail/purchasing across five, customer/confirmation across four, loading regressions, accessibility, lint and a production build of the task snapshot. See docs/qa/mobile-discovery-2026-11-16.md for exact scope and the alternate preview origin restriction.
+- Preserved the pre-existing checkout hint edit and excluded concurrent account dashboard changes from this task.
+
 ## Restore auth skeleton navigation, 2026-11-16
 
 - Followed the final user correction: restored the existing 320ms route skeleton for auth navigation and removed auth content/art fades. Login remains right and register left, with distinct mascot poses.

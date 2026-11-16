@@ -1,5 +1,12 @@
 # Redesign findings
 
+## Mobile discovery, 16 November 2026
+
+- Mobile home used vertical event/city grids and a wrapped category grid, while a final CSS override forced the banner to 400px. Native horizontal shelves and fixed aspect ratios address the supplied screenshots.
+- Metadata date text mixed directly into a flex row could split dates into separate anonymous items; grouping date/time/location text in spans keeps icon/text alignment stable.
+- Fixed checkout actions require a reserved viewport area for the form. The browser CLI needs explicit scrolling when clicking gender labels inside that nested scroll area; the final customer suite passes at all four widths.
+- Concurrent account dashboard edits temporarily break the combined working-tree build. A frozen-dependency export of the committed baseline plus the mobile task files builds successfully, without touching those independent changes.
+
 ## Skeleton loading audit, 15 November 2026
 
 - Route pages already use React.lazy. Workspace shells were eagerly imported; they now load on demand.

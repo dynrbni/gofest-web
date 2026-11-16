@@ -43,7 +43,7 @@ export function HomePage() {
       <EventCarousel events={heroQuery.data?.data ?? []} />
       <div className="container">
         <section className="py-8 sm:py-10" aria-labelledby="featured-heading">
-          <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="home-section-heading">
             <h2 id="featured-heading" className="section-title flex items-center gap-3">
               <Megaphone className="size-6 shrink-0 text-blue-950" aria-hidden />
               {t('Event Seru Untukmu', 'Events for you')}
@@ -78,8 +78,11 @@ export function HomePage() {
               />
             ) : (
               <div
+                role="region"
+                aria-label={t('Pilihan acara', 'Event selection')}
+                tabIndex={0}
                 className={cn(
-                  'event-grid grid grid-cols-1 gap-5 min-[480px]:grid-cols-2 lg:grid-cols-4',
+                  'home-event-shelf event-grid',
                   eventsQuery.isFetching && 'opacity-60',
                 )}
               >
@@ -92,7 +95,7 @@ export function HomePage() {
         </section>
         <EventCategories />
         <section className="py-10 sm:py-14" aria-labelledby="cities-heading">
-          <div className="flex flex-wrap items-end justify-between gap-3">
+          <div className="home-section-heading">
             <h2 id="cities-heading" className="section-title flex items-center gap-3">
               <MapPin className="size-6 shrink-0 text-blue-950" aria-hidden />
               {t('Jelajahi Event di Kotamu', 'Explore events in your city')}

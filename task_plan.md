@@ -1,5 +1,15 @@
 # GoFest marketplace redesign
 
+## Mobile discovery, detail and checkout, 16 November 2026
+
+- [x] Inspect supplied Gofest and Artatix screenshots and current responsive layouts.
+- [x] Implement horizontal home event/category/city shelves and a landscape hero.
+- [x] Reorder mobile detail around its poster and metadata; compact purchase steps and reachable checkout actions.
+- [x] Verify responsive layouts, keyboard/accessibility and purchasing in the browser; run lint and production build.
+- [x] Prepare scoped, verified changes for the requested commit and push to origin/main.
+
+Design direction: retain Gofest blue, DM Sans and existing artwork. Use a visible next card to communicate horizontal scrolling, a 16:5 home banner, 5:2 mobile detail poster, readable metadata and reserved space for purchase actions. Energy 2, rhythm 2, motion 1; retain existing carousel behavior and reduced-motion support. No new artwork is needed.
+
 ## Goal
 
 Redesign the existing ticketing application around Loket-style event discovery, consistent purchasing and management screens, accessible motion, and working backend flows. Commit and push all task changes to the existing GitHub repository.
@@ -36,4 +46,3 @@ Redesign the existing ticketing application around Loket-style event discovery, 
 - [x] Verify browser loading/navigation/error states, mobile layout, lint, types, tests and builds.
 - [x] Hide mascot otter illustration on mobile auth screens and tune mobile navbar height.
 - [x] Commit and push verified changes to origin/main.
-

@@ -2,7 +2,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export function EventGridSkeleton({ count = 4 }: { count?: number }) {
   return (
-    <div className="grid grid-cols-1 gap-5 min-[480px]:grid-cols-2 lg:grid-cols-4" aria-hidden>
+    <div
+      className="event-grid-skeleton grid grid-cols-1 gap-5 min-[480px]:grid-cols-2 lg:grid-cols-4"
+      aria-hidden
+    >
       {Array.from({ length: count }, (_, index) => (
         <div key={index} className="rounded-3xl bg-blue-50 p-3">
           <Skeleton className="aspect-[5/2] w-full rounded-xl" />
@@ -46,9 +49,9 @@ function FormSkeleton() {
 
 export function CitySkeleton() {
   return (
-    <div className="grid grid-cols-1 gap-4 min-[400px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
+    <div className="city-destinations">
       {Array.from({ length: 5 }, (_, index) => (
-        <Skeleton key={index} className="h-56 rounded-2xl" />
+        <Skeleton key={index} className="h-36 rounded-xl" />
       ))}
     </div>
   );
@@ -176,7 +179,7 @@ export function PageSkeleton({ pathname }: { pathname: string }) {
 
   if (pathname === '/')
     return (
-      <>
+      <div className="home-skeleton">
         <Skeleton className="hero-frame w-full rounded-none" />
         <div className="container space-y-8 py-10">
           <HeadingSkeleton />
@@ -184,7 +187,7 @@ export function PageSkeleton({ pathname }: { pathname: string }) {
           <HeadingSkeleton />
           <CitySkeleton />
         </div>
-      </>
+      </div>
     );
 
   if (pathname === '/cities')
@@ -212,18 +215,27 @@ export function PageSkeleton({ pathname }: { pathname: string }) {
 
   if (/^\/events\/[^/]+$/.test(pathname))
     return (
-      <div className="container grid min-h-[70vh] gap-10 py-10 lg:grid-cols-[minmax(0,1fr)_420px]">
-        <div className="space-y-8">
-          <HeadingSkeleton />
-          <Skeleton className="h-12 w-full" />
-          {Array.from({ length: 6 }, (_, index) => (
-            <Skeleton key={index} className={index === 5 ? 'h-4 w-2/3' : 'h-4 w-full'} />
-          ))}
-        </div>
-        <div className="space-y-6">
-          <Skeleton className="aspect-video w-full rounded-xl" />
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-12 w-full" />
+      <div className="event-detail-page">
+        <div className="container event-detail-grid">
+          <div className="event-detail-heading space-y-6">
+            <Skeleton className="h-8 w-24 rounded-full" />
+            <HeadingSkeleton />
+            <Skeleton className="h-6 w-32" />
+            {Array.from({ length: 3 }, (_, index) => (
+              <Skeleton key={index} className="h-6 w-3/4" />
+            ))}
+            <Skeleton className="h-11 w-2/3" />
+          </div>
+          <div className="event-detail-summary">
+            <Skeleton className="event-detail-poster aspect-video w-auto rounded-2xl" />
+            <Skeleton className="mt-7 hidden h-24 w-full rounded-2xl lg:block" />
+          </div>
+          <div className="event-detail-content space-y-5">
+            <Skeleton className="h-12 w-full" />
+            {Array.from({ length: 6 }, (_, index) => (
+              <Skeleton key={index} className={index === 5 ? 'h-4 w-2/3' : 'h-4 w-full'} />
+            ))}
+          </div>
         </div>
       </div>
     );

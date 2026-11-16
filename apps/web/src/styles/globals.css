@@ -164,12 +164,28 @@
   .section-title {
     @apply text-2xl font-semibold tracking-tight sm:text-[28px];
   }
+  .home-section-heading {
+    @apply flex items-center justify-between gap-3;
+  }
+  .home-event-shelf {
+    @apply grid grid-cols-2 gap-5 lg:grid-cols-4;
+  }
+  .home-section-heading .section-title {
+    @apply min-w-0 text-xl leading-snug sm:text-[28px];
+  }
+  .home-section-heading .text-link {
+    @apply shrink-0 whitespace-nowrap text-xs sm:text-sm;
+  }
+  .home-section-heading .section-title svg {
+    @apply hidden sm:block;
+  }
   .event-carousel {
     @apply relative;
   }
   .hero-frame {
     @apply relative isolate overflow-hidden bg-blue-950;
-    height: clamp(380px, 31.25vw, 620px);
+    aspect-ratio: 16 / 5;
+    max-height: 620px;
   }
   .hero-slide {
     @apply absolute inset-0 overflow-hidden;
@@ -560,6 +576,41 @@
   .purchase-progress {
     @apply bg-blue-800 text-white;
   }
+  .purchase-steps {
+    @apply flex items-center gap-2 py-4 sm:gap-4;
+  }
+  .purchase-step {
+    @apply flex min-w-0 flex-1 items-center gap-2 text-sm;
+  }
+  .purchase-step:last-child {
+    flex: 0 0 auto;
+  }
+  .purchase-step-number {
+    @apply flex size-7 shrink-0 items-center justify-center rounded-full border border-current;
+  }
+  .purchase-step-label {
+    @apply sr-only;
+  }
+  .purchase-step[aria-current='step'] {
+    flex-grow: 3;
+  }
+  .purchase-step[aria-current='step'] .purchase-step-label {
+    @apply not-sr-only min-w-0 text-xs leading-snug sm:text-sm;
+  }
+  .purchase-step-arrow {
+    @apply ml-auto size-4 shrink-0;
+  }
+  @media (min-width: 1024px) {
+    .purchase-step-label {
+      @apply not-sr-only min-w-0 leading-snug;
+    }
+    .purchase-step[aria-current='step'] {
+      flex-grow: 1;
+    }
+  }
+  .checkout-action-total {
+    @apply hidden;
+  }
   .checkout-ticket {
     @apply rounded-2xl bg-blue-50 p-3 sm:p-4;
   }
@@ -592,7 +643,108 @@
     @apply text-blue-700 underline;
   }
   .mobile-booking {
-    @apply fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-3 border-t border-slate-200 bg-white px-5 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 lg:hidden;
+    @apply fixed inset-x-0 bottom-0 z-30 grid grid-cols-1 gap-3 border-t border-slate-200 bg-white px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 lg:hidden;
+  }
+  .mobile-booking > div {
+    @apply flex items-center justify-between gap-3;
+  }
+  .mobile-booking .primary-action {
+    @apply min-h-12 w-full;
+  }
+  @media (max-width: 1023px) {
+    .event-detail-page {
+      @apply pt-0 pb-40;
+    }
+    .event-detail-grid {
+      grid-template-areas: 'poster' 'heading' 'summary' 'content';
+      row-gap: 1.5rem;
+    }
+    .event-detail-summary {
+      display: contents;
+    }
+    .event-detail-summary .event-detail-poster {
+      grid-area: poster;
+      @apply -mx-4 rounded-none md:mx-0 md:rounded-2xl;
+      aspect-ratio: 5 / 2;
+    }
+    .event-detail-summary .event-detail-poster img {
+      object-fit: cover;
+    }
+    .event-summary-card {
+      grid-area: summary;
+      @apply mt-0;
+    }
+    .checkout-shell:has(.checkout-page) {
+      @apply flex min-h-0 flex-col;
+      height: 100dvh;
+    }
+    .checkout-shell:has(.checkout-page) > header,
+    .checkout-shell:has(.checkout-page) > .purchase-progress {
+      flex-shrink: 0;
+    }
+    .checkout-page {
+      @apply min-h-0 flex-1 overflow-y-auto pb-6;
+      margin-bottom: calc(112px + env(safe-area-inset-bottom));
+    }
+    .checkout-action {
+      @apply fixed inset-x-0 bottom-0 z-30 grid gap-2 border-t border-slate-200 bg-white px-4 pt-3;
+      padding-bottom: max(12px, env(safe-area-inset-bottom));
+    }
+    .checkout-action-total {
+      @apply flex min-w-0 items-center justify-between gap-3;
+    }
+    .checkout-action button {
+      @apply mt-0 w-full;
+    }
+  }
+  @media (max-width: 767px) {
+    .home-event-shelf,
+    .home-category-grid,
+    .discovery-page .city-destinations,
+    .home-skeleton .event-grid-skeleton,
+    .home-skeleton .city-destinations {
+      display: grid;
+      grid-auto-flow: column;
+      grid-template-columns: none;
+      grid-template-rows: 1fr;
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
+      scroll-snap-type: x proximity;
+      scroll-padding-inline: 4px;
+      scrollbar-width: thin;
+      scrollbar-color: #bfdbfe transparent;
+      padding: 4px 4px 16px;
+      margin-inline: -4px;
+    }
+    .home-event-shelf,
+    .home-skeleton .event-grid-skeleton {
+      grid-auto-columns: min(80%, 320px);
+      gap: 16px;
+    }
+    .home-category-grid {
+      grid-auto-columns: 94px;
+      gap: 12px;
+    }
+    .home-category-label {
+      @apply w-full px-2;
+    }
+    .discovery-page .city-destinations,
+    .home-skeleton .city-destinations {
+      grid-auto-columns: min(78%, 280px);
+      gap: 16px;
+      @apply mt-5;
+    }
+    .home-event-shelf > *,
+    .home-category-grid > *,
+    .discovery-page .city-destinations > * {
+      scroll-snap-align: start;
+    }
+    .discovery-page .city-destination {
+      @apply h-36;
+    }
+    .discovery-page section[aria-labelledby] {
+      @apply py-6;
+    }
   }
 }
 
@@ -696,9 +848,6 @@
   }
 }
 @media (max-width: 639px) {
-  .hero-frame {
-    height: 400px;
-  }
   .hero-image,
   .hero-image-event {
     width: 100%;

@@ -13,7 +13,7 @@ export function EventCategories() {
 
   return (
     <section className="py-8 sm:py-10" aria-labelledby="categories-heading">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="home-section-heading">
         <h2 id="categories-heading" className="section-title">
           {t('Kategori Event', 'Event categories')}
         </h2>
@@ -43,7 +43,11 @@ export function EventCategories() {
             )}
           />
         ) : (
-          <nav aria-label={t('Pilih kategori', 'Choose a category')} className="home-category-grid">
+          <nav
+            aria-label={t('Pilih kategori', 'Choose a category')}
+            className="home-category-grid"
+            tabIndex={0}
+          >
             {categories.map((category) => (
               <Link
                 key={category.id}

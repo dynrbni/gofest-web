@@ -3,13 +3,13 @@ import { cn } from '@/lib/utils';
 
 export function OverflowMarquee({
   text,
-  paused,
+  paused = false,
   onOverflowChange,
   className,
 }: {
   text: string;
-  paused: boolean;
-  onOverflowChange: (overflowing: boolean) => void;
+  paused?: boolean;
+  onOverflowChange?: (overflowing: boolean) => void;
   className?: string;
 }) {
   const containerRef = useRef<HTMLSpanElement>(null);
@@ -27,7 +27,7 @@ export function OverflowMarquee({
       const exceedsContainer = width > container.clientWidth + 1;
       setOverflowing(exceedsContainer);
       setDuration(Math.max(8, (width + 32) / 32));
-      onOverflowChange(exceedsContainer);
+      onOverflowChange?.(exceedsContainer);
     };
     const observer = new ResizeObserver(measure);
     observer.observe(container);
