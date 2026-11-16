@@ -4,12 +4,19 @@ import { env } from '../../config/env';
 import { prisma } from '../../lib/prisma';
 import { writeAudit } from '../../lib/audit';
 import { BadRequestError } from '../../lib/errors';
+import type { Prisma } from '@prisma/client';
 
 export interface PlatformSettings {
   platformFeeType: PlatformFeeType;
   platformFeeValue: number;
   orderReservationMinutes: number;
   eventReviewRequired: boolean;
+  minimumWithdrawal: number;
+  platformName: string;
+  platformLogo: string;
+  contactEmail: string;
+  contactPhone: string;
+  notificationsEnabled: boolean;
 }
 
 const KEYS = {
@@ -17,6 +24,12 @@ const KEYS = {
   platformFeeValue: 'platform_fee_value',
   orderReservationMinutes: 'order_reservation_minutes',
   eventReviewRequired: 'event_review_required',
+  minimumWithdrawal: 'minimum_withdrawal',
+  platformName: 'platform_name',
+  platformLogo: 'platform_logo',
+  contactEmail: 'contact_email',
+  contactPhone: 'contact_phone',
+  notificationsEnabled: 'notifications_enabled',
 } as const;
 
 const defaults: PlatformSettings = {
@@ -24,10 +37,18 @@ const defaults: PlatformSettings = {
   platformFeeValue: env.PLATFORM_FEE_VALUE,
   orderReservationMinutes: env.ORDER_RESERVATION_MINUTES,
   eventReviewRequired: env.EVENT_REVIEW_REQUIRED,
+  minimumWithdrawal: 50_000,
+  platformName: 'GOFEST',
+  platformLogo: '',
+  contactEmail: '',
+  contactPhone: '',
+  notificationsEnabled: true,
 };
 
-export async function getPlatformSettings(): Promise<PlatformSettings> {
-  const rows = await prisma.platformSetting.findMany({
+export async function getPlatformSettings(
+  db: Prisma.TransactionClient = prisma,
+): Promise<PlatformSettings> {
+  const rows = await db.platformSetting.findMany({
     where: { key: { in: Object.values(KEYS) } },
   });
   const values = new Map(rows.map((row) => [row.key, row.value]));
@@ -38,6 +59,16 @@ export async function getPlatformSettings(): Promise<PlatformSettings> {
   const reviewRequired = values.get(KEYS.eventReviewRequired);
 
   return {
+    ...defaults,
+    ...Object.fromEntries(
+      Object.entries(KEYS).flatMap(([field, key]) => {
+        const value = values.get(key);
+        return value !== undefined &&
+          typeof value === typeof defaults[field as keyof PlatformSettings]
+          ? [[field, value]]
+          : [];
+      }),
+    ),
     platformFeeType:
       feeType === 'none' || feeType === 'fixed' || feeType === 'percentage'
         ? feeType
@@ -55,32 +86,17 @@ export async function getPlatformSettings(): Promise<PlatformSettings> {
   };
 }
 
-export async function updatePlatformSettings(
-  input: Partial<PlatformSettings>,
-  req: Request,
-) {
-  if (
-    input.platformFeeType === 'percentage' &&
-    input.platformFeeValue !== undefined &&
-    input.platformFeeValue > 100
-  ) {
-    throw new BadRequestError('Biaya platform dalam persen tidak boleh melebihi 100');
-  }
-  const entries: Array<[string, unknown]> = [];
-  if (input.platformFeeType !== undefined) {
-    entries.push([KEYS.platformFeeType, input.platformFeeType]);
-  }
-  if (input.platformFeeValue !== undefined) {
-    entries.push([KEYS.platformFeeValue, input.platformFeeValue]);
-  }
-  if (input.orderReservationMinutes !== undefined) {
-    entries.push([KEYS.orderReservationMinutes, input.orderReservationMinutes]);
-  }
-  if (input.eventReviewRequired !== undefined) {
-    entries.push([KEYS.eventReviewRequired, input.eventReviewRequired]);
-  }
+export async function updatePlatformSettings(input: Partial<PlatformSettings>, req: Request) {
+  const entries = Object.entries(input).map(
+    ([field, value]) => [KEYS[field as keyof PlatformSettings], value] as const,
+  );
 
   await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(61001)`;
+    const current = await getPlatformSettings(tx);
+    const next = { ...current, ...input };
+    if (next.platformFeeType === 'percentage' && next.platformFeeValue > 100)
+      throw new BadRequestError('Biaya platform dalam persen tidak boleh melebihi 100');
     for (const [key, value] of entries) {
       await tx.platformSetting.upsert({
         where: { key },
@@ -94,7 +110,7 @@ export async function updatePlatformSettings(
         action: 'PLATFORM_SETTINGS_UPDATED',
         resourceType: 'PLATFORM_SETTINGS',
         resourceId: 'global',
-        metadata: input as Record<string, unknown>,
+        metadata: { before: current, after: input },
         req,
       },
       tx,

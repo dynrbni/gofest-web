@@ -1,4 +1,5 @@
 import type { Prisma } from '@prisma/client';
+import { isOperationalAdmin } from '@gofest/shared';
 import type { Request } from 'express';
 import type { TicketListQuery } from '@gofest/shared';
 import { prisma } from '../../lib/prisma';
@@ -129,7 +130,7 @@ async function loadTicketForAccess(ticketCode: string, req: Request) {
   const token = accessTokenFromRequest(req);
   const tokenMatches = token ? safeCompare(sha256(token), ticket.order.accessTokenHash) : false;
   const allowed =
-    req.auth?.role === 'ADMIN' ||
+    isOperationalAdmin(req.auth?.role) ||
     (Boolean(req.auth) && ticket.order.userId === req.auth!.userId) ||
     tokenMatches;
 

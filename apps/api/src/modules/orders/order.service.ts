@@ -1,4 +1,6 @@
 import { Prisma } from '@prisma/client';
+import { isOperationalAdmin } from '@gofest/shared';
+import { postOrderPayment } from '../finance/ledger.service';
 import type { Request } from 'express';
 import type { z } from 'zod';
 import QRCode from 'qrcode';
@@ -145,7 +147,7 @@ function accessTokenFromRequest(req: Request): string | undefined {
 
 export async function getOrderForAccess(orderCode: string, req: Request) {
   const order = await loadOrderByCode(orderCode);
-  if (req.auth?.role === 'ADMIN' || (req.auth && order.userId === req.auth.userId)) {
+  if (isOperationalAdmin(req.auth?.role) || (req.auth && order.userId === req.auth.userId)) {
     return order;
   }
   const token = accessTokenFromRequest(req);
@@ -254,6 +256,19 @@ function platformFeeFor(
   return 0;
 }
 
+function assertOrderAmount(subtotal: number, total: number) {
+  if (
+    !Number.isSafeInteger(subtotal) ||
+    !Number.isSafeInteger(total) ||
+    subtotal > 2_000_000_000 ||
+    total > 2_000_000_000
+  ) {
+    throw new UnprocessableEntityError(
+      'Nominal satu order maksimal Rp2.000.000.000. Kurangi jumlah tiket dalam pesanan.',
+    );
+  }
+}
+
 export async function quoteOrder(input: QuoteOrderInput, req: Request) {
   const settings = await getPlatformSettings();
   const now = new Date();
@@ -355,6 +370,7 @@ export async function quoteOrder(input: QuoteOrderInput, req: Request) {
   }
 
   const platformFee = platformFeeFor(settings, subtotal - discount);
+  assertOrderAmount(subtotal, subtotal - discount + platformFee);
   return {
     subtotal,
     discount,
@@ -530,6 +546,7 @@ export async function createOrder(input: CreateOrderInput, req: Request) {
 
       const platformFee = platformFeeFor(settings, subtotal - discount);
       const total = subtotal - discount + platformFee;
+      assertOrderAmount(subtotal, total);
       const orderCode = humanCode('GF', 10);
       const expiresAt = new Date(now.getTime() + settings.orderReservationMinutes * 60_000);
 
@@ -555,6 +572,8 @@ export async function createOrder(input: CreateOrderInput, req: Request) {
           subtotal,
           discount,
           platformFee,
+          feeTypeSnapshot: settings.platformFeeType,
+          feeValueSnapshot: settings.platformFeeValue,
           total,
           currency: 'IDR',
           couponId,
@@ -1014,6 +1033,8 @@ export async function fulfillOrder(orderId: string, options: FulfillOptions) {
         data: { status: 'PAID', paidAt: options.paidAt },
       });
 
+      await postOrderPayment(tx, orderId);
+
       await tx.payment.upsert({
         where: {
           provider_providerReference: {
@@ -1146,6 +1167,47 @@ export async function releaseExpiredOrders(limit = 50): Promise<number> {
   return released;
 }
 
+async function recordReviewPayment(
+  orderId: string,
+  paymentId: string,
+  event: VerifiedPaymentEvent,
+) {
+  return prisma.$transaction(async (tx) => {
+    // Match fulfillment's order -> wallet -> payment lock order on every webhook path.
+    await tx.$queryRaw`SELECT id FROM orders WHERE id = ${orderId} FOR UPDATE`;
+    const current = await tx.order.findUniqueOrThrow({ where: { id: orderId } });
+    if (['REFUNDED', 'PARTIALLY_REFUNDED', 'REFUND_PENDING'].includes(current.status)) {
+      return current.status;
+    }
+    if (current.status !== 'PAID') {
+      await tx.order.update({ where: { id: orderId }, data: { status: 'PAYMENT_REVIEW' } });
+    }
+    await postOrderPayment(tx, orderId);
+    await tx.payment.update({
+      where: { id: paymentId },
+      data: {
+        status: 'PAID',
+        paidAt: event.paidAt ?? new Date(),
+        rawPayload: event.raw as Prisma.InputJsonValue,
+      },
+    });
+    if (!['PAID', 'PAYMENT_REVIEW'].includes(current.status))
+      await writeAudit(
+        {
+          action: 'PAYMENT_REVIEW_REQUIRED',
+          resourceType: 'ORDER',
+          resourceId: orderId,
+          metadata: {
+            reason: 'Pembayaran diterima setelah reservasi berakhir',
+            providerReference: event.providerReference,
+          },
+        },
+        tx,
+      );
+    return current.status === 'PAID' ? ('PAID' as const) : ('PAYMENT_REVIEW' as const);
+  });
+}
+
 export async function processVerifiedPayment(event: VerifiedPaymentEvent, providerName = 'mock') {
   const order = await prisma.order.findUnique({
     where: { orderCode: event.orderCode },
@@ -1177,8 +1239,8 @@ export async function processVerifiedPayment(event: VerifiedPaymentEvent, provid
   }
 
   if (event.status === 'FAILED' || event.status === 'EXPIRED') {
-    await prisma.payment.update({
-      where: { id: payment.id },
+    await prisma.payment.updateMany({
+      where: { id: payment.id, status: { in: ['PENDING', 'UNKNOWN', 'FAILED', 'EXPIRED'] } },
       data: {
         status: event.status,
         rawPayload: event.raw as Prisma.InputJsonValue,
@@ -1197,72 +1259,17 @@ export async function processVerifiedPayment(event: VerifiedPaymentEvent, provid
     return { processed: true, paid: true, duplicate: true, orderStatus: order.status };
   }
 
-  if (order.status === 'EXPIRED' || order.status === 'CANCELLED') {
-    await prisma.$transaction([
-      prisma.payment.update({
-        where: { id: payment.id },
-        data: {
-          status: 'PAID',
-          paidAt: event.paidAt ?? new Date(),
-          rawPayload: event.raw as Prisma.InputJsonValue,
-        },
-      }),
-      prisma.order.update({
-        where: { id: order.id },
-        data: { status: 'PAYMENT_REVIEW' },
-      }),
-      prisma.auditLog.create({
-        data: {
-          action: 'PAYMENT_REVIEW_REQUIRED',
-          resourceType: 'ORDER',
-          resourceId: order.id,
-          metadata: {
-            reason: 'Pembayaran datang setelah reservasi kedaluwarsa',
-            providerReference: event.providerReference,
-          },
-        },
-      }),
-    ]);
+  if (
+    ['EXPIRED', 'CANCELLED', 'PAYMENT_REVIEW'].includes(order.status) ||
+    order.expiresAt <= new Date()
+  ) {
+    if (order.status === 'PENDING_PAYMENT') await expireOrder(order.id);
+    const status = await recordReviewPayment(order.id, payment.id, event);
     return {
       processed: true,
-      paid: false,
-      paymentReview: true,
-      orderStatus: 'PAYMENT_REVIEW',
-    };
-  }
-
-  if (order.status === 'PAYMENT_REVIEW') {
-    await prisma.payment.update({
-      where: { id: payment.id },
-      data: {
-        status: 'PAID',
-        paidAt: event.paidAt ?? new Date(),
-        rawPayload: event.raw as Prisma.InputJsonValue,
-      },
-    });
-    return { processed: true, paid: false, paymentReview: true, orderStatus: order.status };
-  }
-
-  if (order.expiresAt <= new Date()) {
-    await prisma.$transaction([
-      prisma.payment.update({
-        where: { id: payment.id },
-        data: {
-          status: 'PAID',
-          paidAt: event.paidAt ?? new Date(),
-          rawPayload: event.raw as Prisma.InputJsonValue,
-        },
-      }),
-      prisma.order.update({
-        where: { id: order.id },
-        data: { status: 'PAYMENT_REVIEW' },
-      }),
-    ]);
-    return {
-      processed: true,
-      paid: false,
-      paymentReview: true,
-      orderStatus: 'PAYMENT_REVIEW',
+      paid: status === 'PAID',
+      paymentReview: status === 'PAYMENT_REVIEW',
+      orderStatus: status,
     };
   }
 
