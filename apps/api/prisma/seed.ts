@@ -4,6 +4,7 @@ import { prisma } from '../src/lib/prisma';
 import { hashPassword } from '../src/lib/password';
 import { storePublicImage } from '../src/lib/storage';
 import { env } from '../src/config/env';
+import { seedDashboard } from './dashboard.seed';
 
 interface SeedTicket {
   name: string;
@@ -197,13 +198,19 @@ async function main() {
       city: 'Jakarta',
       startsAt: daysFromNow(21, 19),
       endsAt: daysFromNow(21, 22),
-      rules: 'Usia 17 tahun ke atas. Tidak ada kursi bernomor; mohon datang 30 menit sebelum mulai.',
+      rules:
+        'Usia 17 tahun ke atas. Tidak ada kursi bernomor; mohon datang 30 menit sebelum mulai.',
       refundPolicy: 'Tiket dapat dikembalikan hingga 7 hari sebelum acara melalui halaman order.',
       tickets: [
         { name: 'Masuk Umum', price: 175_000, quotaTotal: 80 },
         { name: 'Duduk Dekat', price: 260_000, quotaTotal: 24 },
       ],
-      coupon: { code: 'RUANG10', discountType: 'PERCENTAGE' as const, discountValue: 10, maxDiscount: 30_000 },
+      coupon: {
+        code: 'RUANG10',
+        discountType: 'PERCENTAGE' as const,
+        discountValue: 10,
+        maxDiscount: 30_000,
+      },
     },
     {
       slug: 'malam-film-pendek-ruang-tunggu',
@@ -218,10 +225,16 @@ async function main() {
       city: 'Bandung',
       startsAt: daysFromNow(35, 18),
       endsAt: daysFromNow(35, 21),
-      rules: 'Tidak ada makanan di dalam ruang pemutaran. Diskusi berlangsung dalam Bahasa Indonesia.',
+      rules:
+        'Tidak ada makanan di dalam ruang pemutaran. Diskusi berlangsung dalam Bahasa Indonesia.',
       refundPolicy: 'Tiket dapat dikembalikan hingga 5 hari sebelum acara.',
       tickets: [{ name: 'Tiket Pemutaran', price: 85_000, quotaTotal: 60 }],
-      coupon: { code: 'FILM15', discountType: 'FIXED_AMOUNT' as const, discountValue: 15_000, maxDiscount: null },
+      coupon: {
+        code: 'FILM15',
+        discountType: 'FIXED_AMOUNT' as const,
+        discountValue: 15_000,
+        maxDiscount: null,
+      },
     },
     {
       slug: 'kelas-menulis-lagu-dari-catatan-harian',
@@ -241,7 +254,12 @@ async function main() {
         { name: 'Kelas Reguler', price: 120_000, quotaTotal: 40 },
         { name: 'Kelas + Umpan Balik', price: 200_000, quotaTotal: 12 },
       ],
-      coupon: { code: 'TULIS20', discountType: 'PERCENTAGE' as const, discountValue: 20, maxDiscount: 25_000 },
+      coupon: {
+        code: 'TULIS20',
+        discountType: 'PERCENTAGE' as const,
+        discountValue: 20,
+        maxDiscount: 25_000,
+      },
     },
     {
       slug: 'dengar-bersama-arsip-suara',
@@ -268,7 +286,9 @@ async function main() {
     const existing = await prisma.event.findUnique({ where: { slug: seed.slug } });
     let coverKey = existing?.coverKey ?? null;
     if (!coverKey) {
-      const png = await sharp(Buffer.from(posterSvg(coverIndex))).png().toBuffer();
+      const png = await sharp(Buffer.from(posterSvg(coverIndex)))
+        .png()
+        .toBuffer();
       const stored = await storePublicImage(png, 'events');
       coverKey = stored.key;
     }
@@ -361,6 +381,7 @@ async function main() {
     create: { eventId: firstEvent.id, userId: staff.id, role: 'CHECK_IN' },
   });
 
+  await seedDashboard();
   console.log('Seed selesai.');
   console.log(`Admin demo: ${adminEmail}`);
   console.log(`Organizer demo: ${organizerEmail}`);
