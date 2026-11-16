@@ -1,3 +1,5 @@
+import { useWorkspace } from '@/pages/workspace/workspace-hooks';
+
 import { useState, type FormEvent } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -24,10 +26,24 @@ import {
 } from '@/components/ui/dialog';
 
 export function EventCouponManagementPage() {
+  const { apiBase } = useWorkspace();
   const { id: eventId } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
 
   const [openModal, setOpenModal] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  function openCoupon(coupon?: Coupon) {
+    setEditingId(coupon?.id ?? null);
+    setCode(coupon?.code ?? '');
+    setDiscountType(coupon?.discountType ?? 'PERCENTAGE');
+    setDiscountValue(String(coupon?.discountValue ?? 10));
+    setMinPurchase(String(coupon?.minimumPurchase ?? 0));
+    setMaxDiscount(String(coupon?.maxDiscount ?? 50000));
+    setMaxRedemptions(String(coupon?.maxRedemptions ?? 50));
+    setErrors({});
+    setModalError(null);
+    setOpenModal(true);
+  }
   const [code, setCode] = useState('');
   const [discountType, setDiscountType] = useState<'PERCENTAGE' | 'FIXED_AMOUNT'>('PERCENTAGE');
   const [discountValue, setDiscountValue] = useState('10');
@@ -40,7 +56,7 @@ export function EventCouponManagementPage() {
 
   const couponsQuery = useQuery({
     queryKey: ['organizer-coupons', eventId],
-    queryFn: () => api<{ coupons: Coupon[] }>(`/organizer/events/${eventId}/coupons`),
+    queryFn: () => api<{ coupons: Coupon[] }>(`${apiBase}/events/${eventId}/coupons`),
     enabled: Boolean(eventId),
   });
 
@@ -63,17 +79,20 @@ export function EventCouponManagementPage() {
 
     setSubmitting(true);
     try {
-      await api(`/organizer/events/${eventId}/coupons`, {
-        method: 'POST',
-        body: {
-          code: code.trim().toUpperCase(),
-          discountType,
-          discountValue: valNum,
-          minimumPurchase: minNum,
-          maxDiscount: discountType === 'PERCENTAGE' ? maxDiscNum : null,
-          maxRedemptions: maxRedeemNum,
+      await api(
+        editingId ? `${apiBase}/coupons/${editingId}` : `${apiBase}/events/${eventId}/coupons`,
+        {
+          method: editingId ? 'PATCH' : 'POST',
+          body: {
+            code: code.trim().toUpperCase(),
+            discountType,
+            discountValue: valNum,
+            minimumPurchase: minNum,
+            maxDiscount: discountType === 'PERCENTAGE' ? maxDiscNum : null,
+            maxRedemptions: maxRedeemNum,
+          },
         },
-      });
+      );
       await queryClient.invalidateQueries({ queryKey: ['organizer-coupons', eventId] });
       toast.success('Kupon promo berhasil dibuat');
       setOpenModal(false);
@@ -92,7 +111,11 @@ export function EventCouponManagementPage() {
 
   async function handleToggleCoupon(couponId: string) {
     try {
-      await api(`/organizer/coupons/${couponId}`, { method: 'DELETE' });
+      const coupon = coupons.find((item) => item.id === couponId);
+      await api(`${apiBase}/coupons/${couponId}`, {
+        method: 'PATCH',
+        body: { isActive: !coupon?.isActive },
+      });
       await queryClient.invalidateQueries({ queryKey: ['organizer-coupons', eventId] });
       toast.success('Status kupon diperbarui');
     } catch (err) {
@@ -110,7 +133,7 @@ export function EventCouponManagementPage() {
           </p>
         </div>
 
-        <Button onClick={() => setOpenModal(true)} className="inline-flex items-center gap-2">
+        <Button onClick={() => openCoupon()} className="inline-flex items-center gap-2">
           <Plus className="h-4 w-4" aria-hidden />
           Buat Kode Kupon
         </Button>
@@ -125,7 +148,7 @@ export function EventCouponManagementPage() {
           title="Belum ada kupon promo"
           description="Kamu belum membuat kode promo untuk acara ini. Buat kupon untuk memberikan potongan harga kepada calon pembeli."
           action={
-            <Button onClick={() => setOpenModal(true)}>
+            <Button onClick={() => openCoupon()}>
               <Plus className="mr-2 h-4 w-4" aria-hidden />
               Buat Kupon Pertama
             </Button>
@@ -176,6 +199,14 @@ export function EventCouponManagementPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="mr-3"
+                      onClick={() => openCoupon(coupon)}
+                    >
+                      Edit
+                    </Button>
                     <button
                       type="button"
                       onClick={() => handleToggleCoupon(coupon.id)}
@@ -196,7 +227,7 @@ export function EventCouponManagementPage() {
       <Dialog open={openModal} onOpenChange={setOpenModal}>
         <DialogContent className="max-w-md bg-paper border-warm-border">
           <DialogHeader>
-            <DialogTitle>Buat Kode Kupon Baru</DialogTitle>
+            <DialogTitle>{editingId ? 'Edit kode kupon' : 'Buat kode kupon'}</DialogTitle>
             <DialogDescription>
               Tentukan kode unik dan ketentuan diskon potongan harga.
             </DialogDescription>

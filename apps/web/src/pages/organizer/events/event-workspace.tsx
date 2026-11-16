@@ -1,18 +1,11 @@
+import { useWorkspace } from '@/pages/workspace/workspace-hooks';
+
+import { EventHistoryPanel } from '@/pages/workspace/operations';
 import { NavLink, Outlet, useParams, Link } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import {
-  ArrowLeft,
-  Ticket,
-  Tag,
-  Users,
-  QrCode,
-  Send,
-  Ban,
-  ExternalLink,
-  Info,
-} from 'lucide-react';
+import { ArrowLeft, Ticket, Tag, Users, QrCode, Send, Ban, ExternalLink, Info } from 'lucide-react';
 import { useOrganizerEvent } from '@/lib/queries';
 import { api, errorMessage } from '@/lib/api';
 import { useDocumentTitle } from '@/lib/hooks';
@@ -22,9 +15,10 @@ import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import { cn } from '@/lib/utils';
 
 export function EventWorkspaceLayout() {
+  const { apiBase, base, creator } = useWorkspace();
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
-  const eventQuery = useOrganizerEvent(id);
+  const eventQuery = useOrganizerEvent(id, apiBase);
   const event = eventQuery.data?.event;
 
   useDocumentTitle(event ? `Kelola ${event.title}` : 'Kelola Acara');
@@ -47,18 +41,18 @@ export function EventWorkspaceLayout() {
   }
 
   const navTabs = [
-    { to: `/organizer/events/${id}/edit`, label: 'Informasi Acara', icon: Info, end: true },
-    { to: `/organizer/events/${id}/tickets`, label: 'Jenis Tiket', icon: Ticket, end: false },
-    { to: `/organizer/events/${id}/coupons`, label: 'Kode Kupon', icon: Tag, end: false },
-    { to: `/organizer/events/${id}/orders`, label: 'Pesanan & Peserta', icon: Users, end: false },
-    { to: `/organizer/events/${id}/staff`, label: 'Petugas Staff', icon: Users, end: false },
-    { to: `/organizer/events/${id}/check-in`, label: 'Check-In', icon: QrCode, end: false },
+    { to: `${base}/events/${id}/edit`, label: 'Informasi Acara', icon: Info, end: true },
+    { to: `${base}/events/${id}/tickets`, label: 'Jenis Tiket', icon: Ticket, end: false },
+    { to: `${base}/events/${id}/coupons`, label: 'Kode Kupon', icon: Tag, end: false },
+    { to: `${base}/events/${id}/orders`, label: 'Pesanan & Peserta', icon: Users, end: false },
+    { to: `${base}/events/${id}/staff`, label: 'Petugas Staff', icon: Users, end: false },
+    { to: `${base}/events/${id}/check-in`, label: 'Check-In', icon: QrCode, end: false },
   ];
 
   async function handleSubmitReview() {
     setSubmitting(true);
     try {
-      await api(`/organizer/events/${id}/submit`, { method: 'POST' });
+      await api(`${apiBase}/events/${id}/submit`, { method: 'POST' });
       await queryClient.invalidateQueries({ queryKey: ['organizer-event', id] });
       await queryClient.invalidateQueries({ queryKey: ['organizer-events'] });
       toast.success('Acara berhasil diajukan untuk publikasi!');
@@ -76,7 +70,7 @@ export function EventWorkspaceLayout() {
     }
     setCancelling(true);
     try {
-      await api(`/organizer/events/${id}/cancel`, {
+      await api(`${apiBase}/events/${id}/cancel`, {
         method: 'POST',
         body: { reason: cancelReason.trim() },
       });
@@ -94,7 +88,7 @@ export function EventWorkspaceLayout() {
     <div className="space-y-6">
       <div>
         <Link
-          to="/organizer/events"
+          to={`${base}/events`}
           className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-ink"
         >
           <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
@@ -112,9 +106,12 @@ export function EventWorkspaceLayout() {
             <h1 className="mt-1 font-display text-2xl font-semibold tracking-tightest sm:text-3xl">
               {event.title}
             </h1>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Slug: /events/{event.slug}
-            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">Slug: /events/{event.slug}</p>
+            {event.reviewNote ? (
+              <p className="mt-3 rounded-lg bg-amber-50 p-3 text-sm leading-6 text-amber-900">
+                {event.reviewNote}
+              </p>
+            ) : null}
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -130,7 +127,7 @@ export function EventWorkspaceLayout() {
               </Link>
             ) : null}
 
-            {event.status === 'DRAFT' || event.status === 'REJECTED' ? (
+            {creator && ['DRAFT', 'REJECTED', 'NEEDS_REVISION'].includes(event.status) ? (
               <button
                 type="button"
                 onClick={handleSubmitReview}
@@ -157,11 +154,14 @@ export function EventWorkspaceLayout() {
                 description={
                   <div className="space-y-3">
                     <p>
-                      Acara yang dibatalkan akan ditutup penjualannya. Pembeli yang memegang tiket valid
-                      akan diberi tahu untuk proses pengembalian dana (refund).
+                      Acara yang dibatalkan akan ditutup penjualannya. Pembeli yang memegang tiket
+                      valid akan diberi tahu untuk proses pengembalian dana (refund).
                     </p>
                     <div>
-                      <label htmlFor="cancel-reason-input" className="block text-xs font-medium text-ink">
+                      <label
+                        htmlFor="cancel-reason-input"
+                        className="block text-xs font-medium text-ink"
+                      >
                         Alasan pembatalan (wajib diisi):
                       </label>
                       <input
@@ -182,8 +182,10 @@ export function EventWorkspaceLayout() {
           </div>
         </div>
 
-        {/* Tab Navigation */}
-        <nav className="mt-4 flex flex-wrap gap-1.5 border-b border-warm-border pb-3" aria-label="Menu kelola acara">
+        <nav
+          className="mt-4 flex flex-wrap gap-1.5 border-b border-warm-border pb-3"
+          aria-label="Menu kelola acara"
+        >
           {navTabs.map((tab) => (
             <NavLink
               key={tab.to}
@@ -208,6 +210,7 @@ export function EventWorkspaceLayout() {
       <div>
         <Outlet context={{ event }} />
       </div>
+      <EventHistoryPanel eventId={id!} />
     </div>
   );
 }

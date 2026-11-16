@@ -1,3 +1,5 @@
+import { useWorkspace } from '@/pages/workspace/workspace-hooks';
+
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
@@ -7,11 +9,12 @@ import { Progress } from '@/components/ui/progress';
 import { EmptyState, ErrorState, LoadingState } from '@/components/common/states';
 
 export function EventCheckInSummaryPage() {
+  const { apiBase } = useWorkspace();
   const { id: eventId } = useParams<{ id: string }>();
 
   const summaryQuery = useQuery({
     queryKey: ['organizer-checkin-summary', eventId],
-    queryFn: () => api<CheckInSummary>(`/organizer/events/${eventId}/check-in/summary`),
+    queryFn: () => api<CheckInSummary>(`${apiBase}/events/${eventId}/check-in/summary`),
     enabled: Boolean(eventId),
     refetchInterval: 15_000, // Live poll every 15s during event
   });
@@ -71,9 +74,7 @@ export function EventCheckInSummaryPage() {
         </div>
 
         <div className="rounded-md border border-warm-border bg-card p-5">
-          <p className="text-xs font-medium uppercase tracking-wider text-olive">
-            Belum Check-In
-          </p>
+          <p className="text-xs font-medium uppercase tracking-wider text-olive">Belum Check-In</p>
           <p className="mt-2 text-3xl font-medium tabular-nums text-ink">{counts.valid}</p>
           <p className="mt-1 text-xs text-muted-foreground">Tiket aktif belum dipindai</p>
         </div>

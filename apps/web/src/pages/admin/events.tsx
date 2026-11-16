@@ -34,16 +34,21 @@ export function AdminEventsPage() {
   // Review modal state
   const [reviewModal, setReviewModal] = useState<{
     event: EventSummary;
-    action: 'PUBLISHED' | 'REJECTED';
+    action: 'PUBLISHED' | 'APPROVED' | 'NEEDS_REVISION' | 'REJECTED' | 'CANCELLED';
   } | null>(null);
   const [reviewNote, setReviewNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const eventsQuery = useQuery({
-    queryKey: ['admin-events', page, debouncedSearch],
+    queryKey: ['admin-events', page, debouncedSearch, searchParams.get('status')],
     queryFn: () =>
       apiPage<EventSummary>('/admin/events', {
-        query: { page, limit: 10, q: debouncedSearch.trim() || undefined },
+        query: {
+          page,
+          limit: 10,
+          q: debouncedSearch.trim() || undefined,
+          status: searchParams.get('status') ?? undefined,
+        },
       }),
   });
 
@@ -60,7 +65,7 @@ export function AdminEventsPage() {
     if (!reviewModal) return;
     const { event, action } = reviewModal;
 
-    if (action === 'REJECTED' && !reviewNote.trim()) {
+    if (['REJECTED', 'NEEDS_REVISION', 'CANCELLED'].includes(action) && !reviewNote.trim()) {
       toast.error('Alasan penolakan wajib diisi');
       return;
     }
@@ -171,6 +176,12 @@ export function AdminEventsPage() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1.5">
+                        <Link
+                          to={`/admin/events/${event.id}`}
+                          className="rounded border border-slate-200 px-3 py-2 text-xs font-medium text-blue-700"
+                        >
+                          Detail / kelola
+                        </Link>
                         {event.status === 'PUBLISHED' ? (
                           <Link
                             to={`/events/${event.slug}`}
@@ -183,7 +194,13 @@ export function AdminEventsPage() {
                           </Link>
                         ) : null}
 
-                        {event.status === 'PENDING_REVIEW' || event.status === 'DRAFT' ? (
+                        {[
+                          'PENDING_REVIEW',
+                          'DRAFT',
+                          'NEEDS_REVISION',
+                          'APPROVED',
+                          'REJECTED',
+                        ].includes(event.status) ? (
                           <>
                             <button
                               type="button"
@@ -234,6 +251,29 @@ export function AdminEventsPage() {
           </DialogHeader>
 
           <div className="space-y-4 pt-2">
+            <Field label="Keputusan moderasi" htmlFor="event-review-action">
+              <select
+                id="event-review-action"
+                className="h-11 w-full rounded-lg border border-slate-300 px-3 text-sm"
+                value={reviewModal?.action ?? 'PUBLISHED'}
+                onChange={(e) =>
+                  setReviewModal((current) =>
+                    current
+                      ? {
+                          ...current,
+                          action: e.target.value as NonNullable<typeof reviewModal>['action'],
+                        }
+                      : null,
+                  )
+                }
+              >
+                <option value="PUBLISHED">Setujui & publikasikan</option>
+                <option value="APPROVED">Setujui tanpa publikasi</option>
+                <option value="NEEDS_REVISION">Minta revisi</option>
+                <option value="REJECTED">Tolak pengajuan</option>
+                <option value="CANCELLED">Batalkan event</option>
+              </select>
+            </Field>
             <Field
               label="Catatan Moderasi"
               htmlFor="eventReviewNote"

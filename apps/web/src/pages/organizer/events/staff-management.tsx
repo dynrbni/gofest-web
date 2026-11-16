@@ -1,3 +1,5 @@
+import { useWorkspace } from '@/pages/workspace/workspace-hooks';
+
 import { useState, type FormEvent } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -18,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 
 export function EventStaffManagementPage() {
+  const { apiBase } = useWorkspace();
   const { id: eventId } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
 
@@ -28,7 +31,7 @@ export function EventStaffManagementPage() {
 
   const staffQuery = useQuery({
     queryKey: ['organizer-staff', eventId],
-    queryFn: () => api<{ staff: StaffAssignment[] }>(`/organizer/events/${eventId}/staff`),
+    queryFn: () => api<{ staff: StaffAssignment[] }>(`${apiBase}/events/${eventId}/staff`),
     enabled: Boolean(eventId),
   });
 
@@ -42,7 +45,7 @@ export function EventStaffManagementPage() {
 
     setAdding(true);
     try {
-      await api(`/organizer/events/${eventId}/staff`, {
+      await api(`${apiBase}/events/${eventId}/staff`, {
         method: 'POST',
         body: {
           email: email.trim(),
@@ -61,7 +64,7 @@ export function EventStaffManagementPage() {
 
   async function handleRemoveStaff(staffId: string) {
     try {
-      await api(`/organizer/events/${eventId}/staff/${staffId}`, { method: 'DELETE' });
+      await api(`${apiBase}/events/${eventId}/staff/${staffId}`, { method: 'DELETE' });
       await queryClient.invalidateQueries({ queryKey: ['organizer-staff', eventId] });
       toast.success('Akses petugas berhasil dicabut');
     } catch (err) {

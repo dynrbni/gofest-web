@@ -1,3 +1,5 @@
+import { useWorkspace } from '@/pages/workspace/workspace-hooks';
+
 import { useState, type FormEvent } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -25,10 +27,34 @@ import {
 } from '@/components/ui/dialog';
 
 export function EventTicketManagementPage() {
+  const { apiBase } = useWorkspace();
   const { id: eventId } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
 
   const [openModal, setOpenModal] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [salesStart, setSalesStart] = useState('');
+  const [salesEnd, setSalesEnd] = useState('');
+  function openTicket(ticket?: TicketType) {
+    setEditingId(ticket?.id ?? null);
+    setName(ticket?.name ?? '');
+    setDescription(ticket?.description ?? '');
+    setPrice(String(ticket?.price ?? 0));
+    setQuotaTotal(String(ticket?.quotaTotal ?? 100));
+    setMinPerOrder(String(ticket?.minPerOrder ?? 1));
+    setMaxPerOrder(String(ticket?.maxPerOrder ?? 5));
+    const local = (value: string | null | undefined) =>
+      value
+        ? new Date(new Date(value).getTime() - new Date(value).getTimezoneOffset() * 60000)
+            .toISOString()
+            .slice(0, 16)
+        : '';
+    setSalesStart(local(ticket?.salesStartAt));
+    setSalesEnd(local(ticket?.salesEndAt));
+    setErrors({});
+    setModalError(null);
+    setOpenModal(true);
+  }
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('0');
@@ -41,7 +67,7 @@ export function EventTicketManagementPage() {
 
   const ticketsQuery = useQuery({
     queryKey: ['organizer-ticket-types', eventId],
-    queryFn: () => api<{ ticketTypes: TicketType[] }>(`/organizer/events/${eventId}/ticket-types`),
+    queryFn: () => api<{ ticketTypes: TicketType[] }>(`${apiBase}/events/${eventId}/ticket-types`),
     enabled: Boolean(eventId),
   });
 
@@ -72,17 +98,24 @@ export function EventTicketManagementPage() {
 
     setSubmitting(true);
     try {
-      await api(`/organizer/events/${eventId}/ticket-types`, {
-        method: 'POST',
-        body: {
-          name: name.trim(),
-          description: description.trim() || undefined,
-          price: priceNum,
-          quotaTotal: quotaNum,
-          minPerOrder: minNum,
-          maxPerOrder: maxNum,
+      await api(
+        editingId
+          ? `${apiBase}/ticket-types/${editingId}`
+          : `${apiBase}/events/${eventId}/ticket-types`,
+        {
+          method: editingId ? 'PATCH' : 'POST',
+          body: {
+            name: name.trim(),
+            description: description.trim() || undefined,
+            price: priceNum,
+            quotaTotal: quotaNum,
+            minPerOrder: minNum,
+            maxPerOrder: maxNum,
+            salesStartAt: salesStart ? new Date(salesStart).toISOString() : null,
+            salesEndAt: salesEnd ? new Date(salesEnd).toISOString() : null,
+          },
         },
-      });
+      );
       await queryClient.invalidateQueries({ queryKey: ['organizer-ticket-types', eventId] });
       await queryClient.invalidateQueries({ queryKey: ['organizer-event', eventId] });
       toast.success('Jenis tiket berhasil ditambahkan');
@@ -104,7 +137,11 @@ export function EventTicketManagementPage() {
 
   async function handleDeactivate(ticketId: string) {
     try {
-      await api(`/organizer/ticket-types/${ticketId}`, { method: 'DELETE' });
+      const ticket = ticketTypes.find((item) => item.id === ticketId);
+      await api(`${apiBase}/ticket-types/${ticketId}`, {
+        method: 'PATCH',
+        body: { isActive: !ticket?.isActive },
+      });
       await queryClient.invalidateQueries({ queryKey: ['organizer-ticket-types', eventId] });
       toast.success('Status tiket diperbarui');
     } catch (err) {
@@ -123,7 +160,7 @@ export function EventTicketManagementPage() {
           </p>
         </div>
 
-        <Button onClick={() => setOpenModal(true)} className="inline-flex items-center gap-2">
+        <Button onClick={() => openTicket()} className="inline-flex items-center gap-2">
           <Plus className="h-4 w-4" aria-hidden />
           Tambah Jenis Tiket
         </Button>
@@ -138,7 +175,7 @@ export function EventTicketManagementPage() {
           title="Belum ada jenis tiket"
           description="Acara belum memiliki tiket yang dapat dijual. Tambahkan setidaknya satu jenis tiket agar acara dapat dibeli pengunjung."
           action={
-            <Button onClick={() => setOpenModal(true)}>
+            <Button onClick={() => openTicket()}>
               <Plus className="mr-2 h-4 w-4" aria-hidden />
               Tambah Tiket Pertama
             </Button>
@@ -205,6 +242,14 @@ export function EventTicketManagementPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="mr-3"
+                        onClick={() => openTicket(ticket)}
+                      >
+                        Edit
+                      </Button>
                       <button
                         type="button"
                         onClick={() => handleDeactivate(ticket.id)}
@@ -223,11 +268,10 @@ export function EventTicketManagementPage() {
         </div>
       )}
 
-      {/* Modal Dialog for Adding Ticket */}
       <Dialog open={openModal} onOpenChange={setOpenModal}>
-        <DialogContent className="max-w-md bg-paper border-warm-border">
+        <DialogContent className="max-h-[90dvh] overflow-y-auto max-w-md bg-paper border-warm-border">
           <DialogHeader>
-            <DialogTitle>Tambah Jenis Tiket</DialogTitle>
+            <DialogTitle>{editingId ? 'Edit jenis tiket' : 'Tambah jenis tiket'}</DialogTitle>
             <DialogDescription>
               Buat tier atau kategori tiket baru untuk acara ini.
             </DialogDescription>
@@ -316,12 +360,30 @@ export function EventTicketManagementPage() {
               </Field>
             </div>
 
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Mulai penjualan" htmlFor="ticket-sales-start">
+                <Input
+                  id="ticket-sales-start"
+                  type="datetime-local"
+                  value={salesStart}
+                  onChange={(event) => setSalesStart(event.target.value)}
+                />
+              </Field>
+              <Field label="Akhir penjualan" htmlFor="ticket-sales-end">
+                <Input
+                  id="ticket-sales-end"
+                  type="datetime-local"
+                  value={salesEnd}
+                  onChange={(event) => setSalesEnd(event.target.value)}
+                />
+              </Field>
+            </div>
             <div className="flex justify-end gap-2 pt-4">
               <Button type="button" variant="outline" onClick={() => setOpenModal(false)}>
                 Batal
               </Button>
               <Button type="submit" disabled={submitting}>
-                {submitting ? 'Menyimpan...' : 'Tambah Tiket'}
+                {submitting ? 'Menyimpan...' : 'Simpan tiket'}
               </Button>
             </div>
           </form>

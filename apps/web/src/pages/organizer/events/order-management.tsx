@@ -1,3 +1,5 @@
+import { useWorkspace } from '@/pages/workspace/workspace-hooks';
+
 import { useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -13,6 +15,7 @@ import { EmptyState, ErrorState, LoadingState } from '@/components/common/states
 import { Button } from '@/components/ui/button';
 
 export function EventOrderManagementPage() {
+  const { apiBase } = useWorkspace();
   const { id: eventId } = useParams<{ id: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const page = Math.max(1, Number(searchParams.get('page') ?? '1'));
@@ -24,7 +27,7 @@ export function EventOrderManagementPage() {
   const ordersQuery = useQuery({
     queryKey: ['organizer-event-orders', eventId, page, debouncedSearch],
     queryFn: () =>
-      apiPage<EventOrderRow>(`/organizer/events/${eventId}/orders`, {
+      apiPage<EventOrderRow>(`${apiBase}/events/${eventId}/orders`, {
         query: { page, limit: 10, q: debouncedSearch.trim() || undefined },
       }),
     enabled: Boolean(eventId),
@@ -40,7 +43,7 @@ export function EventOrderManagementPage() {
   }
 
   function handleExportCsv() {
-    window.open(`/api/v1/organizer/events/${eventId}/attendees/export`, '_blank');
+    window.open(`/api/v1${apiBase}/events/${eventId}/attendees/export`, '_blank');
   }
 
   return (

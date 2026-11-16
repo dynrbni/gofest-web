@@ -1,3 +1,5 @@
+import { useWorkspace } from '@/pages/workspace/workspace-hooks';
+
 import { useState, useEffect, type FormEvent } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
@@ -30,14 +32,14 @@ function fromLocalDatetimeInput(localStr: string) {
 }
 
 export function OrganizerEventFormPage({ isNew = false }: { isNew?: boolean }) {
+  const { apiBase, base } = useWorkspace();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const categoriesQuery = useCategories();
   const categories = categoriesQuery.data?.categories ?? [];
 
-  // If in edit mode, fetch existing data
-  const eventQuery = useOrganizerEvent(isNew ? undefined : id);
+  const eventQuery = useOrganizerEvent(isNew ? undefined : id, apiBase);
   const existingEvent = eventQuery.data?.event;
 
   useDocumentTitle(isNew ? 'Buat Acara Baru' : 'Edit Informasi Acara');
@@ -146,15 +148,15 @@ export function OrganizerEventFormPage({ isNew = false }: { isNew?: boolean }) {
 
     try {
       if (isNew) {
-        const res = await api<{ event: EventManage }>('/organizer/events', {
+        const res = await api<{ event: EventManage }>(`${apiBase}/events`, {
           method: 'POST',
           body: payload,
         });
         await queryClient.invalidateQueries({ queryKey: ['organizer-events'] });
         toast.success('Acara berhasil dibuat dalam status draft');
-        navigate(`/organizer/events/${res.event.id}/tickets`);
+        navigate(`${base}/events/${res.event.id}/tickets`);
       } else {
-        await api(`/organizer/events/${id}`, {
+        await api(`${apiBase}/events/${id}`, {
           method: 'PATCH',
           body: payload,
         });
@@ -182,7 +184,7 @@ export function OrganizerEventFormPage({ isNew = false }: { isNew?: boolean }) {
       {isNew ? (
         <div className="border-b border-warm-border pb-6">
           <Link
-            to="/organizer/events"
+            to={`${base}/events`}
             className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-ink"
           >
             <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
