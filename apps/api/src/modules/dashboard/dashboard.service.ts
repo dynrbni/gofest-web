@@ -41,7 +41,7 @@ export async function getOrganizerDashboard(organizerId: string) {
     }),
     prisma.order.aggregate({
       where: { event: { organizerId }, status: 'PAID' },
-      _sum: { total: true },
+      _sum: { subtotal: true, discount: true, platformFee: true },
       _count: { _all: true },
     }),
     prisma.order.count({
@@ -83,15 +83,15 @@ export async function getOrganizerDashboard(organizerId: string) {
       totalEvents: eventStatusGroups.reduce((sum, group) => sum + group._count._all, 0),
       publishedEvents: statusCounts.PUBLISHED ?? 0,
       draftEvents: statusCounts.DRAFT ?? 0,
-      pendingReviewEvents:
-        (statusCounts.PENDING_REVIEW ?? 0) + (statusCounts.REJECTED ?? 0),
+      pendingReviewEvents: (statusCounts.PENDING_REVIEW ?? 0) + (statusCounts.REJECTED ?? 0),
       upcomingEvents: upcomingEvents.length,
       quotaTotal: ticketAggregate._sum.quotaTotal ?? 0,
       ticketsSold: ticketAggregate._sum.quantitySold ?? 0,
       ticketsReserved: ticketAggregate._sum.quantityReserved ?? 0,
       ticketsCheckedIn: ticketStatusCounts.CHECKED_IN ?? 0,
       ticketsValid: ticketStatusCounts.VALID ?? 0,
-      grossRevenue: paidAggregate._sum.total ?? 0,
+      grossRevenue: (paidAggregate._sum.subtotal ?? 0) - (paidAggregate._sum.discount ?? 0),
+      serviceFeeRevenue: paidAggregate._sum.platformFee ?? 0,
       paidOrders: paidAggregate._count._all,
       pendingOrders: pendingOrderCount,
     },
