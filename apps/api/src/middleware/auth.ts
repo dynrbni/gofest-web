@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { ACCESS_COOKIE, verifyAccessToken } from '../lib/tokens';
 import { ForbiddenError, UnauthorizedError } from '../lib/errors';
+import { isOperationalAdmin } from '@gofest/shared';
 
 async function resolveAuth(req: Request): Promise<void> {
   const token = req.cookies?.[ACCESS_COOKIE] as string | undefined;
@@ -34,6 +35,7 @@ async function resolveAuth(req: Request): Promise<void> {
 }
 
 export async function requireAuth(req: Request, _res: Response, next: NextFunction) {
+  if (req.auth) return next();
   await resolveAuth(req);
   return next();
 }
@@ -51,21 +53,55 @@ export function requireAdmin(req: Request, _res: Response, next: NextFunction) {
   if (!req.auth) {
     throw new UnauthorizedError('Sesi tidak ditemukan. Silakan masuk.', 'SESSION_NOT_FOUND');
   }
-  if (req.auth.role !== 'ADMIN') {
+  if (!isOperationalAdmin(req.auth.role)) {
     throw new ForbiddenError('Akses ini hanya untuk admin', 'ADMIN_ONLY');
   }
   return next();
 }
 
-export function requireActiveOrganizer(req: Request, _res: Response, next: NextFunction) {
+export function requireSuperadmin(req: Request, _res: Response, next: NextFunction) {
+  if (req.auth?.role !== 'SUPERADMIN') {
+    throw new ForbiddenError('Akses ini hanya untuk Superadmin', 'SUPERADMIN_ONLY');
+  }
+  return next();
+}
+
+export async function requireActiveOrganizer(req: Request, _res: Response, next: NextFunction) {
   if (!req.auth) {
     throw new UnauthorizedError('Sesi tidak ditemukan. Silakan masuk.', 'SESSION_NOT_FOUND');
   }
-  if (!req.auth.organizerId || req.auth.organizerStatus !== 'ACTIVE') {
+  if (
+    isOperationalAdmin(req.auth.role) ||
+    !req.auth.organizerId ||
+    req.auth.organizerStatus !== 'ACTIVE'
+  ) {
     throw new ForbiddenError(
       'Akun organizer belum aktif atau belum disetujui',
       'ORGANIZER_NOT_ACTIVE',
     );
+  }
+  const path = req.path;
+  const permission = /payouts|bank-accounts/.test(path)
+    ? 'payouts'
+    : /financial|event-reports|analytics|ledger/.test(path)
+      ? 'finance'
+      : /check-in|staff/.test(path)
+        ? 'check-in'
+        : /orders|attendees/.test(path)
+          ? 'orders'
+          : /ticket-types|coupons/.test(path)
+            ? 'tickets'
+            : /support/.test(path)
+              ? 'support'
+              : /events/.test(path)
+                ? 'events'
+                : null;
+  if (permission) {
+    const rule = await prisma.rolePermission.findUnique({
+      where: { role_permission: { role: 'CREATOR', permission } },
+    });
+    if (rule?.enabled === false)
+      throw new ForbiddenError('Modul ini dinonaktifkan untuk Creator', 'PERMISSION_DISABLED');
   }
   return next();
 }

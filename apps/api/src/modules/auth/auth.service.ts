@@ -12,7 +12,8 @@ import {
   UnauthorizedError,
 } from '../../lib/errors';
 import { refreshTtlMs, signAccessToken } from '../../lib/tokens';
-import type { AuthUser } from '@gofest/shared';
+import type { AuthUser, UserRole } from '@gofest/shared';
+import { writeAudit } from '../../lib/audit';
 import { enqueueEmail } from '../notifications/email.service';
 
 interface SessionResult {
@@ -33,13 +34,14 @@ function toAuthUser(user: {
   name: string;
   email: string;
   phone: string | null;
-  role: 'USER' | 'ADMIN';
+  role: UserRole;
   organizerProfile: { slug: string; status: string } | null;
   staffAssignments?: { id: string }[];
 }): AuthUser {
   const roles: string[] = ['USER'];
-  if (user.role === 'ADMIN') roles.push('ADMIN');
-  if (user.organizerProfile?.status === 'ACTIVE') roles.push('ORGANIZER');
+  if (user.role === 'ADMIN' || user.role === 'SUPERADMIN') roles.push(user.role);
+  if (!['ADMIN', 'SUPERADMIN'].includes(user.role) && user.organizerProfile?.status === 'ACTIVE')
+    roles.push('ORGANIZER', 'CREATOR');
   if (user.staffAssignments && user.staffAssignments.length > 0) roles.push('STAFF');
   return {
     id: user.id,
@@ -52,11 +54,7 @@ function toAuthUser(user: {
   };
 }
 
-async function createSession(
-  userId: string,
-  role: 'USER' | 'ADMIN',
-  req: Request,
-): Promise<SessionResult> {
+async function createSession(userId: string, role: UserRole, req: Request): Promise<SessionResult> {
   const refreshToken = randomToken(48);
   const meta = requestMeta(req);
   await prisma.refreshSession.create({
@@ -163,6 +161,16 @@ export async function login(
   if (user.status === 'DELETED') {
     throw new UnauthorizedError('Email atau password salah', 'INVALID_CREDENTIALS');
   }
+  if (user.status !== 'ACTIVE') {
+    throw new ForbiddenError('Akun belum aktif', 'ACCOUNT_INACTIVE');
+  }
+  await writeAudit({
+    actorUserId: user.id,
+    action: 'LOGIN',
+    resourceType: 'USER',
+    resourceId: user.id,
+    req,
+  });
   return createSession(user.id, user.role, req);
 }
 

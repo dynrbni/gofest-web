@@ -36,7 +36,12 @@ export function verifyAccessToken(token: string): AccessTokenPayload {
     throw new Error('Token payload tidak valid');
   }
   const payload = decoded as JwtPayload & Partial<AccessTokenPayload>;
-  if (!payload.sub || payload.type !== 'access' || (payload.role !== 'USER' && payload.role !== 'ADMIN')) {
+  if (
+    !payload.sub ||
+    payload.type !== 'access' ||
+    !payload.role ||
+    !['USER', 'ADMIN', 'SUPERADMIN', 'CREATOR'].includes(payload.role)
+  ) {
     throw new Error('Token payload tidak valid');
   }
   return {
