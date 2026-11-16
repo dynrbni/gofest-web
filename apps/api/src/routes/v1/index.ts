@@ -14,6 +14,16 @@ import { adminRouter } from '../../modules/admin/admin.routes';
 import { ticketRouter } from '../../modules/tickets/ticket.routes';
 import { accountRouter } from '../../modules/account/account.routes';
 import { getPlatformSettings } from '../../modules/settings/settings.service';
+import {
+  adminFinanceRouter,
+  creatorFinanceRouter,
+  customerRefundRouter,
+} from '../../modules/finance/finance.routes';
+import {
+  adminWorkspaceRouter,
+  creatorWorkspaceRouter,
+} from '../../modules/workspace/workspace.routes';
+import { adminEventRouter } from '../../modules/admin/admin-event.routes';
 
 export const v1Router = Router();
 
@@ -26,10 +36,23 @@ v1Router.get('/', (_req, res) => {
 });
 
 v1Router.use('/auth', authRouter);
+v1Router.use('/admin', adminFinanceRouter, adminWorkspaceRouter, adminEventRouter);
+v1Router.use('/creator', creatorFinanceRouter, creatorWorkspaceRouter, organizerWorkspaceRouter);
+v1Router.use('/account/refunds', customerRefundRouter);
+v1Router.get('/content', async (_req, res) =>
+  ok(res, {
+    items: await prisma.contentItem.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: 'asc' },
+      take: 50,
+    }),
+  }),
+);
 v1Router.use('/events', publicEventRouter);
 v1Router.use('/categories', categoryRouter);
 v1Router.use('/organizers', publicOrganizerRouter);
 v1Router.use('/organizer/account', organizerRouter);
+v1Router.use('/organizer', creatorFinanceRouter, creatorWorkspaceRouter);
 v1Router.use('/organizer', organizerWorkspaceRouter);
 v1Router.use('/uploads', uploadRouter);
 v1Router.use('/orders', orderRouter);
@@ -48,6 +71,10 @@ v1Router.get('/settings', async (_req, res) => {
       platformFeeType: settings.platformFeeType,
       platformFeeValue: settings.platformFeeValue,
       orderReservationMinutes: settings.orderReservationMinutes,
+      platformName: settings.platformName,
+      platformLogo: settings.platformLogo,
+      contactEmail: settings.contactEmail,
+      contactPhone: settings.contactPhone,
     },
   });
 });
