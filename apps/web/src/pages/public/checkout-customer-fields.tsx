@@ -91,7 +91,7 @@ export function CheckoutCustomerFields({
             label="Tanggal lahir"
             htmlFor={id('birthDate')}
             error={error('birthDate')}
-            hint="Usia dihitung saat pemesanan. Di bawah 17 tahun hanya dapat memakai Kartu Pelajar atau Paspor."
+            hint="Di bawah 17 tahun hanya dapat memakai Kartu Pelajar atau Paspor."
             required
           >
             <Input
