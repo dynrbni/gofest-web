@@ -7,6 +7,7 @@ import {
   EVENT_STATUSES,
   EVENT_TYPES,
   ORDER_STATUSES,
+  PAYMENT_STATUSES,
   ORGANIZER_STATUSES,
   PLATFORM_FEE_TYPES,
   USER_STATUSES,
@@ -244,11 +245,11 @@ export const eventUpdateSchema = eventBaseSchema
 
 export const eventReviewSchema = z
   .object({
-    status: z.enum(['PUBLISHED', 'REJECTED', 'CANCELLED']),
+    status: z.enum(['PUBLISHED', 'APPROVED', 'NEEDS_REVISION', 'REJECTED', 'CANCELLED']),
     note: z.string().trim().max(1000).optional(),
   })
   .superRefine((value, ctx) => {
-    if ((value.status === 'REJECTED' || value.status === 'CANCELLED') && !value.note) {
+    if (['REJECTED', 'CANCELLED', 'NEEDS_REVISION'].includes(value.status) && !value.note) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['note'],
@@ -520,11 +521,22 @@ export const platformSettingsSchema = z.object({
   platformFeeValue: z.coerce.number().int().min(0).max(10_000_000).optional(),
   orderReservationMinutes: z.coerce.number().int().min(5).max(120).optional(),
   eventReviewRequired: z.boolean().optional(),
+  minimumWithdrawal: z.coerce.number().int().min(1).max(2_000_000_000).optional(),
+  platformName: z.string().trim().min(1).max(100).optional(),
+  platformLogo: z.string().url().max(1000).or(z.literal('')).optional(),
+  contactEmail: z.string().email().or(z.literal('')).optional(),
+  contactPhone: z.string().trim().max(30).optional(),
+  notificationsEnabled: z.boolean().optional(),
 });
 
 export const orderListQuerySchema = paginationSchema.extend({
   status: z.enum(ORDER_STATUSES).optional(),
   q: z.string().trim().max(120).optional(),
+  eventId: z.string().max(100).optional(),
+  organizerId: z.string().max(100).optional(),
+  from: z.string().datetime().optional(),
+  to: z.string().datetime().optional(),
+  paymentStatus: z.enum(PAYMENT_STATUSES).optional(),
 });
 
 export const ticketListQuerySchema = paginationSchema.extend({

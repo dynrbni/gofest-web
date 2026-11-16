@@ -18,6 +18,8 @@ export const MAX_PAGE_SIZE = 100;
 export const ORDER_ACCESS_TOKEN_QUERY = 'token';
 
 export const EVENT_STATUS_LABELS: Record<EventStatus, string> = {
+  NEEDS_REVISION: 'Perlu revisi',
+  APPROVED: 'Disetujui',
   DRAFT: 'Draf',
   PENDING_REVIEW: 'Menunggu review',
   PUBLISHED: 'Tayang',

@@ -1,5 +1,9 @@
-export const USER_ROLES = ['USER', 'ADMIN'] as const;
+export const USER_ROLES = ['USER', 'ADMIN', 'SUPERADMIN', 'CREATOR'] as const;
 export type UserRole = (typeof USER_ROLES)[number];
+
+export function isOperationalAdmin(role: string | undefined): boolean {
+  return role === 'ADMIN' || role === 'SUPERADMIN';
+}
 
 export const USER_STATUSES = ['ACTIVE', 'PENDING_VERIFICATION', 'SUSPENDED', 'DELETED'] as const;
 export type UserStatus = (typeof USER_STATUSES)[number];
@@ -10,6 +14,8 @@ export type OrganizerStatus = (typeof ORGANIZER_STATUSES)[number];
 export const EVENT_STATUSES = [
   'DRAFT',
   'PENDING_REVIEW',
+  'NEEDS_REVISION',
+  'APPROVED',
   'PUBLISHED',
   'REJECTED',
   'CANCELLED',
