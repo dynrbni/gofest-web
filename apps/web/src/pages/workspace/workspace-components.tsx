@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { ErrorState, LoadingState, EmptyState } from '@/components/common/states';
+import { ErrorState, PageLoading, EmptyState } from '@/components/common/states';
 import { cn } from '@/lib/utils';
 
 export function WorkspaceHeading({
@@ -123,7 +123,7 @@ export function QueryState({
   empty?: boolean;
   children: ReactNode;
 }) {
-  if (query.isLoading) return <LoadingState rows={3} variant="table" />;
+  if (query.isLoading) return <PageLoading label="Memuat konten halaman" />;
   if (query.isError)
     return (
       <ErrorState

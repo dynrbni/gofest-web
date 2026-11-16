@@ -114,6 +114,12 @@ export interface StaffAssignment {
 }
 
 export interface OrganizerProfile {
+  contactEmail?: string | null;
+  contactPhone?: string | null;
+  location?: string | null;
+  websiteUrl?: string | null;
+  instagramUrl?: string | null;
+  tiktokUrl?: string | null;
   bannerKey?: string | null;
   fallbackBannerKey?: string | null;
   eventCounts?: { active: number; past: number; total: number };

@@ -2,20 +2,18 @@ import { Suspense, useEffect, useState, type ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import { PageLoading } from '@/components/common/states';
 
-const authPaths = new Set(['/login', '/register', '/forgot-password', '/reset-password']);
-
 export function RouteTransition({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   const [readyPath, setReadyPath] = useState<string | null>(null);
-  const auth = authPaths.has(pathname.replace(/\/+$/, ''));
   const account = /^\/account(?:\/|$)/.test(pathname);
-  const pending = !account && readyPath !== pathname;
+  const workspace = /^\/(admin|creator|organizer)(?:\/|$)/.test(pathname);
+  const pending = !account && !workspace && readyPath !== pathname;
 
   useEffect(() => {
-    if (account) return;
+    if (account || workspace) return;
     const timer = window.setTimeout(() => setReadyPath(pathname), 320);
     return () => window.clearTimeout(timer);
-  }, [pathname, account]);
+  }, [pathname, account, workspace]);
 
   return (
     <>
@@ -29,12 +27,7 @@ export function RouteTransition({ children }: { children: ReactNode }) {
         aria-hidden={pending ? true : undefined}
         style={pending ? { visibility: 'hidden' } : undefined}
       >
-        <Suspense
-          key={auth ? 'auth' : account ? 'account' : pathname}
-          fallback={<PageLoading fullPage={!account} />}
-        >
-          {children}
-        </Suspense>
+        <Suspense fallback={<PageLoading fullPage={!account && !workspace} />}>{children}</Suspense>
       </div>
     </>
   );

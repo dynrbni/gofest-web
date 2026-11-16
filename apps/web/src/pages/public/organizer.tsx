@@ -69,7 +69,7 @@ export function OrganizerPublicPage() {
     <main className="bg-slate-50/70 pb-12 pt-7 sm:pt-10">
       <div className="container">
         <header>
-          <div className="creator-cover relative w-full aspect-[7/2] max-h-80 min-h-32 overflow-hidden rounded-2xl bg-blue-100">
+          <div className="creator-cover relative w-full aspect-[3/1] max-h-80 min-h-32 overflow-hidden rounded-2xl bg-blue-100">
             {banner && banner !== failedBanner ? (
               <LoadingImage
                 src={banner}
@@ -92,6 +92,52 @@ export function OrganizerPublicPage() {
               <h1 className="break-words text-2xl font-semibold leading-tight tracking-tight sm:text-3xl">
                 {organizer.organizationName}
               </h1>
+              <p className="mt-2 text-xs font-medium text-blue-800">Organizer terverifikasi</p>
+              {organizer.description ? (
+                <p className="mt-4 max-w-2xl whitespace-pre-wrap text-sm leading-6 text-slate-600">
+                  {organizer.description}
+                </p>
+              ) : null}
+              {organizer.location ? (
+                <p className="mt-3 text-sm text-slate-600">{organizer.location}</p>
+              ) : null}
+              <div className="mt-4 flex flex-wrap gap-x-5 gap-y-3 text-sm text-blue-800">
+                {organizer.contactEmail ? (
+                  <a
+                    href={`mailto:${organizer.contactEmail}`}
+                    className="underline underline-offset-4"
+                  >
+                    {organizer.contactEmail}
+                  </a>
+                ) : null}
+                {organizer.contactPhone ? (
+                  <a
+                    href={`tel:${organizer.contactPhone}`}
+                    className="underline underline-offset-4"
+                  >
+                    {organizer.contactPhone}
+                  </a>
+                ) : null}
+                {(
+                  [
+                    ['Website', organizer.websiteUrl],
+                    ['Instagram', organizer.instagramUrl],
+                    ['TikTok', organizer.tiktokUrl],
+                  ] as const
+                ).map(([label, url]) =>
+                  url && /^https?:\/\//i.test(url) ? (
+                    <a
+                      key={label}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline underline-offset-4"
+                    >
+                      {label}
+                    </a>
+                  ) : null,
+                )}
+              </div>
               <dl className="mt-5 flex flex-wrap gap-x-8 gap-y-4 text-sm sm:mt-6">
                 <div>
                   <dt className="text-slate-600">{t('Total Event', 'Total Events')}</dt>

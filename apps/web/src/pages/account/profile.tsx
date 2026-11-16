@@ -7,8 +7,10 @@ import { useDocumentTitle } from '@/lib/hooks';
 import { useLanguage } from '@/lib/language';
 import { Field, InlineError } from '@/components/common/states';
 import { Input } from '@/components/ui/input';
-import { AccountAvatar, AccountHeading } from './account-components';
+import { AccountHeading } from './account-components';
 import { AccountSecurity } from './account-security';
+import { ImageUploader } from '@/components/common/image-uploader';
+import { UserAvatar } from '@/components/common/user-avatar';
 
 export function AccountProfilePage() {
   const { t } = useLanguage();
@@ -20,13 +22,15 @@ export function AccountProfilePage() {
   const [generalError, setGeneralError] = useState<unknown>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [avatarKey, setAvatarKey] = useState<string | null>(user?.avatarKey ?? null);
+  const [uploading, setUploading] = useState(false);
   async function submit(event: FormEvent) {
     event.preventDefault();
-    if (saving) return;
+    if (saving || uploading) return;
     setErrors({});
     setGeneralError(null);
     setSaved(false);
-    const parsed = updateProfileSchema.safeParse({ name, phone });
+    const parsed = updateProfileSchema.safeParse({ name, phone, avatarKey });
     if (!parsed.success) {
       setErrors(
         Object.fromEntries(parsed.error.issues.map((issue) => [issue.path[0], issue.message])),
@@ -63,13 +67,27 @@ export function AccountProfilePage() {
           aria-busy={saving}
         >
           <div className="account-profile-avatar">
-            <AccountAvatar name={user?.name ?? ''} />
+            <UserAvatar name={user?.name ?? ''} avatarKey={avatarKey} className="size-14" />
             <div className="min-w-0">
               <h2>{t('Informasi pribadi', 'Personal information')}</h2>
-              <p>{t('Avatar menggunakan inisial namamu.', 'Your avatar uses your initials.')}</p>
+              <p>
+                {t('Foto profil dan informasi akunmu.', 'Your profile photo and account details.')}
+              </p>
             </div>
           </div>
           <InlineError error={generalError} />
+          <ImageUploader
+            label={t('Foto profil', 'Profile photo')}
+            folder="avatars"
+            value={avatarKey}
+            onChange={setAvatarKey}
+            onUploadingChange={setUploading}
+            disabled={saving}
+            hint={t(
+              'Gunakan rasio 1:1. Simpan perubahan untuk menerapkan foto.',
+              'Use a 1:1 ratio. Save changes to apply your photo.',
+            )}
+          />
           <Field
             label={t('Nama lengkap', 'Full name')}
             htmlFor="account-name"
@@ -125,7 +143,7 @@ export function AccountProfilePage() {
             />
           </Field>
           <div className="flex flex-wrap items-center gap-4">
-            <button type="submit" className="account-primary" disabled={saving}>
+            <button type="submit" className="account-primary" disabled={saving || uploading}>
               {saving ? t('Menyimpan…', 'Saving…') : t('Simpan perubahan', 'Save changes')}
             </button>
             {saved ? (

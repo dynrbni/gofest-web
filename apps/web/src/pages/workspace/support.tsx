@@ -18,6 +18,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { WorkspaceHeading, Panel, QueryState, Status } from './workspace-components';
+import { useWorkspaceNotifications } from '@/lib/workspace-notifications';
 
 interface SupportTicket {
   id: string;
@@ -204,31 +205,14 @@ export function SupportPage() {
   );
 }
 
-interface Notice {
-  id: string;
-  title: string;
-  message: string;
-  href: string | null;
-  readAt: string | null;
-  createdAt: string;
-}
 export function NotificationsPage() {
   const { apiBase } = useWorkspace();
   const client = useQueryClient();
   const [page, setPage] = useState(1);
-  const query = useQuery({
-    queryKey: ['notifications', apiBase, page],
-    queryFn: () =>
-      api<{
-        notifications: Notice[];
-        unread: number;
-        meta?: { page: number; limit: number; total: number; totalPages: number };
-      }>(`${apiBase}/notifications`, { query: { page } }),
-  });
+  const query = useWorkspaceNotifications(apiBase, page);
   const read = useMutation({
     mutationFn: (id: string) => api(`${apiBase}/notifications/${id}/read`, { method: 'PATCH' }),
     onSuccess: () => {
-      void client.invalidateQueries({ queryKey: ['notifications'] });
       void client.invalidateQueries({ queryKey: ['workspace-notifications'] });
     },
     onError: (error) => toast.error(errorMessage(error)),

@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import type { EventManage } from '@/lib/models';
+import { ImageUploader } from '@/components/common/image-uploader';
 
 function toLocalDatetimeInput(iso?: string | null) {
   if (!iso) return '';
@@ -66,6 +67,7 @@ export function OrganizerEventFormPage({ isNew = false }: { isNew?: boolean }) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [generalError, setGeneralError] = useState<unknown>(null);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (existingEvent) {
@@ -106,6 +108,7 @@ export function OrganizerEventFormPage({ isNew = false }: { isNew?: boolean }) {
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
+    if (uploading || saving) return;
     setErrors({});
     setGeneralError(null);
 
@@ -207,6 +210,15 @@ export function OrganizerEventFormPage({ isNew = false }: { isNew?: boolean }) {
 
         <div className="space-y-4">
           <h2 className="text-base font-semibold text-ink">1. Informasi utama</h2>
+          <ImageUploader
+            label="Banner acara"
+            folder="events"
+            value={coverKey}
+            onChange={setCoverKey}
+            onUploadingChange={setUploading}
+            disabled={saving}
+            hint="Rekomendasi 1920 × 800 px. Gambar diterapkan setelah acara disimpan."
+          />
 
           <Field label="Judul Acara" htmlFor="title" required error={errors.title}>
             <Input
@@ -435,7 +447,7 @@ export function OrganizerEventFormPage({ isNew = false }: { isNew?: boolean }) {
           <Button type="button" variant="outline" onClick={() => navigate(-1)}>
             Batal
           </Button>
-          <Button type="submit" disabled={saving}>
+          <Button type="submit" disabled={saving || uploading}>
             {saving ? 'Menyimpan...' : isNew ? 'Simpan & Lanjut ke Tiket' : 'Simpan Perubahan'}
           </Button>
         </div>

@@ -3,30 +3,51 @@ import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { useOrganizerProfile } from '@/lib/queries';
 import { api, fieldErrors, ApiError } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
 import { useDocumentTitle } from '@/lib/hooks';
 import { Field, InlineError, LoadingState, ErrorState } from '@/components/common/states';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { assetUrl } from '@/lib/assets';
 import { Textarea } from '@/components/ui/textarea';
+import { ImageUploader } from '@/components/common/image-uploader';
+
+const contactFields = [
+  ['contactEmail', 'Email kontak', 'email'],
+  ['contactPhone', 'Telepon kontak', 'tel'],
+  ['location', 'Lokasi organisasi', 'text'],
+  ['websiteUrl', 'Website', 'url'],
+  ['instagramUrl', 'Instagram URL', 'url'],
+  ['tiktokUrl', 'TikTok URL', 'url'],
+] as const;
+type ContactField = (typeof contactFields)[number][0];
+const emptyContacts: Record<ContactField, string> = {
+  contactEmail: '',
+  contactPhone: '',
+  location: '',
+  websiteUrl: '',
+  instagramUrl: '',
+  tiktokUrl: '',
+};
 
 export function OrganizerSettingsPage() {
-  useDocumentTitle('Pengaturan Organisasi');
+  useDocumentTitle('Profil Kreator');
   const queryClient = useQueryClient();
+  const { user, refreshMe } = useAuth();
   const profileQuery = useOrganizerProfile();
   const profile = profileQuery.data?.organizer;
-
   const [orgName, setOrgName] = useState('');
   const [slug, setSlug] = useState('');
   const [description, setDescription] = useState('');
   const [logoKey, setLogoKey] = useState<string | null>(null);
   const [bannerKey, setBannerKey] = useState<string | null>(null);
-  const [uploading, setUploading] = useState<'logo' | 'banner' | null>(null);
+  const [avatarKey, setAvatarKey] = useState<string | null>(user?.avatarKey ?? null);
+  const [contacts, setContacts] = useState(emptyContacts);
+  const [uploads, setUploads] = useState<Record<string, boolean>>({});
   const initializedProfile = useRef<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [generalError, setGeneralError] = useState<unknown>(null);
   const [saving, setSaving] = useState(false);
-
+  const uploading = Object.values(uploads).some(Boolean);
   useEffect(() => {
     if (profile && initializedProfile.current !== profile.id) {
       initializedProfile.current = profile.id;
@@ -35,157 +56,107 @@ export function OrganizerSettingsPage() {
       setDescription(profile.description ?? '');
       setLogoKey(profile.logoKey);
       setBannerKey(profile.bannerKey ?? null);
+      setContacts(
+        Object.fromEntries(contactFields.map(([key]) => [key, profile[key] ?? ''])) as Record<
+          ContactField,
+          string
+        >,
+      );
     }
   }, [profile]);
-
-  async function uploadImage(file: File, kind: 'logo' | 'banner') {
-    setUploading(kind);
-    setGeneralError(null);
-    try {
-      const body = new FormData();
-      body.append('file', file);
-      body.append('folder', 'organizers');
-      const result = await api<{ key: string }>('/uploads', { method: 'POST', body });
-      if (kind === 'logo') setLogoKey(result.key);
-      else setBannerKey(result.key);
-    } catch (error) {
-      setGeneralError(error);
-    } finally {
-      setUploading(null);
-    }
-  }
-
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
-    if (uploading) return;
+    if (uploading || saving || !user) return;
     setErrors({});
     setGeneralError(null);
-
-    if (!orgName.trim()) {
-      setErrors({ organizationName: 'Nama organisasi wajib diisi' });
-      return;
-    }
-
     setSaving(true);
     try {
-      await api('/organizer/account/profile', {
-        method: 'PATCH',
-        body: {
-          organizationName: orgName.trim(),
-          slug: slug.trim(),
-          description: description.trim(),
-          logoKey,
-          bannerKey,
-        },
-      });
-      await queryClient.invalidateQueries({ queryKey: ['organizer-profile'] });
-      await queryClient.invalidateQueries({ queryKey: ['public-organizer'] });
-      await queryClient.invalidateQueries({ queryKey: ['public-events'] });
-      toast.success('Profil organisasi berhasil diperbarui');
-    } catch (err) {
-      if (err instanceof ApiError && err.details) {
-        setErrors(fieldErrors(err));
-      } else {
-        setGeneralError(err);
-      }
+      await Promise.all([
+        api('/organizer/account/profile', {
+          method: 'PATCH',
+          body: {
+            organizationName: orgName.trim(),
+            slug: slug.trim(),
+            description: description.trim(),
+            logoKey,
+            bannerKey,
+            ...contacts,
+          },
+        }),
+        api('/auth/profile', {
+          method: 'PATCH',
+          body: { name: user.name, phone: user.phone ?? undefined, avatarKey },
+        }),
+      ]);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['organizer-profile'] }),
+        queryClient.invalidateQueries({ queryKey: ['public-organizer'] }),
+        queryClient.invalidateQueries({ queryKey: ['public-events'] }),
+        refreshMe(),
+      ]);
+      toast.success('Profil kreator berhasil diperbarui');
+    } catch (error) {
+      if (error instanceof ApiError && error.details) setErrors(fieldErrors(error));
+      else setGeneralError(error);
     } finally {
       setSaving(false);
     }
   }
-
-  if (profileQuery.isLoading) {
-    return <LoadingState rows={4} label="Memuat profil organisasi" />;
-  }
-
-  if (profileQuery.isError || !profile) {
+  if (profileQuery.isLoading) return <LoadingState rows={4} label="Memuat profil kreator" />;
+  if (profileQuery.isError || !profile)
     return (
       <ErrorState
         error={profileQuery.error ?? new Error('Profil tidak ditemukan')}
         onRetry={() => void profileQuery.refetch()}
       />
     );
-  }
-
   return (
-    <div className="max-w-2xl space-y-6">
-      <div className="border-b border-warm-border pb-4">
-        <h1 className="font-display text-3xl font-semibold tracking-tightest">Profil Organisasi</h1>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Kelola identitas publik organisasimu yang ditampilkan pada halaman acara
+    <div className="max-w-3xl space-y-6">
+      <header className="border-b border-warm-border pb-4">
+        <h1 className="font-display text-3xl font-semibold tracking-tightest">Profil Kreator</h1>
+        <p className="mt-2 text-sm text-slate-600">
+          Kelola foto akun dan informasi yang tampil pada profil publik organisasi.
         </p>
-      </div>
-
+      </header>
       <form
         onSubmit={onSubmit}
-        className="space-y-5 rounded-md border border-warm-border bg-card p-6"
+        className="space-y-6 rounded-md border border-warm-border bg-card p-5 sm:p-6"
       >
         <InlineError error={generalError} />
-
-        <div className="flex items-center gap-2 rounded bg-warm-muted/50 p-3 text-xs text-muted-foreground">
-          <span>Status verifikasi:</span>
-          <span className="font-medium text-ink uppercase tracking-wider">{profile.status}</span>
-        </div>
-
-        <fieldset className="space-y-5" disabled={saving || uploading !== null}>
-          <legend className="mb-3 font-medium">Logo dan banner kreator</legend>
-          {(['logo', 'banner'] as const).map((kind) => {
-            const key = kind === 'logo' ? logoKey : bannerKey;
-            return (
-              <div key={kind} className="space-y-3">
-                <Field
-                  label={kind === 'logo' ? 'Logo kreator' : 'Banner kreator'}
-                  htmlFor={`creator-${kind}`}
-                  hint={
-                    kind === 'logo'
-                      ? 'Gunakan gambar persegi dalam format JPG, PNG atau WebP.'
-                      : 'Gunakan gambar lebar (rasio sekitar 7:2), JPG, PNG atau WebP.'
-                  }
-                >
-                  <Input
-                    id={`creator-${kind}`}
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    onChange={(event) => {
-                      const file = event.target.files?.[0];
-                      event.target.value = '';
-                      if (file) void uploadImage(file, kind);
-                    }}
-                    className="h-auto py-2"
-                  />
-                </Field>
-                {key ? (
-                  <div className="space-y-2">
-                    <img
-                      src={assetUrl(key)!}
-                      alt={kind === 'logo' ? 'Pratinjau logo kreator' : 'Pratinjau banner kreator'}
-                      className={
-                        kind === 'logo'
-                          ? 'size-24 rounded-full border border-slate-200 object-contain'
-                          : 'aspect-[7/2] w-full rounded-xl bg-blue-50 object-cover'
-                      }
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => (kind === 'logo' ? setLogoKey(null) : setBannerKey(null))}
-                    >
-                      Hapus {kind}
-                    </Button>
-                  </div>
-                ) : null}
-                {uploading === kind ? (
-                  <p role="status" className="text-sm text-slate-600">
-                    Mengunggah {kind}...
-                  </p>
-                ) : null}
-              </div>
-            );
-          })}
-          <p className="text-xs leading-5 text-slate-500">
-            Tekan Simpan Perubahan untuk menerapkan logo dan banner pada profil publik.
+        <p className="rounded bg-blue-50 p-3 text-sm text-blue-900">
+          Status verifikasi: <strong>{profile.status}</strong>
+        </p>
+        <fieldset disabled={saving} className="space-y-5">
+          <legend className="mb-3 text-base font-semibold">Gambar akun dan organisasi</legend>
+          <ImageUploader
+            label="Foto profil akun"
+            folder="avatars"
+            value={avatarKey}
+            onChange={setAvatarKey}
+            onUploadingChange={(busy) => setUploads((current) => ({ ...current, avatar: busy }))}
+            hint="Rekomendasi rasio 1:1. Foto ini ditampilkan pada topbar akun."
+          />
+          <ImageUploader
+            label="Logo organisasi"
+            folder="organizers"
+            value={logoKey}
+            onChange={setLogoKey}
+            onUploadingChange={(busy) => setUploads((current) => ({ ...current, logo: busy }))}
+            hint="Gunakan gambar persegi untuk identitas profil publik."
+          />
+          <ImageUploader
+            label="Banner organisasi"
+            folder="organizers"
+            value={bannerKey}
+            onChange={setBannerKey}
+            onUploadingChange={(busy) => setUploads((current) => ({ ...current, banner: busy }))}
+            hint="Rekomendasi 1500 × 500 px, rasio 3:1."
+          />
+          <p className="text-xs text-slate-600">
+            Gambar diterapkan setelah Simpan Perubahan. Hapus gambar untuk memakai tampilan
+            pengganti.
           </p>
         </fieldset>
-
         <Field
           label="Nama Organisasi / Komunitas"
           htmlFor="orgName"
@@ -195,12 +166,11 @@ export function OrganizerSettingsPage() {
           <Input
             id="orgName"
             value={orgName}
-            onChange={(e) => setOrgName(e.target.value)}
-            placeholder="Nama organisasi"
+            onChange={(event) => setOrgName(event.target.value)}
             required
+            maxLength={120}
           />
         </Field>
-
         <Field
           label="Slug URL Organisasi"
           htmlFor="orgSlug"
@@ -211,27 +181,38 @@ export function OrganizerSettingsPage() {
           <Input
             id="orgSlug"
             value={slug}
-            onChange={(e) => setSlug(e.target.value)}
-            placeholder="slug-organisasi"
+            onChange={(event) => setSlug(event.target.value)}
             required
           />
         </Field>
-
-        <Field label="Deskripsi Profil" htmlFor="orgDesc" hint="Profil singkat promotor">
+        <Field label="Deskripsi Profil" htmlFor="orgDesc" error={errors.description}>
           <Textarea
             id="orgDesc"
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Jelaskan tentang organisasimu..."
+            onChange={(event) => setDescription(event.target.value)}
             rows={4}
+            maxLength={3000}
           />
         </Field>
-
-        <div className="pt-2">
-          <Button type="submit" disabled={saving || uploading !== null}>
-            {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
-          </Button>
-        </div>
+        <fieldset className="grid gap-4 sm:grid-cols-2" disabled={saving}>
+          <legend className="mb-3 text-base font-semibold">Kontak dan media sosial publik</legend>
+          {contactFields.map(([key, label, type]) => (
+            <Field key={key} label={label} htmlFor={`org-${key}`} error={errors[key]}>
+              <Input
+                id={`org-${key}`}
+                type={type}
+                value={contacts[key]}
+                onChange={(event) =>
+                  setContacts((current) => ({ ...current, [key]: event.target.value }))
+                }
+                placeholder={type === 'url' ? 'https://' : undefined}
+              />
+            </Field>
+          ))}
+        </fieldset>
+        <Button type="submit" disabled={saving || uploading}>
+          {saving ? 'Menyimpan…' : 'Simpan Perubahan'}
+        </Button>
       </form>
     </div>
   );

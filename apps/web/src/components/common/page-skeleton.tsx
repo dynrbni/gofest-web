@@ -80,6 +80,8 @@ function WorkspaceSkeleton({
   contentOnly?: boolean;
 }) {
   const form = /\/(settings|profile|new|edit|apply)$/.test(pathname);
+  const metrics = /\/(dashboard|finance)$/.test(pathname);
+  const chart = metrics;
   return (
     <div
       className={
@@ -101,11 +103,24 @@ function WorkspaceSkeleton({
           <FormSkeleton />
         ) : (
           <>
-            <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
-              {Array.from({ length: 4 }, (_, index) => (
-                <Skeleton key={index} className="h-28 rounded-xl" />
-              ))}
-            </div>
+            {metrics ? (
+              <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+                {Array.from({ length: 4 }, (_, index) => (
+                  <Skeleton key={index} className="h-28 rounded-xl" />
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-3">
+                <Skeleton className="h-11 w-64" />
+                <Skeleton className="h-11 w-40" />
+              </div>
+            )}
+            {chart ? (
+              <div className="grid gap-5 xl:grid-cols-2">
+                <Skeleton className="h-64 rounded-xl" />
+                <Skeleton className="h-64 rounded-xl" />
+              </div>
+            ) : null}
             <div className="space-y-5 rounded-xl border border-slate-100 p-5">
               {Array.from({ length: 6 }, (_, index) => (
                 <div key={index} className="grid grid-cols-3 gap-4">
@@ -175,8 +190,10 @@ export function PageSkeleton({ pathname }: { pathname: string }) {
   if (/^\/account(\/|$)/.test(pathname))
     return <WorkspaceSkeleton pathname={pathname} contentOnly />;
 
-  if (/^\/(admin|organizer|staff)(\/|$)/.test(pathname))
-    return <WorkspaceSkeleton pathname={pathname} />;
+  if (/^\/(admin|creator|organizer)(\/|$)/.test(pathname))
+    return <WorkspaceSkeleton pathname={pathname} contentOnly />;
+
+  if (/^\/staff(\/|$)/.test(pathname)) return <WorkspaceSkeleton pathname={pathname} />;
 
   if (/^\/(checkout|order|ticket)\//.test(pathname))
     return (

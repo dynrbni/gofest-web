@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth';
 import { errorMessage } from '@/lib/api';
 import { useLanguage } from '@/lib/language';
+import { UserAvatar } from './user-avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,13 +21,6 @@ export function UserAccountMenu() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [leaving, setLeaving] = useState(false);
-  const initials = user?.name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part.charAt(0))
-    .join('')
-    .toLocaleUpperCase('id-ID');
   const links = [
     {
       to: user?.roles.some((role) => ['ADMIN', 'SUPERADMIN'].includes(role))
@@ -65,7 +59,7 @@ export function UserAccountMenu() {
           disabled={!user}
           aria-label={t(`Menu akun ${user?.name ?? ''}`, `Account menu for ${user?.name ?? ''}`)}
         >
-          <span aria-hidden>{initials || <UserRound size={20} />}</span>
+          <UserAvatar name={user?.name ?? ''} avatarKey={user?.avatarKey} className="size-11" />
         </button>
       </DropdownMenuTrigger>
       {user ? (

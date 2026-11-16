@@ -3,16 +3,16 @@ import {
   Bell,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   LogOut,
   Menu,
   Search,
-  UserCircle,
 } from 'lucide-react';
 import { useState, type ReactNode, type FormEvent } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import type { LucideIcon } from 'lucide-react';
 import { Logo } from '@/components/common/brand-logo';
+import { UserAvatar } from '@/components/common/user-avatar';
 import { RouteContent } from '@/components/common/route-content';
 import {
   Sheet,
@@ -23,8 +23,11 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { useAuth } from '@/lib/auth';
-import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import {
+  notificationCategoryForMenu,
+  useWorkspaceNotifications,
+} from '@/lib/workspace-notifications';
 
 export interface WorkspaceNavItem {
   to: string;
@@ -49,15 +52,13 @@ export function WorkspaceLayout({
   const location = useLocation();
   const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [closedGroups, setClosedGroups] = useState<Record<string, boolean>>({});
   const [search, setSearch] = useState('');
   const creator =
     location.pathname.startsWith('/creator') || location.pathname.startsWith('/organizer');
+  const logoVariant = creator ? 'creator' : 'admin';
   const base = creator ? '/creator' : '/admin';
-  const notifications = useQuery({
-    queryKey: ['workspace-notifications', base],
-    queryFn: () => api<{ unread: number }>(`${base}/notifications`, { query: { limit: 1 } }),
-    staleTime: 30_000,
-  });
+  const notifications = useWorkspaceNotifications(base);
   const current =
     nav.find((item) => item.to === location.pathname + location.search) ??
     nav
@@ -70,9 +71,23 @@ export function WorkspaceLayout({
         {groups.map((group) => (
           <div key={group}>
             {!compact ? (
-              <p className="mb-2 px-3 text-[11px] font-medium text-slate-500">{group}</p>
+              <button
+                type="button"
+                className="mb-2 flex min-h-8 w-full items-center justify-between rounded px-3 text-left text-[11px] font-medium text-slate-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600"
+                aria-expanded={!closedGroups[group]}
+                onClick={() =>
+                  setClosedGroups((previous) => ({ ...previous, [group]: !previous[group] }))
+                }
+              >
+                {group}
+                {closedGroups[group] ? (
+                  <ChevronRight className="size-3" aria-hidden />
+                ) : (
+                  <ChevronDown className="size-3" aria-hidden />
+                )}
+              </button>
             ) : null}
-            <div className="space-y-1">
+            <div className="space-y-1" hidden={!compact && closedGroups[group]}>
               {nav
                 .filter((item) => (item.group ?? 'Workspace') === group)
                 .map((item) => (
@@ -92,7 +107,7 @@ export function WorkspaceLayout({
                         ? item.to === location.pathname + location.search
                         : !exactQuery;
                       return cn(
-                        'flex min-h-10 items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600',
+                        'relative flex min-h-10 items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600',
                         isActive && queryMatch
                           ? 'bg-blue-50 text-blue-800'
                           : 'text-slate-600 hover:bg-slate-50 hover:text-slate-950',
@@ -101,7 +116,15 @@ export function WorkspaceLayout({
                     }}
                   >
                     <item.icon className="size-[18px] shrink-0" aria-hidden />
-                    <span className={compact ? 'sr-only' : ''}>{item.label}</span>
+                    <span className={compact ? 'sr-only' : 'min-w-0 flex-1'}>{item.label}</span>
+                    <UnreadBadge
+                      count={
+                        notifications.data?.unreadByCategory[
+                          notificationCategoryForMenu(item.to) ?? ''
+                        ] ?? 0
+                      }
+                      compact={compact}
+                    />
                   </NavLink>
                 ))}
             </div>
@@ -127,7 +150,7 @@ export function WorkspaceLayout({
           )}
         >
           <div className="flex h-[84px] shrink-0 items-center justify-between gap-2 px-4">
-            {!collapsed ? <Logo /> : null}
+            {!collapsed ? <Logo variant={logoVariant} /> : null}
             <button
               className="flex size-10 shrink-0 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100"
               aria-label={collapsed ? 'Perluas sidebar' : 'Perkecil sidebar'}
@@ -137,14 +160,16 @@ export function WorkspaceLayout({
               {collapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
             </button>
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-5">{navigation(collapsed)}</div>
+          <div data-workspace-sidebar-scroll className="min-h-0 flex-1 overflow-y-auto px-3 pb-5">
+            {navigation(collapsed)}
+          </div>
           <div className="shrink-0 border-t border-slate-200 p-4">
             <Link
               to="/account/profile"
               className="flex min-h-11 items-center gap-3 text-sm"
               title={user?.email}
             >
-              <UserCircle className="size-7 shrink-0 text-slate-500" aria-hidden />
+              <UserAvatar name={user?.name ?? ''} avatarKey={user?.avatarKey} className="size-7" />
               {!collapsed ? (
                 <div className="min-w-0">
                   <p className="truncate font-medium text-slate-900">{user?.name}</p>
@@ -169,7 +194,7 @@ export function WorkspaceLayout({
                   </button>
                 </SheetTrigger>
                 <SheetContent side="left" className="w-[min(85vw,300px)] overflow-y-auto">
-                  <Logo className="mb-5" />
+                  <Logo variant={logoVariant} className="mb-5" />
                   <SheetHeader>
                     <SheetTitle>{title}</SheetTitle>
                     <SheetDescription className="sr-only">
@@ -179,7 +204,7 @@ export function WorkspaceLayout({
                   <div className="mt-6">{navigation(false)}</div>
                 </SheetContent>
               </Sheet>
-              <Logo className={cn('lg:hidden', collapsed && 'lg:block')} />
+              <Logo variant={logoVariant} className={cn('lg:hidden', collapsed && 'lg:block')} />
               <div className="hidden min-w-0 sm:block">
                 <p className="text-xs text-slate-500">{workspace}</p>
                 <p className="mt-1 truncate text-sm font-medium text-slate-900">
@@ -188,6 +213,17 @@ export function WorkspaceLayout({
               </div>
             </div>
             <div className="flex items-center gap-2 sm:gap-4">
+              <Link
+                to="/account/profile"
+                aria-label="Profil akun"
+                className="flex size-11 items-center justify-center rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600"
+              >
+                <UserAvatar
+                  name={user?.name ?? ''}
+                  avatarKey={user?.avatarKey}
+                  className="size-8"
+                />
+              </Link>
               <form onSubmit={submitSearch} className="relative hidden xl:block">
                 <label htmlFor="workspace-search" className="sr-only">
                   Cari order ID
@@ -211,9 +247,7 @@ export function WorkspaceLayout({
               >
                 <Bell className="size-5" aria-hidden />
                 {notifications.data?.unread ? (
-                  <span className="absolute right-0 top-0 flex min-w-4 items-center justify-center rounded bg-blue-700 px-1 text-[10px] text-white">
-                    {notifications.data.unread}
-                  </span>
+                  <UnreadBadge count={notifications.data.unread} compact />
                 ) : null}
               </Link>
               <Link
@@ -246,5 +280,20 @@ export function WorkspaceLayout({
         </div>
       </div>
     </div>
+  );
+}
+
+function UnreadBadge({ count, compact = false }: { count: number; compact?: boolean }) {
+  if (count === 0) return null;
+  return (
+    <span
+      className={cn(
+        'flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-red-700 px-1 text-[10px] font-semibold tabular-nums text-white',
+        compact && 'absolute right-0 top-0',
+      )}
+      aria-label={`${count} notifikasi belum dibaca`}
+    >
+      {count > 99 ? '99+' : count}
+    </span>
   );
 }
