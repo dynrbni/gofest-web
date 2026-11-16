@@ -1,168 +1,191 @@
-import { useState, useEffect, type FormEvent } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { api, fieldErrors, ApiError } from '@/lib/api';
-import { useDocumentTitle } from '@/lib/hooks';
-import { Field, InlineError, LoadingState, ErrorState } from '@/components/common/states';
+import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Field, InlineError } from '@/components/common/states';
+import { WorkspaceHeading, Panel, QueryState } from '@/pages/workspace/workspace-components';
 
-interface PlatformSettingsData {
-  platformFeeType: 'none' | 'fixed' | 'percentage';
+interface Settings {
+  platformName: string;
+  platformLogo: string;
+  contactEmail: string;
+  contactPhone: string;
+  platformFeeType: string;
   platformFeeValue: number;
+  minimumWithdrawal: number;
   orderReservationMinutes: number;
+  eventReviewRequired: boolean;
+  notificationsEnabled: boolean;
 }
-
 export function AdminSettingsPage() {
-  useDocumentTitle('Pengaturan Platform · Super Admin');
-  const queryClient = useQueryClient();
-
-  const settingsQuery = useQuery({
+  const client = useQueryClient();
+  const query = useQuery({
     queryKey: ['admin-platform-settings'],
-    queryFn: () => api<{ settings: PlatformSettingsData }>('/admin/settings'),
+    queryFn: () => api<{ settings: Settings }>('/admin/settings'),
   });
-
-  const settings = settingsQuery.data?.settings;
-
-  const [feeType, setFeeType] = useState<'none' | 'fixed' | 'percentage'>('none');
-  const [feeValue, setFeeValue] = useState('0');
-  const [reservationMinutes, setReservationMinutes] = useState('15');
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [generalError, setGeneralError] = useState<unknown>(null);
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    if (settings) {
-      setFeeType(settings.platformFeeType);
-      setFeeValue(String(settings.platformFeeValue));
-      setReservationMinutes(String(settings.orderReservationMinutes));
-    }
-  }, [settings]);
-
-  async function onSubmit(e: FormEvent) {
-    e.preventDefault();
-    setErrors({});
-    setGeneralError(null);
-
-    const valNum = Number(feeValue);
-    const minNum = Math.floor(Number(reservationMinutes));
-
-    if (feeType !== 'none' && valNum < 0) {
-      setErrors({ platformFeeValue: 'Nilai biaya tidak boleh negatif' });
-      return;
-    }
-    if (minNum < 1 || minNum > 120) {
-      setErrors({ orderReservationMinutes: 'Batas reservasi antara 1 sampai 120 menit' });
-      return;
-    }
-
-    setSaving(true);
-    try {
-      await api('/admin/settings', {
-        method: 'PATCH',
-        body: {
-          platformFeeType: feeType,
-          platformFeeValue: feeType === 'none' ? 0 : valNum,
-          orderReservationMinutes: minNum,
-        },
-      });
-      await queryClient.invalidateQueries({ queryKey: ['admin-platform-settings'] });
-      await queryClient.invalidateQueries({ queryKey: ['platform-settings-public'] });
-      toast.success('Pengaturan platform berhasil diperbarui');
-    } catch (err) {
-      if (err instanceof ApiError && err.details) {
-        setErrors(fieldErrors(err));
-      } else {
-        setGeneralError(err);
-      }
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  if (settingsQuery.isLoading) {
-    return <LoadingState rows={4} label="Memuat pengaturan platform" />;
-  }
-
-  if (settingsQuery.isError || !settings) {
-    return (
-      <ErrorState
-        error={settingsQuery.error ?? new Error('Gagal memuat pengaturan')}
-        onRetry={() => void settingsQuery.refetch()}
-      />
-    );
-  }
-
+  const save = useMutation({
+    mutationFn: (body: Record<string, unknown>) =>
+      api('/admin/settings', { method: 'PATCH', body }),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: ['admin-platform-settings'] });
+      void client.invalidateQueries({ queryKey: ['platform-settings-public'] });
+      toast.success('Konfigurasi tersimpan dan dicatat pada audit log');
+    },
+  });
+  const settings = query.data?.settings;
   return (
-    <div className="max-w-xl space-y-6">
-      <div className="border-b border-warm-border pb-4">
-        <h1 className="font-display text-3xl font-semibold tracking-tightest">Konfigurasi Platform</h1>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Pengaturan global untuk biaya layanan platform dan durasi reservasi kuota checkout
-        </p>
-      </div>
-
-      <form onSubmit={onSubmit} className="space-y-5 rounded-md border border-warm-border bg-card p-6">
-        <InlineError error={generalError} />
-
-        <div className="space-y-4">
-          <Field label="Tipe Biaya Layanan Platform" htmlFor="feeType">
-            <select
-              id="feeType"
-              value={feeType}
-              onChange={(e) => setFeeType(e.target.value as 'none' | 'fixed' | 'percentage')}
-              className="h-10 w-full rounded-md border border-ink/20 bg-card px-3 text-sm outline-none focus-visible:border-ink"
-            >
-              <option value="none">Tanpa Biaya (Gratis)</option>
-              <option value="fixed">Nominal Tetap per Transaksi (Rp)</option>
-              <option value="percentage">Persentase per Transaksi (%)</option>
-            </select>
-          </Field>
-
-          {feeType !== 'none' ? (
-            <Field
-              label={feeType === 'percentage' ? 'Persentase Biaya (%)' : 'Nominal Biaya (Rp)'}
-              htmlFor="feeVal"
-              required
-              error={errors.platformFeeValue}
-            >
-              <Input
-                id="feeVal"
-                type="number"
-                min="0"
-                step={feeType === 'percentage' ? '0.1' : '500'}
-                value={feeValue}
-                onChange={(e) => setFeeValue(e.target.value)}
-                required
-              />
-            </Field>
-          ) : null}
-
-          <Field
-            label="Durasi Reservasi Kuota Checkout (Menit)"
-            htmlFor="reservationMin"
-            hint="Batas waktu pembeli menyelesaikan pembayaran sebelum kuota dilepas worker otomatis"
-            required
-            error={errors.orderReservationMinutes}
+    <div className="space-y-6">
+      <WorkspaceHeading
+        title="System Settings"
+        description="Konfigurasi platform dan service fee. Perubahan tarif berlaku untuk checkout berikutnya; snapshot transaksi lama tetap tersimpan."
+      />
+      <QueryState query={query}>
+        {settings ? (
+          <form
+            key={JSON.stringify(settings)}
+            className="space-y-6"
+            onSubmit={(event) => {
+              event.preventDefault();
+              const data = new FormData(event.currentTarget);
+              save.mutate({
+                platformName: data.get('platformName'),
+                platformLogo: data.get('platformLogo'),
+                contactEmail: data.get('contactEmail'),
+                contactPhone: data.get('contactPhone'),
+                platformFeeType: data.get('platformFeeType'),
+                platformFeeValue: Number(data.get('platformFeeValue')),
+                minimumWithdrawal: Number(data.get('minimumWithdrawal')),
+                orderReservationMinutes: Number(data.get('orderReservationMinutes')),
+                eventReviewRequired: data.has('eventReviewRequired'),
+                notificationsEnabled: data.has('notificationsEnabled'),
+              });
+            }}
           >
-            <Input
-              id="reservationMin"
-              type="number"
-              min="1"
-              max="120"
-              value={reservationMinutes}
-              onChange={(e) => setReservationMinutes(e.target.value)}
-              required
-            />
-          </Field>
-        </div>
-
-        <div className="pt-2">
-          <Button type="submit" disabled={saving}>
-            {saving ? 'Menyimpan...' : 'Simpan Konfigurasi'}
-          </Button>
-        </div>
-      </form>
+            <Panel title="Identitas & kontak">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Nama platform" htmlFor="platform-name" required>
+                  <Input
+                    id="platform-name"
+                    name="platformName"
+                    defaultValue={settings.platformName}
+                    required
+                    maxLength={100}
+                  />
+                </Field>
+                <Field label="URL logo platform" htmlFor="platform-logo">
+                  <Input
+                    id="platform-logo"
+                    name="platformLogo"
+                    type="url"
+                    defaultValue={settings.platformLogo}
+                  />
+                </Field>
+                <Field label="Email kontak" htmlFor="platform-email">
+                  <Input
+                    id="platform-email"
+                    name="contactEmail"
+                    type="email"
+                    defaultValue={settings.contactEmail}
+                  />
+                </Field>
+                <Field label="Telepon kontak" htmlFor="platform-phone">
+                  <Input
+                    id="platform-phone"
+                    name="contactPhone"
+                    defaultValue={settings.contactPhone}
+                    maxLength={30}
+                  />
+                </Field>
+              </div>
+            </Panel>
+            <Panel
+              title="Biaya layanan & withdrawal"
+              description="Customer membayar harga tiket setelah diskon ditambah service fee. Dana harga tiket merupakan hak organizer."
+            >
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Jenis service fee" htmlFor="fee-type">
+                  <select
+                    id="fee-type"
+                    name="platformFeeType"
+                    defaultValue={settings.platformFeeType}
+                    className="h-11 w-full rounded-lg border border-slate-300 px-3"
+                  >
+                    <option value="none">Tanpa fee</option>
+                    <option value="percentage">Persentase (%)</option>
+                    <option value="fixed">Nominal tetap (Rp)</option>
+                  </select>
+                </Field>
+                <Field
+                  label="Nilai service fee"
+                  htmlFor="fee-value"
+                  hint="Persentase maksimal 100; nilai tetap dalam Rupiah."
+                >
+                  <Input
+                    id="fee-value"
+                    name="platformFeeValue"
+                    type="number"
+                    min={0}
+                    step={1}
+                    required
+                    defaultValue={settings.platformFeeValue}
+                  />
+                </Field>
+                <Field label="Minimum withdrawal (Rp)" htmlFor="min-withdrawal">
+                  <Input
+                    id="min-withdrawal"
+                    name="minimumWithdrawal"
+                    type="number"
+                    min={1}
+                    max={2000000000}
+                    step={1}
+                    required
+                    defaultValue={settings.minimumWithdrawal}
+                  />
+                </Field>
+                <Field label="Reservasi order (menit)" htmlFor="reservation-minutes">
+                  <Input
+                    id="reservation-minutes"
+                    name="orderReservationMinutes"
+                    type="number"
+                    min={5}
+                    max={120}
+                    step={1}
+                    required
+                    defaultValue={settings.orderReservationMinutes}
+                  />
+                </Field>
+              </div>
+            </Panel>
+            <Panel title="Review & notifikasi">
+              <div className="space-y-4">
+                <label className="flex min-h-11 items-center gap-3 text-sm">
+                  <input
+                    type="checkbox"
+                    name="eventReviewRequired"
+                    defaultChecked={settings.eventReviewRequired}
+                    className="size-4 accent-blue-700"
+                  />
+                  Event wajib ditinjau admin sebelum publikasi
+                </label>
+                <label className="flex min-h-11 items-center gap-3 text-sm">
+                  <input
+                    type="checkbox"
+                    name="notificationsEnabled"
+                    defaultChecked={settings.notificationsEnabled}
+                    className="size-4 accent-blue-700"
+                  />
+                  Aktifkan notifikasi operasional
+                </label>
+              </div>
+            </Panel>
+            <InlineError error={save.error} />
+            <Button type="submit" disabled={save.isPending}>
+              {save.isPending ? 'Menyimpan…' : 'Simpan konfigurasi'}
+            </Button>
+          </form>
+        ) : null}
+      </QueryState>
     </div>
   );
 }

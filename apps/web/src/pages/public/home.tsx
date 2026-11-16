@@ -11,6 +11,7 @@ import { useLanguage } from '@/lib/language';
 import { useDocumentTitle } from '@/lib/hooks';
 import { usePublicEvents } from '@/lib/queries';
 import { cn } from '@/lib/utils';
+import { PlatformContent } from './platform-content';
 
 const CityDestinations = lazy(() =>
   import('@/components/discovery/city-destinations').then((module) => ({
@@ -41,6 +42,7 @@ export function HomePage() {
         {t('Temukan acara dan pengalaman seru di Gofest', 'Find events and experiences on Gofest')}
       </h1>
       <EventCarousel events={heroQuery.data?.data ?? []} />
+      <PlatformContent />
       <div className="container">
         <section className="py-8 sm:py-10" aria-labelledby="featured-heading">
           <div className="home-section-heading">
