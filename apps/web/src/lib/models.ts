@@ -388,7 +388,7 @@ export interface AdminUser {
   name: string;
   email: string;
   phone: string | null;
-  role: 'USER' | 'ADMIN';
+  role: 'USER' | 'ADMIN' | 'SUPERADMIN' | 'CREATOR';
   status: UserStatus;
   emailVerifiedAt?: string | null;
   createdAt: string;

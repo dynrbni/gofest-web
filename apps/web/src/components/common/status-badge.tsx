@@ -25,6 +25,8 @@ const toneClasses: Record<Tone, string> = {
 };
 
 const eventTones: Record<EventStatus, Tone> = {
+  NEEDS_REVISION: 'warning',
+  APPROVED: 'success',
   DRAFT: 'neutral',
   PENDING_REVIEW: 'warning',
   PUBLISHED: 'success',

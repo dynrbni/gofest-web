@@ -94,10 +94,10 @@ export function useOrganizerEvents(params: {
   });
 }
 
-export function useOrganizerEvent(id: string | undefined) {
+export function useOrganizerEvent(id: string | undefined, apiBase = '/organizer') {
   return useQuery({
-    queryKey: ['organizer-event', id],
-    queryFn: () => api<{ event: EventManage }>(`/organizer/events/${encodeURIComponent(id!)}`),
+    queryKey: ['organizer-event', id, apiBase],
+    queryFn: () => api<{ event: EventManage }>(`${apiBase}/events/${encodeURIComponent(id!)}`),
     enabled: Boolean(id),
   });
 }

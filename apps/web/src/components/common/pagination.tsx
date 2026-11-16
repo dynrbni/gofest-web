@@ -6,10 +6,12 @@ export function Pagination({
   meta,
   onPageChange,
   className,
+  itemLabel = 'entri',
 }: {
   meta: PaginationMeta | null | undefined;
   onPageChange: (page: number) => void;
   className?: string;
+  itemLabel?: string;
 }) {
   if (!meta || meta.totalPages <= 1) return null;
   const pages: number[] = [];
@@ -20,9 +22,12 @@ export function Pagination({
   if (!pages.includes(meta.totalPages)) pages.push(meta.totalPages);
 
   return (
-    <nav className={cn('flex flex-wrap items-center justify-between gap-3', className)} aria-label="Navigasi halaman">
+    <nav
+      className={cn('flex flex-wrap items-center justify-between gap-3', className)}
+      aria-label="Navigasi halaman"
+    >
       <p className="text-xs font-medium text-slate-500 tabular-nums">
-        Halaman {meta.page} dari {meta.totalPages} · Total {meta.total} acara
+        Halaman {meta.page} dari {meta.totalPages} · Total {meta.total} {itemLabel}
       </p>
       <div className="flex items-center gap-1.5">
         <button
