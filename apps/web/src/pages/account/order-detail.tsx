@@ -1,173 +1,192 @@
-import { useParams, Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Calendar, MapPin, CreditCard, QrCode } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, QrCode } from 'lucide-react';
+import { useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
 import type { Order } from '@/lib/models';
 import { useDocumentTitle } from '@/lib/hooks';
-import { formatDateTime, formatEventWhen, formatIDR } from '@/lib/format';
-import { OrderStatusBadge, TicketStatusBadge } from '@/components/common/status-badge';
+import { useLanguage } from '@/lib/language';
+import { formatDateTime, formatIDR } from '@/lib/format';
 import { ErrorState, LoadingState } from '@/components/common/states';
+import { OrderStatusBadge, TicketStatusBadge } from '@/components/common/status-badge';
+import { AccountEventMeta, AccountHeading, PaymentBadge } from './account-components';
 
 export function AccountOrderDetailPage() {
-  const { id } = useParams<{ id: string }>();
-  useDocumentTitle('Detail Pesanan');
-
-  const orderQuery = useQuery({
-    queryKey: ['account-order-detail', id],
-    queryFn: () => api<{ order: Order }>(`/account/orders/${encodeURIComponent(id!)}`),
-    enabled: Boolean(id),
+  const { id } = useParams();
+  const { user } = useAuth();
+  const { t } = useLanguage();
+  useDocumentTitle(t('Detail Pesanan', 'Order Details'));
+  const query = useQuery({
+    queryKey: ['customer', user?.id, 'order', id],
+    enabled: Boolean(id && user),
+    queryFn: ({ signal }) =>
+      api<{ order: Order }>(`/account/orders/${encodeURIComponent(id!)}`, { signal }),
   });
-
-  const order = orderQuery.data?.order;
-
-  if (orderQuery.isLoading) {
-    return <LoadingState rows={4} label="Memuat detail pesanan" />;
-  }
-
-  if (orderQuery.isError || !order) {
-    return (
-      <ErrorState
-        error={orderQuery.error ?? new Error('Pesanan tidak ditemukan')}
-        onRetry={() => void orderQuery.refetch()}
-      />
-    );
-  }
-
-  const isPending = order.status === 'PENDING_PAYMENT';
-  const isPaid = order.status === 'PAID';
-
+  if (query.isPending) return <LoadingState rows={4} />;
+  if (query.isError) return <ErrorState error={query.error} onRetry={() => void query.refetch()} />;
+  const { order } = query.data;
   return (
-    <div className="space-y-8">
-      <div>
-        <Link
-          to="/account/orders"
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-ink"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
-          Kembali ke daftar pesanan
-        </Link>
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Pesanan {order.orderCode}</h2>
-              <OrderStatusBadge status={order.status} />
-            </div>
-            <p className="mt-1 text-xs text-slate-500">
-              Dibuat pada {formatDateTime(order.createdAt)}
-            </p>
-          </div>
-
-          {isPending ? (
-            <Link
-              to={`/order/${order.orderCode}`}
-              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-medium text-white shadow-md hover:bg-blue-700"
-            >
-              <CreditCard className="h-4 w-4" aria-hidden />
-              Selesaikan Pembayaran
+    <>
+      <Link className="account-text-link mb-4" to="/account/orders">
+        <ArrowLeft size={16} aria-hidden />
+        {t('Riwayat pesanan', 'Order history')}
+      </Link>
+      <AccountHeading
+        title={t('Detail Pesanan', 'Order Details')}
+        description={`${order.orderCode} · ${formatDateTime(order.createdAt)}`}
+      />
+      <div className="account-detail-grid">
+        <div className="account-detail-stack">
+          <section className="account-panel">
+            <h2>{order.event.title}</h2>
+            <AccountEventMeta event={order.event} />
+            <Link to={`/events/${order.event.slug}`} className="account-text-link mt-2">
+              {t('Informasi event', 'Event information')}
+              <ArrowUpRight size={16} aria-hidden />
             </Link>
-          ) : null}
-        </div>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-        <div className="space-y-6">
-          {/* Event information */}
-          {order.event ? (
-            <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
-              <p className="text-xs font-medium uppercase tracking-wider text-blue-600">Informasi Acara</p>
-              <h3 className="mt-1 text-lg font-semibold text-slate-900">
-                <Link to={`/events/${order.event.slug}`} className="hover:text-blue-600">
-                  {order.event.title}
-                </Link>
-              </h3>
-              <div className="mt-3 grid gap-2 text-xs text-slate-500 sm:grid-cols-2">
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-slate-400" aria-hidden />
-                  <span>{formatEventWhen(order.event.startsAt, order.event.endsAt, order.event.timezone)}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-slate-400" aria-hidden />
-                  <span>{order.event.city ? `${order.event.venueName ?? ''}, ${order.event.city}` : 'Acara Online'}</span>
-                </div>
+            <dl className="account-definition sm:grid-cols-2">
+              <div>
+                <dt>{t('Status pesanan', 'Order status')}</dt>
+                <dd>
+                  <OrderStatusBadge status={order.status} />
+                </dd>
               </div>
-            </div>
-          ) : null}
-
-          {/* Tickets issued */}
-          <div className="space-y-3">
-            <h3 className="text-base font-semibold text-slate-900">
-              Tiket Digital ({order.tickets?.length ?? 0})
-            </h3>
-
-            {order.tickets && order.tickets.length > 0 ? (
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <dt>{t('Status pembayaran', 'Payment status')}</dt>
+                <dd>
+                  <PaymentBadge status={order.payment?.status} />
+                </dd>
+              </div>
+              <div>
+                <dt>{t('Metode pembayaran', 'Payment method')}</dt>
+                <dd>
+                  {order.payment?.method ??
+                    (order.payment?.provider === 'mock'
+                      ? t('Pembayaran simulasi', 'Simulated payment')
+                      : (order.payment?.provider ?? t('Belum dipilih', 'Not selected')))}
+                </dd>
+              </div>
+              <div>
+                <dt>{t('Waktu pembayaran', 'Paid at')}</dt>
+                <dd>
+                  {order.payment?.paidAt
+                    ? formatDateTime(order.payment.paidAt)
+                    : t('Belum dibayar', 'Not paid yet')}
+                </dd>
+              </div>
+            </dl>
+            {order.status === 'PENDING_PAYMENT' ? (
+              <Link
+                className="account-primary mt-6"
+                to={`/order/${encodeURIComponent(order.orderCode)}`}
+              >
+                {t('Lanjutkan pembayaran', 'Continue payment')}
+                <ArrowUpRight size={16} aria-hidden />
+              </Link>
+            ) : null}
+          </section>
+          <section className="account-panel">
+            <h2>{t('Rincian tiket', 'Ticket breakdown')}</h2>
+            <ul className="account-item-list">
+              {order.items.map((item) => (
+                <li key={item.id}>
+                  <div>
+                    {item.ticketNameSnapshot ?? item.ticketTypeName}
+                    <span className="mt-1 block">
+                      {item.quantity} × {formatIDR(item.unitPrice)}
+                    </span>
+                  </div>
+                  <strong className="font-medium">{formatIDR(item.lineTotal)}</strong>
+                </li>
+              ))}
+            </ul>
+          </section>
+          <section className="account-panel">
+            <h2>{t('Tiket digital', 'Digital tickets')}</h2>
+            {order.tickets.length ? (
+              <ul className="mt-4 divide-y divide-slate-100">
                 {order.tickets.map((ticket) => (
-                  <div
+                  <li
+                    className="flex flex-wrap items-center justify-between gap-3 py-4"
                     key={ticket.id}
-                    className="relative flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs transition-shadow hover:shadow-md"
                   >
                     <div>
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="font-mono text-xs font-medium text-blue-600">{ticket.ticketCode}</span>
+                      <p className="text-sm font-medium">{ticket.holderName}</p>
+                      <p className="mt-1 break-all font-mono text-xs text-slate-600">
+                        {ticket.ticketCode}
+                      </p>
+                      <div className="mt-2">
                         <TicketStatusBadge status={ticket.status} />
                       </div>
-                      <p className="mt-2 text-sm font-medium text-slate-900">{ticket.holderName}</p>
-                      <p className="text-xs text-slate-400">{ticket.holderEmail}</p>
                     </div>
-
-                    <div className="mt-4 border-t border-dashed border-slate-200 pt-3">
-                      <Link
-                        to={`/ticket/${ticket.ticketCode}`}
-                        className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-600 underline underline-offset-4 hover:text-blue-800"
-                      >
-                        <QrCode className="h-3.5 w-3.5" aria-hidden />
-                        Buka Tiket & QR Code
-                      </Link>
-                    </div>
-                  </div>
+                    <Link
+                      to={`/account/tickets/${encodeURIComponent(ticket.ticketCode)}`}
+                      className="account-text-link"
+                    >
+                      <QrCode size={16} aria-hidden />
+                      {t('Buka tiket', 'Open ticket')}
+                    </Link>
+                  </li>
                 ))}
-              </div>
+              </ul>
             ) : (
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-center text-xs text-slate-500">
-                {isPaid
-                  ? 'Tiket sedang diproses.'
-                  : 'Tiket digital akan diterbitkan otomatis setelah pembayaran pesanan dikonfirmasi lunas.'}
-              </div>
+              <p className="account-panel-description mt-4">
+                {t(
+                  'Tiket diterbitkan setelah pembayaran dikonfirmasi. Jika sudah lunas, muat ulang untuk memeriksa penerbitan tiket.',
+                  'Tickets are issued after payment confirmation. If already paid, refresh to check ticket issuance.',
+                )}
+              </p>
             )}
-          </div>
+          </section>
         </div>
-
-        {/* Pricing Summary */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs h-fit">
-          <h3 className="text-base font-semibold text-slate-900 border-b border-slate-100 pb-3">Ringkasan Biaya</h3>
-          <div className="mt-4 space-y-2 text-xs">
-            <div className="flex justify-between text-slate-600">
-              <span>Subtotal Tiket</span>
-              <span className="font-medium tabular-nums text-slate-900">{formatIDR(order.subtotal)}</span>
-            </div>
-            {order.discount ? (
-              <div className="flex justify-between text-emerald-600">
-                <span>Diskon Promo</span>
-                <span className="font-medium tabular-nums">− {formatIDR(order.discount)}</span>
+        <aside
+          className="account-detail-stack"
+          aria-label={t('Ringkasan pesanan', 'Order summary')}
+        >
+          <section className="account-panel">
+            <h2>{t('Ringkasan pembayaran', 'Payment summary')}</h2>
+            <dl className="account-breakdown">
+              <div>
+                <dt>Subtotal</dt>
+                <dd>{formatIDR(order.subtotal)}</dd>
               </div>
-            ) : null}
-            <div className="flex justify-between text-slate-600">
-              <span>Biaya Layanan</span>
-              <span className="font-medium tabular-nums text-slate-900">{formatIDR(order.platformFee)}</span>
-            </div>
-            <div className="border-t border-slate-200 pt-3 flex justify-between text-sm font-semibold text-slate-900">
-              <span>Total Bayar</span>
-              <span className="text-base text-blue-600 tabular-nums">{formatIDR(order.total)}</span>
-            </div>
-          </div>
-          <div className="mt-6 border-t border-slate-100 pt-4 text-xs text-slate-500 space-y-1">
-            <p className="font-medium text-slate-800">Data Pembeli:</p>
-            <p>{order.buyerName}</p>
-            <p>{order.buyerEmail}</p>
-            {order.buyerPhone ? <p>{order.buyerPhone}</p> : null}
-          </div>
-        </div>
+              {order.discount > 0 ? (
+                <div>
+                  <dt>{t('Diskon', 'Discount')}</dt>
+                  <dd>−{formatIDR(order.discount)}</dd>
+                </div>
+              ) : null}
+              <div>
+                <dt>{t('Biaya layanan', 'Service fee')}</dt>
+                <dd>{formatIDR(order.platformFee)}</dd>
+              </div>
+              <div className="account-breakdown-total">
+                <dt>Total</dt>
+                <dd>{formatIDR(order.total)}</dd>
+              </div>
+            </dl>
+          </section>
+          <section className="account-panel">
+            <h2>{t('Data pemesan', 'Buyer information')}</h2>
+            <dl className="account-definition">
+              <div>
+                <dt>{t('Nama', 'Name')}</dt>
+                <dd>{order.buyerName}</dd>
+              </div>
+              <div>
+                <dt>Email</dt>
+                <dd>{order.buyerEmail}</dd>
+              </div>
+              {order.buyerPhone ? (
+                <div>
+                  <dt>WhatsApp</dt>
+                  <dd>{order.buyerPhone}</dd>
+                </div>
+              ) : null}
+            </dl>
+          </section>
+        </aside>
       </div>
-    </div>
+    </>
   );
 }

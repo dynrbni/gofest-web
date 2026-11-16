@@ -8,6 +8,7 @@ import { api } from '@/lib/api';
 import { useDocumentTitle } from '@/lib/hooks';
 import { AuthShell } from './auth-shell';
 import { passwordSchema } from '@gofest/shared';
+import { Eye, EyeOff } from 'lucide-react';
 
 export function ResetPasswordPage() {
   useDocumentTitle('Reset password');
@@ -16,6 +17,8 @@ export function ResetPasswordPage() {
   const token = searchParams.get('token') ?? '';
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [visible, setVisible] = useState(false);
+  const [confirmVisible, setConfirmVisible] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState<unknown>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -82,24 +85,54 @@ export function ResetPasswordPage() {
           error={errors.password}
           required
         >
-          <Input
-            id="reset-password"
-            type="password"
-            autoComplete="new-password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            className="h-11 border-ink/25 bg-paper"
-          />
+          <div className="relative">
+            <Input
+              id="reset-password"
+              type={visible ? 'text' : 'password'}
+              autoComplete="new-password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              className="h-11 border-ink/25 bg-paper pr-12"
+              maxLength={72}
+              aria-invalid={Boolean(errors.password)}
+              aria-describedby={errors.password ? 'reset-password-error' : undefined}
+            />
+            <button
+              type="button"
+              className="absolute right-0 top-0 flex size-11 items-center justify-center rounded-lg text-slate-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600"
+              aria-label={visible ? 'Sembunyikan password baru' : 'Tampilkan password baru'}
+              aria-pressed={visible}
+              onClick={() => setVisible((value) => !value)}
+            >
+              {visible ? <EyeOff size={18} aria-hidden /> : <Eye size={18} aria-hidden />}
+            </button>
+          </div>
         </Field>
         <Field label="Ulangi password" htmlFor="reset-confirm" error={errors.confirm} required>
-          <Input
-            id="reset-confirm"
-            type="password"
-            autoComplete="new-password"
-            value={confirm}
-            onChange={(event) => setConfirm(event.target.value)}
-            className="h-11 border-ink/25 bg-paper"
-          />
+          <div className="relative">
+            <Input
+              id="reset-confirm"
+              type={confirmVisible ? 'text' : 'password'}
+              autoComplete="new-password"
+              value={confirm}
+              onChange={(event) => setConfirm(event.target.value)}
+              className="h-11 border-ink/25 bg-paper pr-12"
+              maxLength={72}
+              aria-invalid={Boolean(errors.confirm)}
+              aria-describedby={errors.confirm ? 'reset-confirm-error' : undefined}
+            />
+            <button
+              type="button"
+              className="absolute right-0 top-0 flex size-11 items-center justify-center rounded-lg text-slate-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600"
+              aria-label={
+                confirmVisible ? 'Sembunyikan konfirmasi password' : 'Tampilkan konfirmasi password'
+              }
+              aria-pressed={confirmVisible}
+              onClick={() => setConfirmVisible((value) => !value)}
+            >
+              {confirmVisible ? <EyeOff size={18} aria-hidden /> : <Eye size={18} aria-hidden />}
+            </button>
+          </div>
         </Field>
         {error ? <InlineError error={error} /> : null}
         <Button

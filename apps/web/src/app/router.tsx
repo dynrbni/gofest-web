@@ -51,6 +51,15 @@ const AccountOrdersPage = lazyPage(() =>
 const AccountOrderDetailPage = lazyPage(() =>
   import('@/pages/account/order-detail').then((m) => m.AccountOrderDetailPage),
 );
+const AccountFavoritesPage = lazyPage(() =>
+  import('@/pages/account/favorites').then((m) => m.AccountFavoritesPage),
+);
+const AccountSettingsPage = lazyPage(() =>
+  import('@/pages/account/settings').then((m) => m.AccountSettingsPage),
+);
+const AccountTicketDetailPage = lazyPage(() =>
+  import('@/pages/account/ticket-detail').then((m) => m.AccountTicketDetailPage),
+);
 const AccountProfilePage = lazyPage(() =>
   import('@/pages/account/profile').then((m) => m.AccountProfilePage),
 );
@@ -183,6 +192,24 @@ export const router = createBrowserRouter([
         ],
       },
       {
+        path: '/account',
+        element: (
+          <RequireAuth>
+            <AccountLayout />
+          </RequireAuth>
+        ),
+        children: [
+          { index: true, element: <AccountOverviewPage /> },
+          { path: 'orders', element: <AccountOrdersPage /> },
+          { path: 'tickets', element: <AccountTicketsPage /> },
+          { path: 'tickets/:ticketCode', element: <AccountTicketDetailPage /> },
+          { path: 'favorites', element: <AccountFavoritesPage /> },
+          { path: 'settings', element: <AccountSettingsPage /> },
+          { path: 'orders/:id', element: <AccountOrderDetailPage /> },
+          { path: 'profile', element: <AccountProfilePage /> },
+        ],
+      },
+      {
         element: <AuthLayout />,
         children: [
           { path: '/login', element: <LoginPage /> },
@@ -203,21 +230,6 @@ export const router = createBrowserRouter([
           { path: '/ticket/:ticketCode', element: <TicketPage /> },
           { path: '/terms', element: <TermsPage /> },
           { path: '/privacy', element: <PrivacyPage /> },
-          {
-            path: '/account',
-            element: (
-              <RequireAuth>
-                <AccountLayout />
-              </RequireAuth>
-            ),
-            children: [
-              { index: true, element: <AccountOverviewPage /> },
-              { path: 'orders', element: <AccountOrdersPage /> },
-              { path: 'tickets', element: <AccountTicketsPage /> },
-              { path: 'orders/:id', element: <AccountOrderDetailPage /> },
-              { path: 'profile', element: <AccountProfilePage /> },
-            ],
-          },
           { path: '*', element: <NotFoundPage /> },
         ],
       },

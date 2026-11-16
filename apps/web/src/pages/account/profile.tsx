@@ -1,97 +1,142 @@
 import { useState, type FormEvent } from 'react';
+import { updateProfileSchema } from '@gofest/shared';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth';
 import { api, fieldErrors, ApiError } from '@/lib/api';
 import { useDocumentTitle } from '@/lib/hooks';
+import { useLanguage } from '@/lib/language';
 import { Field, InlineError } from '@/components/common/states';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { AccountAvatar, AccountHeading } from './account-components';
+import { AccountSecurity } from './account-security';
 
 export function AccountProfilePage() {
-  useDocumentTitle('Profil Saya');
+  const { t } = useLanguage();
+  useDocumentTitle(t('Profil Saya', 'My Profile'));
   const { user, refreshMe } = useAuth();
-
   const [name, setName] = useState(user?.name ?? '');
   const [phone, setPhone] = useState(user?.phone ?? '');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [generalError, setGeneralError] = useState<unknown>(null);
   const [saving, setSaving] = useState(false);
-
-  async function onSubmit(event: FormEvent) {
+  const [saved, setSaved] = useState(false);
+  async function submit(event: FormEvent) {
     event.preventDefault();
+    if (saving) return;
     setErrors({});
     setGeneralError(null);
-
-    if (!name.trim()) {
-      setErrors({ name: 'Nama lengkap wajib diisi' });
+    setSaved(false);
+    const parsed = updateProfileSchema.safeParse({ name, phone });
+    if (!parsed.success) {
+      setErrors(
+        Object.fromEntries(parsed.error.issues.map((issue) => [issue.path[0], issue.message])),
+      );
       return;
     }
-
     setSaving(true);
     try {
-      await api('/auth/profile', {
-        method: 'PATCH',
-        body: {
-          name: name.trim(),
-          phone: phone.trim() || undefined,
-        },
-      });
+      await api('/auth/profile', { method: 'PATCH', body: parsed.data });
       await refreshMe();
-      toast.success('Profil berhasil diperbarui');
-    } catch (err) {
-      if (err instanceof ApiError && err.details) {
-        setErrors(fieldErrors(err));
-      } else {
-        setGeneralError(err);
-      }
+      setSaved(true);
+      toast.success(t('Profil berhasil diperbarui', 'Profile updated'));
+    } catch (error) {
+      if (error instanceof ApiError && error.details) setErrors(fieldErrors(error));
+      else setGeneralError(error);
     } finally {
       setSaving(false);
     }
   }
-
   return (
-    <div className="max-w-xl space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold tracking-tight text-slate-900">Informasi Akun</h2>
-        <p className="mt-0.5 text-xs text-slate-500">
-          Perbarui nama dan nomor kontak untuk komunikasi pesanan tiketmu
-        </p>
-      </div>
-
-      <form onSubmit={onSubmit} className="space-y-4 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
-        <InlineError error={generalError} />
-
-        <Field label="Alamat Email" htmlFor="email" hint="Email login tidak dapat diubah langsung">
-          <Input id="email" value={user?.email ?? ''} disabled className="bg-slate-100 text-slate-500 cursor-not-allowed rounded-xl border-slate-200" />
-        </Field>
-
-        <Field label="Nama Lengkap" htmlFor="name" required error={errors.name}>
-          <Input
-            id="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Nama lengkap sesuai identitas"
+    <>
+      <AccountHeading
+        title={t('Profil Saya', 'My Profile')}
+        description={t(
+          'Pastikan informasi akunmu selalu terbaru.',
+          'Keep your account information up to date.',
+        )}
+      />
+      <div className="account-profile-grid">
+        <form
+          className="account-panel account-profile-form"
+          onSubmit={submit}
+          noValidate
+          aria-busy={saving}
+        >
+          <div className="account-profile-avatar">
+            <AccountAvatar name={user?.name ?? ''} />
+            <div className="min-w-0">
+              <h2>{t('Informasi pribadi', 'Personal information')}</h2>
+              <p>{t('Avatar menggunakan inisial namamu.', 'Your avatar uses your initials.')}</p>
+            </div>
+          </div>
+          <InlineError error={generalError} />
+          <Field
+            label={t('Nama lengkap', 'Full name')}
+            htmlFor="account-name"
             required
-            className="rounded-xl border-slate-200 bg-slate-50 focus:bg-white"
-          />
-        </Field>
-
-        <Field label="Nomor WhatsApp / Telepon" htmlFor="phone" hint="Opsional, untuk konfirmasi acara" error={errors.phone}>
-          <Input
-            id="phone"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="Contoh: 08123456789"
-            className="rounded-xl border-slate-200 bg-slate-50 focus:bg-white"
-          />
-        </Field>
-
-        <div className="pt-2">
-          <Button type="submit" disabled={saving} className="rounded-xl bg-blue-600 px-6 font-medium text-white shadow-xs hover:bg-blue-700">
-            {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
-          </Button>
-        </div>
-      </form>
-    </div>
+            error={errors.name}
+          >
+            <Input
+              id="account-name"
+              name="name"
+              autoComplete="name"
+              maxLength={80}
+              value={name}
+              onChange={(event) => {
+                setName(event.target.value);
+                setSaved(false);
+              }}
+              aria-invalid={Boolean(errors.name)}
+              aria-describedby={errors.name ? 'account-name-error' : undefined}
+            />
+          </Field>
+          <Field
+            label="Email"
+            htmlFor="account-email"
+            hint={t(
+              'Email login tidak dapat diubah langsung karena memerlukan verifikasi ulang.',
+              'Changing your login email requires re-verification and is not currently available.',
+            )}
+          >
+            <Input id="account-email" type="email" value={user?.email ?? ''} disabled />
+          </Field>
+          <Field
+            label={t('Nomor WhatsApp', 'WhatsApp number')}
+            htmlFor="account-phone"
+            error={errors.phone}
+            hint={t(
+              'Nomor Indonesia, contoh +6281234567890. Opsional.',
+              'Indonesian number, e.g. +6281234567890. Optional.',
+            )}
+          >
+            <Input
+              id="account-phone"
+              name="phone"
+              type="tel"
+              autoComplete="tel"
+              maxLength={24}
+              value={phone}
+              onChange={(event) => {
+                setPhone(event.target.value);
+                setSaved(false);
+              }}
+              aria-invalid={Boolean(errors.phone)}
+              aria-describedby={errors.phone ? 'account-phone-error' : undefined}
+            />
+          </Field>
+          <div className="flex flex-wrap items-center gap-4">
+            <button type="submit" className="account-primary" disabled={saving}>
+              {saving ? t('Menyimpan…', 'Saving…') : t('Simpan perubahan', 'Save changes')}
+            </button>
+            {saved ? (
+              <p role="status" className="text-xs text-emerald-700">
+                {t('Perubahan tersimpan.', 'Changes saved.')}
+              </p>
+            ) : null}
+          </div>
+        </form>
+        <AccountSecurity />
+      </div>
+    </>
   );
 }
