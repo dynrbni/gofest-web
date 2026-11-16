@@ -247,6 +247,10 @@ describe('payment review resolution', () => {
     });
     const order = await createLatePaymentOrder(organizer, event.id, ticketType.id);
 
+    expect(
+      await prisma.organizerWallet.findUnique({ where: { organizerId: organizer.organizerId } }),
+    ).toMatchObject({ available: 0n, pending: 90_000n });
+
     const review = await admin.agent.get('/api/v1/admin/orders?status=PAYMENT_REVIEW');
     expect(review.body.data).toHaveLength(1);
 
@@ -263,6 +267,9 @@ describe('payment review resolution', () => {
     });
     expect(stored.status).toBe('PAID');
     expect(stored.tickets).toHaveLength(1);
+    expect(
+      await prisma.organizerWallet.findUnique({ where: { organizerId: organizer.organizerId } }),
+    ).toMatchObject({ available: 90_000n, pending: 0n });
 
     const audit = await prisma.auditLog.findFirstOrThrow({
       where: { action: 'PAYMENT_REVIEW_RESOLVED', resourceId: order.id },
@@ -318,6 +325,7 @@ describe('user status and platform settings', () => {
 
   it('mengelola kategori, pengaturan, dan audit log', async () => {
     const admin = await setupAdmin();
+    await prisma.user.update({ where: { id: admin.userId }, data: { role: 'SUPERADMIN' } });
     const slug = `workshop-${Date.now()}`;
 
     const created = await admin.agent.post('/api/v1/admin/categories').send({

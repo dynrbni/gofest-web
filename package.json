@@ -32,7 +32,8 @@
     "db:seed": "pnpm --filter @gofest/api db:seed",
     "db:reset": "pnpm --filter @gofest/api db:reset",
     "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
-    "test:checkout-customer": "node e2e/tests/checkout-customer.mjs"
+    "test:checkout-customer": "node e2e/tests/checkout-customer.mjs",
+    "test:dashboard": "node e2e/tests/dashboard-roles.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.31.0",
