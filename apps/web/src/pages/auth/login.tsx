@@ -45,10 +45,10 @@ export function LoginPage() {
       const next = safeNext(searchParams.get('next'));
       if (next) {
         navigate(next, { replace: true });
-      } else if (user.roles.includes('ADMIN')) {
-        navigate('/admin', { replace: true });
+      } else if (user.roles.includes('ADMIN') || user.roles.includes('SUPERADMIN')) {
+        navigate('/admin/dashboard', { replace: true });
       } else if (user.roles.includes('ORGANIZER')) {
-        navigate('/organizer', { replace: true });
+        navigate('/creator/dashboard', { replace: true });
       } else if (user.roles.includes('STAFF')) {
         navigate('/staff/events', { replace: true });
       } else {

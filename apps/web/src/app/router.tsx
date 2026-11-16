@@ -1,4 +1,4 @@
-import { Outlet, ScrollRestoration, createBrowserRouter } from 'react-router-dom';
+import { Navigate, Outlet, ScrollRestoration, createBrowserRouter } from 'react-router-dom';
 import { lazy, type ComponentType } from 'react';
 import { RouteTransition } from '@/components/common/route-transition';
 import { BrandLogo } from '@/components/common/brand-logo';
@@ -64,9 +64,6 @@ const AccountProfilePage = lazyPage(() =>
 const OrganizerApplyPage = lazyPage(() =>
   import('@/pages/organizer/apply').then((m) => m.OrganizerApplyPage),
 );
-const OrganizerDashboardPage = lazyPage(() =>
-  import('@/pages/organizer/dashboard').then((m) => m.OrganizerDashboardPage),
-);
 const OrganizerEventListPage = lazyPage(() =>
   import('@/pages/organizer/events/event-list').then((m) => m.OrganizerEventListPage),
 );
@@ -100,18 +97,12 @@ const StaffEventsPage = lazyPage(() =>
 const StaffCheckInScannerPage = lazyPage(() =>
   import('@/pages/staff/check-in').then((m) => m.StaffCheckInScannerPage),
 );
-const AdminOverviewPage = lazyPage(() =>
-  import('@/pages/admin/overview').then((m) => m.AdminOverviewPage),
-);
 const AdminUsersPage = lazyPage(() => import('@/pages/admin/users').then((m) => m.AdminUsersPage));
 const AdminOrganizersPage = lazyPage(() =>
   import('@/pages/admin/organizers').then((m) => m.AdminOrganizersPage),
 );
 const AdminEventsPage = lazyPage(() =>
   import('@/pages/admin/events').then((m) => m.AdminEventsPage),
-);
-const AdminOrdersPage = lazyPage(() =>
-  import('@/pages/admin/orders').then((m) => m.AdminOrdersPage),
 );
 const AdminCategoriesPage = lazyPage(() =>
   import('@/pages/admin/categories').then((m) => m.AdminCategoriesPage),
@@ -122,6 +113,80 @@ const AdminSettingsPage = lazyPage(() =>
 const AdminAuditLogsPage = lazyPage(() =>
   import('@/pages/admin/audit-logs').then((m) => m.AdminAuditLogsPage),
 );
+const WorkspaceDashboardPage = lazyPage(() =>
+  import('@/pages/workspace/dashboard').then((m) => m.WorkspaceDashboardPage),
+);
+const FinanceOverviewPage = lazyPage(() =>
+  import('@/pages/workspace/finance').then((m) => m.FinanceOverviewPage),
+);
+const BankAccountsPage = lazyPage(() =>
+  import('@/pages/workspace/finance').then((m) => m.BankAccountsPage),
+);
+const PayoutsPage = lazyPage(() => import('@/pages/workspace/finance').then((m) => m.PayoutsPage));
+const EventReportsPage = lazyPage(() =>
+  import('@/pages/workspace/finance').then((m) => m.EventReportsPage),
+);
+const WorkspaceOrdersPage = lazyPage(() =>
+  import('@/pages/workspace/orders').then((m) => m.WorkspaceOrdersPage),
+);
+const RefundsPage = lazyPage(() => import('@/pages/workspace/refunds').then((m) => m.RefundsPage));
+const AdminManagementPage = lazyPage(() =>
+  import('@/pages/workspace/admin-management').then((m) => m.AdminManagementPage),
+);
+const RolePermissionsPage = lazyPage(() =>
+  import('@/pages/workspace/admin-management').then((m) => m.RolePermissionsPage),
+);
+const ContentManagementPage = lazyPage(() =>
+  import('@/pages/workspace/content').then((m) => m.ContentManagementPage),
+);
+const SupportPage = lazyPage(() => import('@/pages/workspace/support').then((m) => m.SupportPage));
+const NotificationsPage = lazyPage(() =>
+  import('@/pages/workspace/support').then((m) => m.NotificationsPage),
+);
+const CheckInOperationsPage = lazyPage(() =>
+  import('@/pages/workspace/operations').then((m) => m.CheckInOperationsPage),
+);
+const AttendeesPage = lazyPage(() =>
+  import('@/pages/workspace/operations').then((m) => m.AttendeesPage),
+);
+const EventToolsPage = lazyPage(() =>
+  import('@/pages/workspace/operations').then((m) => m.EventToolsPage),
+);
+
+const eventWorkspaceChildren = [
+  { index: true, element: <OrganizerEventFormPage /> },
+  { path: 'edit', element: <OrganizerEventFormPage /> },
+  { path: 'tickets', element: <EventTicketManagementPage /> },
+  { path: 'coupons', element: <EventCouponManagementPage /> },
+  { path: 'orders', element: <EventOrderManagementPage /> },
+  { path: 'staff', element: <EventStaffManagementPage /> },
+  { path: 'check-in', element: <EventCheckInSummaryPage /> },
+];
+const creatorChildren = [
+  { index: true, element: <Navigate to="/creator/dashboard" replace /> },
+  { path: 'dashboard', element: <WorkspaceDashboardPage /> },
+  { path: 'events', element: <OrganizerEventListPage /> },
+  { path: 'events/new', element: <OrganizerEventFormPage isNew /> },
+  { path: 'events/:id', element: <EventWorkspaceLayout />, children: eventWorkspaceChildren },
+  { path: 'settings', element: <OrganizerSettingsPage /> },
+  { path: 'finance', element: <FinanceOverviewPage /> },
+  { path: 'bank-accounts', element: <BankAccountsPage /> },
+  { path: 'payouts', element: <PayoutsPage /> },
+  { path: 'payouts/history', element: <PayoutsPage /> },
+  { path: 'event-reports', element: <EventReportsPage /> },
+  { path: 'event-reports/:id', element: <EventReportsPage /> },
+  { path: 'orders', element: <WorkspaceOrdersPage /> },
+  { path: 'attendees', element: <AttendeesPage /> },
+  { path: 'check-in', element: <CheckInOperationsPage /> },
+  { path: 'check-in/history', element: <CheckInOperationsPage /> },
+  { path: 'staff', element: <CheckInOperationsPage /> },
+  { path: 'tickets', element: <EventToolsPage /> },
+  { path: 'promotions', element: <EventToolsPage /> },
+  { path: 'marketing', element: <EventToolsPage /> },
+  { path: 'links', element: <EventToolsPage /> },
+  { path: 'support', element: <SupportPage /> },
+  { path: 'notifications', element: <NotificationsPage /> },
+];
 
 function RootLayout() {
   return (
@@ -236,37 +301,19 @@ export const router = createBrowserRouter([
         ),
         children: [{ index: true, element: <OrganizerApplyPage /> }],
       },
-      {
-        path: '/organizer',
+      ...['/organizer', '/creator'].map((path) => ({
+        path,
         element: (
-          <RequireAuth roles={['ORGANIZER', 'ADMIN']}>
+          <RequireAuth roles={['ORGANIZER', 'CREATOR']}>
             <OrganizerShell />
           </RequireAuth>
         ),
-        children: [
-          { index: true, element: <OrganizerDashboardPage /> },
-          { path: 'events', element: <OrganizerEventListPage /> },
-          { path: 'events/new', element: <OrganizerEventFormPage isNew /> },
-          {
-            path: 'events/:id',
-            element: <EventWorkspaceLayout />,
-            children: [
-              { index: true, element: <OrganizerEventFormPage /> },
-              { path: 'edit', element: <OrganizerEventFormPage /> },
-              { path: 'tickets', element: <EventTicketManagementPage /> },
-              { path: 'coupons', element: <EventCouponManagementPage /> },
-              { path: 'orders', element: <EventOrderManagementPage /> },
-              { path: 'staff', element: <EventStaffManagementPage /> },
-              { path: 'check-in', element: <EventCheckInSummaryPage /> },
-            ],
-          },
-          { path: 'settings', element: <OrganizerSettingsPage /> },
-        ],
-      },
+        children: creatorChildren,
+      })),
       {
         path: '/staff',
         element: (
-          <RequireAuth roles={['STAFF', 'ORGANIZER', 'ADMIN']}>
+          <RequireAuth roles={['STAFF', 'ORGANIZER', 'CREATOR', 'ADMIN', 'SUPERADMIN']}>
             <PublicLayout />
           </RequireAuth>
         ),
@@ -278,18 +325,61 @@ export const router = createBrowserRouter([
       {
         path: '/admin',
         element: (
-          <RequireAuth roles={['ADMIN']}>
+          <RequireAuth roles={['ADMIN', 'SUPERADMIN']}>
             <AdminShell />
           </RequireAuth>
         ),
         children: [
-          { index: true, element: <AdminOverviewPage /> },
+          { index: true, element: <Navigate to="/admin/dashboard" replace /> },
+          { path: 'dashboard', element: <WorkspaceDashboardPage /> },
           { path: 'users', element: <AdminUsersPage /> },
           { path: 'organizers', element: <AdminOrganizersPage /> },
           { path: 'events', element: <AdminEventsPage /> },
-          { path: 'orders', element: <AdminOrdersPage /> },
+          {
+            path: 'events/:id',
+            element: <EventWorkspaceLayout />,
+            children: eventWorkspaceChildren,
+          },
+          { path: 'orders', element: <WorkspaceOrdersPage /> },
+          { path: 'payments', element: <WorkspaceOrdersPage /> },
+          { path: 'refunds', element: <RefundsPage /> },
+          { path: 'finance', element: <FinanceOverviewPage /> },
+          { path: 'payouts', element: <PayoutsPage /> },
+          { path: 'payouts/history', element: <PayoutsPage /> },
+          { path: 'event-reports', element: <EventReportsPage /> },
+          { path: 'event-reports/:id', element: <EventReportsPage /> },
+          { path: 'check-in', element: <CheckInOperationsPage /> },
+          { path: 'check-in/history', element: <CheckInOperationsPage /> },
+          { path: 'staff', element: <CheckInOperationsPage /> },
+          { path: 'content', element: <ContentManagementPage /> },
+          { path: 'promotions', element: <EventToolsPage /> },
+          { path: 'support', element: <SupportPage /> },
+          { path: 'notifications', element: <NotificationsPage /> },
+          {
+            path: 'admins',
+            element: (
+              <RequireAuth roles={['SUPERADMIN']}>
+                <AdminManagementPage />
+              </RequireAuth>
+            ),
+          },
+          {
+            path: 'permissions',
+            element: (
+              <RequireAuth roles={['SUPERADMIN']}>
+                <RolePermissionsPage />
+              </RequireAuth>
+            ),
+          },
           { path: 'categories', element: <AdminCategoriesPage /> },
-          { path: 'settings', element: <AdminSettingsPage /> },
+          {
+            path: 'settings',
+            element: (
+              <RequireAuth roles={['SUPERADMIN']}>
+                <AdminSettingsPage />
+              </RequireAuth>
+            ),
+          },
           { path: 'audit-logs', element: <AdminAuditLogsPage /> },
         ],
       },

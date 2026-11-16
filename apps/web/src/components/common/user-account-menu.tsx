@@ -28,7 +28,15 @@ export function UserAccountMenu() {
     .join('')
     .toLocaleUpperCase('id-ID');
   const links = [
-    { to: '/account', label: 'Dashboard', icon: House },
+    {
+      to: user?.roles.some((role) => ['ADMIN', 'SUPERADMIN'].includes(role))
+        ? '/admin/dashboard'
+        : user?.roles.includes('CREATOR') || user?.roles.includes('ORGANIZER')
+          ? '/creator/dashboard'
+          : '/account',
+      label: 'Dashboard',
+      icon: House,
+    },
     { to: '/account/tickets', label: t('Tiket Saya', 'My Tickets'), icon: Ticket },
     { to: '/account/orders', label: t('Riwayat Pesanan', 'Order History'), icon: ReceiptText },
     { to: '/account/favorites', label: t('Event Favorit', 'Favorite Events'), icon: Heart },
