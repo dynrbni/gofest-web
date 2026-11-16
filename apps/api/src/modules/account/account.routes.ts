@@ -13,6 +13,7 @@ import {
   getAccountRecommendations,
   listAccountHistory,
   listAccountTickets,
+  getAccountTicket,
 } from './account.service';
 
 export const accountRouter = Router();
@@ -36,4 +37,7 @@ accountRouter.get('/history', validate(accountHistoryQuerySchema, 'query'), asyn
 });
 accountRouter.get('/recommendations', async (_req, res) =>
   ok(res, await getAccountRecommendations()),
+);
+accountRouter.get('/tickets/:ticketCode', async (req, res) =>
+  ok(res, await getAccountTicket(req.params.ticketCode!, req)),
 );

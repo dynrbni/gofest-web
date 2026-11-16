@@ -628,6 +628,93 @@ paths:
         '409':
           description: Order tidak dapat dibayar.
 
+  /account/dashboard:
+    get:
+      tags: [Orders]
+      summary: Statistik dan event mendatang milik pengguna login
+      operationId: getCustomerDashboard
+      security: [{ cookieAuth: [] }]
+      responses:
+        '200':
+          description: Total tiket terbit, total pesanan, jumlah event mendatang unik dan tiga event terdekat dengan tiket valid.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /account/tickets:
+    get:
+      tags: [Orders]
+      summary: Wallet tiket milik pengguna dengan filter sebelum pagination
+      operationId: listCustomerTickets
+      security: [{ cookieAuth: [] }]
+      parameters:
+        - { name: period, in: query, schema: { type: string, enum: [upcoming, past, invalid], default: upcoming } }
+        - { name: q, in: query, description: Nama event, schema: { type: string, maxLength: 140 } }
+        - { name: dateFrom, in: query, description: Tanggal event inklusif dalam Asia/Jakarta, schema: { type: string, format: date } }
+        - { name: dateTo, in: query, description: Tanggal event inklusif dalam Asia/Jakarta, schema: { type: string, format: date } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 50, default: 12 } }
+      responses:
+        '200':
+          description: Array tiket individual dengan event, pemilik, kategori, status, kode dan meta pagination. Tidak mengandung token QR atau data identitas checkout.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          description: Filter atau rentang tanggal tidak valid.
+
+  /account/tickets/{ticketCode}:
+    get:
+      tags: [Orders]
+      summary: Detail tiket yang dimiliki pengguna login
+      operationId: getCustomerTicket
+      security: [{ cookieAuth: [] }]
+      parameters:
+        - { name: ticketCode, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: Detail tiket dan qrAvailable. QR masuk hanya ditampilkan untuk tiket valid yang sudah dibayar dan event belum berakhir atau dibatalkan.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /account/history:
+    get:
+      tags: [Orders]
+      summary: Riwayat pesanan dengan filter status pembayaran terakhir yang terpisah
+      operationId: listCustomerHistory
+      security: [{ cookieAuth: [] }]
+      parameters:
+        - { name: q, in: query, schema: { type: string, maxLength: 140 } }
+        - { name: status, in: query, schema: { type: string, enum: [PENDING_PAYMENT, PAID, EXPIRED, CANCELLED, PAYMENT_REVIEW, REFUND_PENDING, REFUNDED, PARTIALLY_REFUNDED] } }
+        - { name: paymentStatus, in: query, schema: { type: string, enum: [PENDING, PAID, FAILED, EXPIRED, REFUND_PENDING, REFUNDED, UNKNOWN] } }
+        - { name: dateFrom, in: query, description: Tanggal transaksi inklusif dalam Asia/Jakarta, schema: { type: string, format: date } }
+        - { name: dateTo, in: query, description: Tanggal transaksi inklusif dalam Asia/Jakarta, schema: { type: string, format: date } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 50, default: 12 } }
+      responses:
+        '200':
+          description: Semua filter diterapkan sebelum pagination. FAILED adalah status pembayaran, bukan status pesanan.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountOrderListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          description: Filter atau rentang tanggal tidak valid.
+
+  /account/recommendations:
+    get:
+      tags: [Orders]
+      summary: Empat event yang dapat dibeli saat ini
+      operationId: getCustomerRecommendations
+      security: [{ cookieAuth: [] }]
+      responses:
+        '200':
+          description: Event PUBLISHED dari organizer aktif dengan kuota dan jendela penjualan event serta kategori tiket yang masih berlaku. Harga mulai hanya dari kategori yang tersedia.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
   /account/orders:
     get:
       tags: [Orders]

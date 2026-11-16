@@ -113,6 +113,18 @@ describe('customer account reads', () => {
       (await buyer.agent.get(`/api/v1/account/history?q=${order.orderCode}`)).body.meta.total,
     ).toBe(1);
     expect((await buyer.agent.get('/api/v1/account/history?status=FAILED')).status).toBe(422);
+    expect((await buyer.agent.get('/api/v1/account/history?dateFrom=2026-02-30')).status).toBe(422);
+    await prisma.order.update({
+      where: { id: order.id },
+      data: { createdAt: new Date('2026-11-16T17:00:00Z') },
+    });
+    expect(
+      (await buyer.agent.get('/api/v1/account/history?dateTo=2026-11-16')).body.meta.total,
+    ).toBe(0);
+    expect(
+      (await buyer.agent.get('/api/v1/account/history?dateFrom=2026-11-17&dateTo=2026-11-17')).body
+        .meta.total,
+    ).toBe(1);
   });
 
   it('only recommends events that can be purchased now', async () => {
@@ -140,6 +152,13 @@ describe('customer account reads', () => {
     const ticket = await prisma.ticket.findFirstOrThrow({ where: { orderId: order.id } });
     const other = await registerAgent(app);
     expect((await other.agent.get(`/api/v1/tickets/${ticket.ticketCode}/qr`)).status).toBe(401);
+    expect((await other.agent.get(`/api/v1/account/tickets/${ticket.ticketCode}`)).status).toBe(
+      404,
+    );
+    expect(
+      (await buyer.agent.get(`/api/v1/account/tickets/${ticket.ticketCode}`)).body.data.ticket
+        .qrAvailable,
+    ).toBe(true);
     expect((await buyer.agent.get(`/api/v1/tickets/${ticket.ticketCode}/qr`)).status).toBe(200);
     await prisma.order.update({ where: { id: order.id }, data: { status: 'EXPIRED' } });
     expect((await buyer.agent.get(`/api/v1/tickets/${ticket.ticketCode}/qr`)).status).toBe(409);

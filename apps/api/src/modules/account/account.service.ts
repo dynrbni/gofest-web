@@ -2,6 +2,18 @@ import { Prisma } from '@prisma/client';
 import type { AccountHistoryQuery, AccountTicketQuery } from '@gofest/shared';
 import { prisma } from '../../lib/prisma';
 import { orderInclude, serializeOrder } from '../orders/order.service';
+import type { Request } from 'express';
+import { NotFoundError } from '../../lib/errors';
+import { getTicketByCode } from '../tickets/ticket.service';
+
+export async function getAccountTicket(ticketCode: string, req: Request) {
+  const owned = await prisma.ticket.findFirst({
+    where: { ticketCode: ticketCode.toUpperCase(), order: { userId: req.auth!.userId } },
+    select: { id: true },
+  });
+  if (!owned) throw new NotFoundError('Tiket tidak ditemukan', 'TICKET_NOT_FOUND');
+  return getTicketByCode(ticketCode, req);
+}
 
 const paidStatuses = ['PAID', 'PARTIALLY_REFUNDED', 'REFUND_PENDING'] as const;
 const eventSelect = {

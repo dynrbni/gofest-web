@@ -156,6 +156,11 @@ export async function getTicketByCode(ticketCode: string, req: Request) {
       qrImageKey: undefined,
       order: undefined,
       orderCode: ticket.order.orderCode,
+      qrAvailable:
+        paid &&
+        ticket.status === 'VALID' &&
+        ticket.event.status !== 'CANCELLED' &&
+        ticket.event.endsAt > new Date(),
       event: {
         ...ticket.event,
         onlineAccessUrl: paid ? ticket.event.onlineAccessUrl : null,

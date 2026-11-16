@@ -16,3 +16,11 @@
 - Added a narrow QR guard for unpaid orders/cancelled events; scanner and payment write flows remain unchanged.
 - New API integration tests first failed on missing routes. After implementation, all six pass. API typecheck and scoped ESLint pass; the initial full regression also passed 100 tests before the sixth case was added.
 - A mistakenly overlapping second Vitest process collided with the shared test database truncation. Reran the focused suite sequentially; six pass. Keep DB-backed tests sequential.
+
+## Customer ticket detail and UI integration
+
+- Added a customer-only ticket-detail read that checks ownership even for admin-role accounts; shared guest ticket route remains available. QR availability now communicates paid/valid/non-cancelled/non-ended state.
+- Documented all five new account endpoints in OpenAPI. Eight focused account/OpenAPI tests pass, including Asia/Jakarta inclusive date boundaries and invalid calendar dates.
+- Dedicated shell, overview, wallet, transaction detail/history, profile, email-reset security, settings and truthful favorites availability are implemented. Local Poppins is scoped to customer UI.
+- Browser verification exposed and fixed duplicate unnamed aside landmarks and success-toast contrast. Header/account regression now passes with the dedicated customer navigation.
+- Full API regression: 101 tests pass. Lint/types and API/web production build pass. Customer interaction suite is still being completed.
