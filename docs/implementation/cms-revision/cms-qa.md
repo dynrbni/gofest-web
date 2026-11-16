@@ -4,15 +4,15 @@ Pengujian dilakukan pada 17 November 2026 (Asia/Jakarta), menggunakan API develo
 
 ## Hasil
 
-| Pemeriksaan      | Bukti                                                                                      | Status                       |
-| ---------------- | ------------------------------------------------------------------------------------------ | ---------------------------- |
-| CMS API          | `LOG_LEVEL=silent pnpm --filter @gofest/api exec vitest run tests/integration/cms.test.ts` | PASS, 14 test (gate backend final)                |
-| Browser CMS      | `node e2e/tests/cms.mjs`                                                                   | PASS                         |
-| Responsif        | 7 halaman × lebar 1440, 820, 390 px; tidak ada horizontal overflow atau error data         | PASS, 21 pemeriksaan halaman |
-| Editor responsif | Dialog halaman dibuka pada tiga lebar, setelah animasi selesai; screenshot diperiksa       | PASS                         |
-| Aksesibilitas    | Axe `wcag2a,wcag2aa` pada overview CMS                                                     | PASS, 0 pelanggaran          |
-| Runtime browser  | `agent-browser errors` setelah alur Superadmin                                             | PASS, daftar error kosong    |
-| Kualitas kode    | ESLint untuk CMS/editor/browser script; API dan web typecheck                              | PASS                         |
+| Pemeriksaan      | Bukti                                                                                      | Status                             |
+| ---------------- | ------------------------------------------------------------------------------------------ | ---------------------------------- |
+| CMS API          | `LOG_LEVEL=silent pnpm --filter @gofest/api exec vitest run tests/integration/cms.test.ts` | PASS, 14 test (gate backend final) |
+| Browser CMS      | `node e2e/tests/cms.mjs`                                                                   | PASS                               |
+| Responsif        | 7 halaman × lebar 1440, 820, 390 px; tidak ada horizontal overflow atau error data         | PASS, 21 pemeriksaan halaman       |
+| Editor responsif | Dialog halaman dibuka pada tiga lebar, setelah animasi selesai; screenshot diperiksa       | PASS                               |
+| Aksesibilitas    | Axe `wcag2a,wcag2aa` pada overview CMS                                                     | PASS, 0 pelanggaran                |
+| Runtime browser  | `agent-browser errors` setelah alur Superadmin                                             | PASS, daftar error kosong          |
+| Kualitas kode    | ESLint untuk CMS/editor/browser script; API dan web typecheck                              | PASS                               |
 
 ## Alur yang dicoba
 
