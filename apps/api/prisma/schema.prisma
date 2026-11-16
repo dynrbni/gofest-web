@@ -10,6 +10,8 @@ datasource db {
 enum UserRole {
   USER
   ADMIN
+  SUPERADMIN
+  CREATOR
 }
 
 enum UserStatus {
@@ -29,6 +31,8 @@ enum OrganizerStatus {
 enum EventStatus {
   DRAFT
   PENDING_REVIEW
+  NEEDS_REVISION
+  APPROVED
   PUBLISHED
   REJECTED
   CANCELLED
@@ -130,6 +134,10 @@ model User {
   couponRedemptions  CouponRedemption[]
   reviewedOrganizers OrganizerProfile[]   @relation("OrganizerReviewedBy")
   reviewedEvents     Event[]              @relation("EventReviewedBy")
+  notifications      Notification[]
+  supportTickets     SupportTicket[]
+  reviewedPayouts    PayoutRequest[]
+  reviewedRefunds    Refund[]
 
   @@map("users")
 }
@@ -165,9 +173,13 @@ model OrganizerProfile {
   createdAt        DateTime        @default(now()) @db.Timestamptz(3)
   updatedAt        DateTime        @updatedAt @db.Timestamptz(3)
 
-  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  reviewedBy User?   @relation("OrganizerReviewedBy", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
-  events     Event[]
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviewedBy     User?             @relation("OrganizerReviewedBy", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+  events         Event[]
+  wallet         OrganizerWallet?
+  bankAccounts   BankAccount[]
+  payoutRequests PayoutRequest[]
+  ledgerEntries  FinancialLedger[]
 
   @@index([status])
   @@map("organizer_profiles")
@@ -336,6 +348,10 @@ model Order {
   payments         Payment[]
   tickets          Ticket[]
   couponRedemption CouponRedemption?
+  ledgerEntries    FinancialLedger[]
+  refunds          Refund[]
+  feeTypeSnapshot  String?
+  feeValueSnapshot Int?
 
   @@index([eventId, status, createdAt])
   @@index([buyerEmail])
@@ -549,4 +565,188 @@ model PlatformSetting {
   updatedAt       DateTime @updatedAt @db.Timestamptz(3)
 
   @@map("platform_settings")
+}
+
+enum PayoutStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum RefundStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+model OrganizerWallet {
+  organizerId String           @id
+  available   BigInt           @default(0)
+  reserved    BigInt           @default(0)
+  pending     BigInt           @default(0)
+  withdrawn   BigInt           @default(0)
+  updatedAt   DateTime         @updatedAt @db.Timestamptz(3)
+  organizer   OrganizerProfile @relation(fields: [organizerId], references: [id], onDelete: Restrict)
+
+  @@map("organizer_wallets")
+}
+
+model BankAccount {
+  id            String           @id @default(cuid())
+  organizerId   String
+  bankName      String
+  accountHolder String
+  accountNumber String
+  isActive      Boolean          @default(true)
+  createdAt     DateTime         @default(now()) @db.Timestamptz(3)
+  organizer     OrganizerProfile @relation(fields: [organizerId], references: [id], onDelete: Restrict)
+  payouts       PayoutRequest[]
+
+  @@unique([organizerId, bankName, accountNumber])
+  @@index([organizerId, isActive])
+  @@map("bank_accounts")
+}
+
+model PayoutRequest {
+  id               String              @id @default(cuid())
+  organizerId      String
+  bankAccountId    String
+  amount           Int
+  status           PayoutStatus        @default(PENDING)
+  idempotencyKey   String              @unique
+  bankSnapshot     Json
+  note             String?             @db.Text
+  reviewedByUserId String?
+  reviewedAt       DateTime?           @db.Timestamptz(3)
+  createdAt        DateTime            @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime            @updatedAt @db.Timestamptz(3)
+  organizer        OrganizerProfile    @relation(fields: [organizerId], references: [id], onDelete: Restrict)
+  bankAccount      BankAccount         @relation(fields: [bankAccountId], references: [id], onDelete: Restrict)
+  reviewedBy       User?               @relation(fields: [reviewedByUserId], references: [id], onDelete: Restrict)
+  transactions     PayoutTransaction[]
+  ledgerEntries    FinancialLedger[]
+
+  @@index([organizerId, createdAt])
+  @@index([status, createdAt])
+  @@map("payout_requests")
+}
+
+model PayoutTransaction {
+  id                String        @id @default(cuid())
+  payoutId          String
+  provider          String        @default("INTERNAL")
+  providerReference String?       @unique
+  idempotencyKey    String        @unique
+  status            PayoutStatus
+  note              String?
+  createdAt         DateTime      @default(now()) @db.Timestamptz(3)
+  payout            PayoutRequest @relation(fields: [payoutId], references: [id], onDelete: Restrict)
+
+  @@index([payoutId, createdAt])
+  @@map("payout_transactions")
+}
+
+model FinancialLedger {
+  id              String            @id @default(cuid())
+  organizerId     String?
+  orderId         String?
+  payoutId        String?
+  transactionType String
+  debit           String
+  credit          String
+  amount          Int
+  referenceId     String            @unique
+  description     String
+  createdAt       DateTime          @default(now()) @db.Timestamptz(3)
+  organizer       OrganizerProfile? @relation(fields: [organizerId], references: [id], onDelete: Restrict)
+  order           Order?            @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  payout          PayoutRequest?    @relation(fields: [payoutId], references: [id], onDelete: Restrict)
+
+  @@index([organizerId, createdAt])
+  @@index([orderId])
+  @@index([payoutId])
+  @@index([transactionType, createdAt])
+  @@map("financial_ledger")
+}
+
+model Refund {
+  id               String       @id @default(cuid())
+  orderId          String
+  amount           Int
+  ticketAmount     Int
+  feeAmount        Int
+  reason           String       @db.Text
+  status           RefundStatus @default(PENDING)
+  idempotencyKey   String       @unique
+  reviewedByUserId String?
+  reviewedAt       DateTime?    @db.Timestamptz(3)
+  note             String?
+  provider         String       @default("INTERNAL_SIMULATION")
+  createdAt        DateTime     @default(now()) @db.Timestamptz(3)
+  order            Order        @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  reviewedBy       User?        @relation(fields: [reviewedByUserId], references: [id], onDelete: Restrict)
+
+  @@index([orderId, status])
+  @@index([status, createdAt])
+  @@map("refunds")
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  href      String?
+  readAt    DateTime? @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("notifications")
+}
+
+model ContentItem {
+  id          String   @id @default(cuid())
+  kind        String
+  title       String
+  description String?
+  imageUrl    String?
+  targetUrl   String?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(3)
+
+  @@index([kind, isActive, sortOrder])
+  @@map("content_items")
+}
+
+model SupportTicket {
+  id        String   @id @default(cuid())
+  userId    String
+  subject   String
+  message   String   @db.Text
+  status    String   @default("OPEN")
+  reply     String?  @db.Text
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+  @@map("support_tickets")
+}
+
+model RolePermission {
+  id         String   @id @default(cuid())
+  role       UserRole
+  permission String
+  enabled    Boolean  @default(true)
+
+  @@unique([role, permission])
+  @@map("role_permissions")
 }
