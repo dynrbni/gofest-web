@@ -3,11 +3,12 @@ import type { Request } from 'express';
 import type { EventListQuery } from '@gofest/shared';
 import { findEventCity } from '@gofest/shared';
 import { prisma } from '../../lib/prisma';
-import { env } from '../../config/env';
 import { writeAudit } from '../../lib/audit';
 import { ConflictError, ForbiddenError, NotFoundError } from '../../lib/errors';
 import { removePublicObject } from '../../lib/storage';
 import { enqueueEmail } from '../notifications/email.service';
+import { notifyAdmins } from '../notifications/inbox.service';
+import { getPlatformSettings } from '../settings/settings.service';
 
 type EventInput = {
   title: string;
@@ -416,6 +417,26 @@ export async function updateEvent(
   if (input.rules !== undefined) data.rules = input.rules;
   if (input.refundPolicy !== undefined) data.refundPolicy = input.refundPolicy;
 
+  const importantFields = [
+    'title',
+    'startsAt',
+    'endsAt',
+    'venueName',
+    'address',
+    'city',
+    'type',
+    'onlineAccessUrl',
+  ];
+  if (
+    ['PUBLISHED', 'APPROVED'].includes(current.status) &&
+    req.auth?.role !== 'ADMIN' &&
+    req.auth?.role !== 'SUPERADMIN' &&
+    importantFields.some((key) => key in input)
+  ) {
+    data.status = 'PENDING_REVIEW';
+    data.reviewNote = 'Perubahan informasi utama menunggu review ulang.';
+  }
+
   const startsAt = data.startsAt instanceof Date ? data.startsAt : current.startsAt;
   const endsAt = data.endsAt instanceof Date ? data.endsAt : current.endsAt;
   if (endsAt <= startsAt) {
@@ -524,7 +545,7 @@ export async function deleteEvent(eventId: string, organizerId: string, req: Req
 
 export async function submitEvent(eventId: string, organizerId: string, req: Request) {
   const event = await getOwnedEvent(eventId, organizerId);
-  if (event.status !== 'DRAFT' && event.status !== 'REJECTED') {
+  if (!['DRAFT', 'REJECTED', 'NEEDS_REVISION'].includes(event.status)) {
     throw new ConflictError(
       'Event ini tidak dapat diajukan untuk publikasi',
       'EVENT_NOT_SUBMITTABLE',
@@ -541,7 +562,8 @@ export async function submitEvent(eventId: string, organizerId: string, req: Req
     throw new ConflictError('Kategori event tidak aktif', 'CATEGORY_INACTIVE');
   }
 
-  const publishImmediately = !env.EVENT_REVIEW_REQUIRED;
+  const settings = await getPlatformSettings();
+  const publishImmediately = !settings.eventReviewRequired;
   const updated = await prisma.$transaction(async (tx) => {
     const result = await tx.event.update({
       where: { id: eventId },
@@ -549,6 +571,12 @@ export async function submitEvent(eventId: string, organizerId: string, req: Req
         ? { status: 'PUBLISHED', publishedAt: new Date(), reviewNote: null }
         : { status: 'PENDING_REVIEW', reviewNote: null },
     });
+    if (!publishImmediately)
+      await notifyAdmins(tx, {
+        title: 'Pengajuan event baru',
+        message: `${event.title} menunggu review.`,
+        href: '/admin/events?status=PENDING_REVIEW',
+      });
     await writeAudit(
       {
         actorUserId: req.auth?.userId,

@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import { isOperationalAdmin } from '@gofest/shared';
 import { prisma } from '../../lib/prisma';
 import { ForbiddenError, NotFoundError } from '../../lib/errors';
 import { writeAudit } from '../../lib/audit';
@@ -17,7 +18,7 @@ export async function exportAttendees(req: Request, res: Response) {
     select: { id: true, organizerId: true, title: true, slug: true },
   });
   if (!event) throw new NotFoundError('Event tidak ditemukan', 'EVENT_NOT_FOUND');
-  if (event.organizerId !== req.auth!.organizerId) {
+  if (!isOperationalAdmin(req.auth!.role) && event.organizerId !== req.auth!.organizerId) {
     throw new ForbiddenError('Event ini bukan milik organizer kamu', 'EVENT_NOT_OWNED');
   }
 

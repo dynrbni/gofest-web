@@ -18,7 +18,7 @@ import {
   type EventManageQuery,
   type OrderListQuery,
 } from '@gofest/shared';
-import { requireAdmin, requireAuth } from '../../middleware/auth';
+import { requireAdmin, requireAuth, requireSuperadmin } from '../../middleware/auth';
 import { validate } from '../../middleware/validate';
 import { created, ok } from '../../lib/response';
 import {
@@ -37,11 +37,7 @@ import {
   reviewOrganizer,
   updateUserStatus,
 } from './admin.service';
-import {
-  createCategory,
-  listAllCategories,
-  updateCategory,
-} from '../categories/category.service';
+import { createCategory, listAllCategories, updateCategory } from '../categories/category.service';
 import { getPlatformSettings, updatePlatformSettings } from '../settings/settings.service';
 
 export const adminRouter = Router();
@@ -63,47 +59,25 @@ adminRouter.get('/users/:id', async (req, res) => {
   return ok(res, { user });
 });
 
-adminRouter.patch(
-  '/users/:id/status',
-  validate(userStatusInputSchema),
-  async (req, res) => {
-    const user = await updateUserStatus(
-      req.params.id!,
-      req.body,
-      req.auth!.userId,
-      req,
-    );
-    return ok(res, { user });
-  },
-);
+adminRouter.patch('/users/:id/status', validate(userStatusInputSchema), async (req, res) => {
+  const user = await updateUserStatus(req.params.id!, req.body, req.auth!.userId, req);
+  return ok(res, { user });
+});
 
-adminRouter.get(
-  '/organizers',
-  validate(adminOrganizerQuerySchema, 'query'),
-  async (req, res) => {
-    const result = await listAdminOrganizers(req.query as unknown as AdminOrganizerQuery);
-    return ok(res, result.data, result.meta);
-  },
-);
+adminRouter.get('/organizers', validate(adminOrganizerQuerySchema, 'query'), async (req, res) => {
+  const result = await listAdminOrganizers(req.query as unknown as AdminOrganizerQuery);
+  return ok(res, result.data, result.meta);
+});
 
 adminRouter.get('/organizers/:id', async (req, res) => {
   const organizer = await getAdminOrganizer(req.params.id!);
   return ok(res, { organizer });
 });
 
-adminRouter.patch(
-  '/organizers/:id/status',
-  validate(organizerReviewSchema),
-  async (req, res) => {
-    const organizer = await reviewOrganizer(
-      req.params.id!,
-      req.body,
-      req.auth!.userId,
-      req,
-    );
-    return ok(res, { organizer });
-  },
-);
+adminRouter.patch('/organizers/:id/status', validate(organizerReviewSchema), async (req, res) => {
+  const organizer = await reviewOrganizer(req.params.id!, req.body, req.auth!.userId, req);
+  return ok(res, { organizer });
+});
 
 adminRouter.get('/events', validate(eventManageQuerySchema, 'query'), async (req, res) => {
   const result = await listAdminEvents(req.query as unknown as EventManageQuery);
@@ -115,19 +89,10 @@ adminRouter.get('/events/:id', async (req, res) => {
   return ok(res, { event });
 });
 
-adminRouter.patch(
-  '/events/:id/review',
-  validate(eventReviewSchema),
-  async (req, res) => {
-    const event = await reviewEvent(
-      req.params.id!,
-      req.body,
-      req.auth!.userId,
-      req,
-    );
-    return ok(res, { event });
-  },
-);
+adminRouter.patch('/events/:id/review', validate(eventReviewSchema), async (req, res) => {
+  const event = await reviewEvent(req.params.id!, req.body, req.auth!.userId, req);
+  return ok(res, { event });
+});
 
 adminRouter.get('/orders', validate(orderListQuerySchema, 'query'), async (req, res) => {
   const result = await listAdminOrders(req.query as unknown as OrderListQuery);
@@ -143,12 +108,7 @@ adminRouter.post(
   '/orders/:id/payment-review/resolve',
   validate(paymentReviewResolveSchema),
   async (req, res) => {
-    const result = await resolvePaymentReview(
-      req.params.id!,
-      req.body,
-      req.auth!.userId,
-      req,
-    );
+    const result = await resolvePaymentReview(req.params.id!, req.body, req.auth!.userId, req);
     return ok(res, result);
   },
 );
@@ -168,17 +128,25 @@ adminRouter.patch('/categories/:id', validate(categoryUpdateSchema), async (req,
   return ok(res, { category });
 });
 
-adminRouter.get('/settings', async (_req, res) => {
+adminRouter.get('/settings', requireSuperadmin, async (_req, res) => {
   const settings = await getPlatformSettings();
   return ok(res, { settings });
 });
 
-adminRouter.patch('/settings', validate(platformSettingsSchema), async (req, res) => {
-  const settings = await updatePlatformSettings(req.body, req);
-  return ok(res, { settings });
-});
+adminRouter.patch(
+  '/settings',
+  requireSuperadmin,
+  validate(platformSettingsSchema),
+  async (req, res) => {
+    const settings = await updatePlatformSettings(req.body, req);
+    return ok(res, { settings });
+  },
+);
 
 adminRouter.get('/audit-logs', validate(adminAuditQuerySchema, 'query'), async (req, res) => {
-  const result = await listAuditLogs(req.query as unknown as AdminAuditQuery);
+  const result = await listAuditLogs(
+    req.query as unknown as AdminAuditQuery,
+    req.auth!.role !== 'SUPERADMIN',
+  );
   return ok(res, result.data, result.meta);
 });

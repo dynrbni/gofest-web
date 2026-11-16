@@ -9,9 +9,10 @@ import type {
 } from '@gofest/shared';
 import { prisma } from '../../lib/prisma';
 import { writeAudit } from '../../lib/audit';
-import { BadRequestError, ConflictError, NotFoundError } from '../../lib/errors';
+import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from '../../lib/errors';
 import { fulfillOrder } from '../orders/order.service';
 import { cancelEventAsAdmin } from '../events/event.service';
+import { notifyUser } from '../notifications/inbox.service';
 
 export async function getAdminDashboard() {
   const [
@@ -31,7 +32,7 @@ export async function getAdminDashboard() {
     prisma.order.groupBy({ by: ['status'], _count: { _all: true } }),
     prisma.order.aggregate({
       where: { status: 'PAID' },
-      _sum: { total: true },
+      _sum: { subtotal: true, discount: true, platformFee: true },
     }),
     prisma.ticket.groupBy({ by: ['status'], _count: { _all: true } }),
     prisma.order.findMany({
@@ -113,7 +114,8 @@ export async function getAdminDashboard() {
       pendingPayment: orderCounts.PENDING_PAYMENT ?? 0,
       paymentReview: orderCounts.PAYMENT_REVIEW ?? 0,
       refundPending: orderCounts.REFUND_PENDING ?? 0,
-      grossRevenue: revenue._sum.total ?? 0,
+      grossRevenue: (revenue._sum.subtotal ?? 0) - (revenue._sum.discount ?? 0),
+      serviceFeeRevenue: revenue._sum.platformFee ?? 0,
     },
     tickets: {
       issued: (ticketCounts.VALID ?? 0) + (ticketCounts.CHECKED_IN ?? 0),
@@ -133,6 +135,7 @@ export async function getAdminDashboard() {
 
 export async function listAdminUsers(query: AdminUserQuery) {
   const where: Prisma.UserWhereInput = {
+    role: { notIn: ['ADMIN', 'SUPERADMIN'] },
     ...(query.status ? { status: query.status } : {}),
     ...(query.q
       ? {
@@ -215,6 +218,10 @@ export async function getAdminUser(userId: string) {
     },
   });
   if (!user) throw new NotFoundError('Pengguna tidak ditemukan', 'USER_NOT_FOUND');
+
+  if (user.role === 'ADMIN' || user.role === 'SUPERADMIN') {
+    throw new ForbiddenError('Kelola akun administrasi melalui Admin Management');
+  }
   return user;
 }
 
@@ -233,6 +240,9 @@ export async function updateUserStatus(
   }
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) throw new NotFoundError('Pengguna tidak ditemukan', 'USER_NOT_FOUND');
+  if (user.role === 'ADMIN' || user.role === 'SUPERADMIN') {
+    throw new ForbiddenError('Kelola akun administrasi melalui Admin Management');
+  }
 
   await prisma.$transaction(async (tx) => {
     await tx.user.update({
@@ -343,9 +353,11 @@ export async function reviewOrganizer(
 ) {
   const organizer = await prisma.organizerProfile.findUnique({
     where: { id: organizerId },
-    include: { user: { select: { id: true, status: true } } },
+    include: { user: { select: { id: true, status: true, role: true } } },
   });
   if (!organizer) throw new NotFoundError('Organizer tidak ditemukan', 'ORGANIZER_NOT_FOUND');
+  if (['ADMIN', 'SUPERADMIN'].includes(organizer.user.role))
+    throw new ForbiddenError('Status akun administrasi dikelola melalui Admin Management');
   if (input.status === 'ACTIVE' && organizer.user.status !== 'ACTIVE') {
     throw new ConflictError(
       'Akun pengguna organizer tidak aktif. Aktifkan akun terlebih dahulu.',
@@ -363,6 +375,11 @@ export async function reviewOrganizer(
         reviewedAt: new Date(),
       },
     });
+    if (input.status === 'ACTIVE')
+      await tx.user.updateMany({
+        where: { id: organizer.userId, role: 'USER' },
+        data: { role: 'CREATOR' },
+      });
     if (input.status === 'SUSPENDED' || input.status === 'REJECTED') {
       await tx.refreshSession.updateMany({
         where: { userId: organizer.userId, revokedAt: null },
@@ -468,7 +485,10 @@ export async function getAdminEvent(eventId: string) {
 
 export async function reviewEvent(
   eventId: string,
-  input: { status: 'PUBLISHED' | 'REJECTED' | 'CANCELLED'; note?: string },
+  input: {
+    status: 'PUBLISHED' | 'APPROVED' | 'NEEDS_REVISION' | 'REJECTED' | 'CANCELLED';
+    note?: string;
+  },
   adminId: string,
   req: Request,
 ) {
@@ -486,7 +506,10 @@ export async function reviewEvent(
   }
 
   if (event.status === 'CANCELLED' || event.status === 'COMPLETED') {
-    throw new ConflictError('Event yang sudah dibatalkan atau selesai tidak dapat dimoderasi', 'EVENT_CLOSED');
+    throw new ConflictError(
+      'Event yang sudah dibatalkan atau selesai tidak dapat dimoderasi',
+      'EVENT_CLOSED',
+    );
   }
   if (input.status === 'PUBLISHED') {
     if (event.ticketTypes.length === 0) {
@@ -499,7 +522,7 @@ export async function reviewEvent(
       throw new ConflictError('Kategori event tidak aktif', 'CATEGORY_INACTIVE');
     }
   }
-  if (input.status === 'REJECTED' && !input.note) {
+  if ((input.status === 'REJECTED' || input.status === 'NEEDS_REVISION') && !input.note) {
     throw new BadRequestError('Alasan penolakan wajib diisi');
   }
 
@@ -511,10 +534,17 @@ export async function reviewEvent(
         reviewNote: input.note ?? null,
         reviewedByUserId: adminId,
         reviewedAt: new Date(),
-        ...(input.status === 'PUBLISHED'
-          ? { publishedAt: event.publishedAt ?? new Date() }
-          : {}),
+        ...(input.status === 'PUBLISHED' ? { publishedAt: event.publishedAt ?? new Date() } : {}),
       },
+    });
+    const organizer = await tx.organizerProfile.findUniqueOrThrow({
+      where: { id: event.organizerId },
+    });
+    await notifyUser(tx, {
+      userId: organizer.userId,
+      title: `Review event: ${input.status}`,
+      message: input.note ?? `Status ${event.title} diperbarui menjadi ${input.status}.`,
+      href: `/creator/events/${event.id}`,
     });
     await writeAudit(
       {
@@ -538,6 +568,10 @@ export async function reviewEvent(
 
 export async function listAdminOrders(query: OrderListQuery) {
   const where: Prisma.OrderWhereInput = {
+    ...(query.eventId ? { eventId: query.eventId } : {}),
+    ...(query.organizerId ? { event: { organizerId: query.organizerId } } : {}),
+    ...(query.from || query.to ? { createdAt: { gte: query.from, lte: query.to } } : {}),
+    ...(query.paymentStatus ? { payments: { some: { status: query.paymentStatus } } } : {}),
     ...(query.status ? { status: query.status } : {}),
     ...(query.q
       ? {
@@ -545,7 +579,9 @@ export async function listAdminOrders(query: OrderListQuery) {
             { orderCode: { contains: query.q, mode: 'insensitive' } },
             { buyerName: { contains: query.q, mode: 'insensitive' } },
             { buyerEmail: { contains: query.q, mode: 'insensitive' } },
-            { payments: { some: { providerReference: { contains: query.q, mode: 'insensitive' } } } },
+            {
+              payments: { some: { providerReference: { contains: query.q, mode: 'insensitive' } } },
+            },
           ],
         }
       : {}),
@@ -641,7 +677,13 @@ export async function getAdminOrder(orderId: string) {
     },
   });
   if (!order) throw new NotFoundError('Order tidak ditemukan', 'ORDER_NOT_FOUND');
-  return order;
+  const history = await prisma.auditLog.findMany({
+    where: { resourceType: 'ORDER', resourceId: orderId },
+    orderBy: { createdAt: 'asc' },
+    take: 100,
+    select: { id: true, action: true, createdAt: true, metadata: true },
+  });
+  return { ...order, history };
 }
 
 export async function resolvePaymentReview(
@@ -713,7 +755,17 @@ export async function resolvePaymentReview(
     });
     await tx.ticket.updateMany({
       where: { orderId: order.id, status: 'VALID' },
-      data: { status: 'REFUNDED' },
+      data: { status: 'CANCELLED' },
+    });
+    await tx.refund.create({
+      data: {
+        orderId: order.id,
+        amount: order.total,
+        ticketAmount: order.subtotal - order.discount,
+        feeAmount: order.platformFee,
+        reason: input.note,
+        idempotencyKey: `payment-review-refund:${order.id}`,
+      },
     });
     await writeAudit(
       {
@@ -735,8 +787,26 @@ export async function resolvePaymentReview(
   return { resolved: true, action: input.action, refundPending: true };
 }
 
-export async function listAuditLogs(query: AdminAuditQuery) {
+export async function listAuditLogs(query: AdminAuditQuery, operationalOnly = false) {
   const where: Prisma.AuditLogWhereInput = {
+    ...(operationalOnly
+      ? {
+          AND: [
+            { resourceType: { notIn: ['ADMIN', 'ROLE_PERMISSION', 'PLATFORM_SETTINGS'] } },
+            {
+              action: {
+                notIn: [
+                  'ADMIN_CREATED',
+                  'ADMIN_MODIFIED',
+                  'ADMIN_PASSWORD_RESET',
+                  'ROLE_PERMISSION_UPDATED',
+                  'PLATFORM_SETTINGS_UPDATED',
+                ],
+              },
+            },
+          ],
+        }
+      : {}),
     ...(query.action ? { action: query.action } : {}),
     ...(query.resourceType ? { resourceType: query.resourceType } : {}),
     ...(query.q
