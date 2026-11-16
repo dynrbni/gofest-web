@@ -397,7 +397,28 @@
     @apply flex min-h-24 items-center gap-4 rounded-xl p-3 transition-colors hover:bg-blue-50 focus-visible:bg-blue-50;
   }
   .home-category-grid {
-    @apply grid grid-cols-3 gap-x-3 gap-y-6 min-[400px]:grid-cols-4 md:grid-cols-6 xl:grid-cols-8 sm:gap-y-8;
+    @apply grid grid-flow-col auto-cols-[94px] grid-rows-1 gap-3 overflow-x-auto md:gap-4 xl:gap-6;
+    grid-template-columns: none;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    scroll-padding-inline: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: #bfdbfe transparent;
+    padding: 4px 4px 16px;
+    margin-inline: -4px;
+  }
+  @media (min-width: 768px) {
+    .home-category-grid {
+      grid-auto-columns: calc((100% - 80px) / 6);
+    }
+  }
+  @media (min-width: 1280px) {
+    .home-category-grid {
+      grid-auto-columns: calc((100% - 168px) / 8);
+    }
+  }
+  .home-category-grid > * {
+    scroll-snap-align: start;
   }
   .home-category-link {
     @apply flex min-w-0 flex-col items-center gap-3 rounded-xl text-center;
@@ -699,7 +720,6 @@
   }
   @media (max-width: 767px) {
     .home-event-shelf,
-    .home-category-grid,
     .discovery-page .city-destinations,
     .home-skeleton .event-grid-skeleton,
     .home-skeleton .city-destinations {
@@ -721,10 +741,6 @@
       grid-auto-columns: min(80%, 320px);
       gap: 16px;
     }
-    .home-category-grid {
-      grid-auto-columns: 94px;
-      gap: 12px;
-    }
     .home-category-label {
       @apply w-full px-2;
     }
@@ -735,7 +751,6 @@
       @apply mt-5;
     }
     .home-event-shelf > *,
-    .home-category-grid > *,
     .discovery-page .city-destinations > * {
       scroll-snap-align: start;
     }

@@ -60,21 +60,33 @@ try {
     browser('set', 'viewport', String(width), '900');
     const layout = evaluate(`(() => {
       const links = [...document.querySelectorAll('nav[aria-label="Pilih kategori"] a')];
+      const nav = links[0].parentElement;
       return { overflow: document.documentElement.scrollWidth > innerWidth + 1,
+        scrollable: nav.scrollWidth > nav.clientWidth,
+        oneRow: links.every(link => Math.abs(link.getBoundingClientRect().top - links[0].getBoundingClientRect().top) < 1),
         allFit: links.every(link => {
           const rect = link.getBoundingClientRect();
           const icon = link.querySelector('.category-symbol').getBoundingClientRect();
           const label = link.querySelector('.home-category-label').getBoundingClientRect();
-          return rect.left >= 0 && rect.right <= innerWidth && rect.width >= 44 &&
+          return rect.width >= 44 &&
             icon.bottom <= label.top && label.height >= 44;
         }) };
     })()`);
     assert.equal(layout.overflow, false, `Home categories fit ${width}px`);
+    assert.equal(layout.oneRow, true, `Home categories stay in one row at ${width}px`);
+    assert.equal(layout.scrollable, true, `Home categories scroll horizontally at ${width}px`);
     assert.equal(
       layout.allFit,
       true,
       'Every category has an icon above its label and a full touch target',
     );
+    evaluate(`document.querySelector('nav[aria-label="Pilih kategori"] a:last-child').focus()`);
+    wait(`(() => {
+      const nav = document.querySelector('nav[aria-label="Pilih kategori"]');
+      const item = nav.lastElementChild.getBoundingClientRect();
+      const bounds = nav.getBoundingClientRect();
+      return item.left >= bounds.left - 1 && item.right <= bounds.right + 1;
+    })()`);
   }
   assert.equal(
     browser('a11y', '--selector', 'section[aria-labelledby="categories-heading"]').counts
@@ -182,7 +194,7 @@ try {
   assert.equal(browser('a11y', '--selector', 'main').counts.violations, 0);
   assert.deepEqual(browser('errors').errors, []);
   process.stdout.write(
-    'PASS 12 home categories without descriptions, home/category navigation, category selection, all-events reset, legacy URL cleanup, search/empty recovery, responsive grid and compact ribbon at six widths, scroll arrows, keyboard focus, accessibility and zero runtime errors.\n',
+    'PASS 12 home categories without descriptions, single-row home scrolling and keyboard access at six widths, home/category navigation, category selection, all-events reset, legacy URL cleanup, search/empty recovery, compact ribbon, scroll arrows, accessibility and zero runtime errors.\n',
   );
 } finally {
   browser('close');
