@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import sharp from 'sharp';
+import { fromBuffer } from 'file-type';
 import { env } from '../config/env';
 import { BadRequestError } from './errors';
 
@@ -13,6 +14,7 @@ export interface StoredImage {
   url: string;
   width: number;
   height: number;
+  byteSize: number;
 }
 
 function safeKey(key: string): string {
@@ -21,6 +23,19 @@ function safeKey(key: string): string {
     throw new BadRequestError('Lokasi file tidak valid');
   }
   return normalized;
+}
+
+export async function validateImage(buffer: Buffer, mimeType: string, maxBytes: number) {
+  if (!buffer.length || buffer.length > maxBytes) {
+    throw new BadRequestError(`Ukuran gambar maksimal ${maxBytes / 1024 / 1024} MB`);
+  }
+  const signature = await fromBuffer(buffer).catch(() => undefined);
+  if (
+    !['image/jpeg', 'image/png', 'image/webp'].includes(mimeType) ||
+    signature?.mime !== mimeType
+  ) {
+    throw new BadRequestError('Format dan isi gambar harus cocok: JPG, PNG, atau WebP');
+  }
 }
 
 export async function storePublicImage(buffer: Buffer, folder: string): Promise<StoredImage> {
@@ -43,7 +58,10 @@ export async function storePublicImage(buffer: Buffer, folder: string): Promise<
     .rotate()
     .resize({ width: 2000, height: 2000, fit: 'inside', withoutEnlargement: true })
     .webp({ quality: 82 })
-    .toBuffer({ resolveWithObject: true });
+    .toBuffer({ resolveWithObject: true })
+    .catch(() => {
+      throw new BadRequestError('File yang diunggah bukan gambar yang valid');
+    });
 
   const key = `${folder}/${randomUUID()}.webp`;
   const target = path.join(publicRoot, safeKey(key));
@@ -55,6 +73,7 @@ export async function storePublicImage(buffer: Buffer, folder: string): Promise<
     url: `/uploads/${key}`,
     width: result.info.width,
     height: result.info.height,
+    byteSize: result.data.length,
   };
 }
 

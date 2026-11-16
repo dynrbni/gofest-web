@@ -118,6 +118,7 @@ export async function createSupport(input: z.infer<typeof supportSchema>, req: R
   return prisma.$transaction(async (tx) => {
     const ticket = await tx.supportTicket.create({ data: { ...input, userId: req.auth!.userId } });
     await notifyAdmins(tx, {
+      category: 'SUPPORT',
       title: 'Tiket bantuan baru',
       message: input.subject,
       href: '/admin/support',
@@ -135,6 +136,7 @@ export async function replySupport(
     if (!ticket) throw new NotFoundError();
     const result = await tx.supportTicket.update({ where: { id }, data: input });
     await notifyUser(tx, {
+      category: 'SUPPORT',
       userId: ticket.userId,
       title: 'Balasan dukungan GOFEST',
       message: input.reply,

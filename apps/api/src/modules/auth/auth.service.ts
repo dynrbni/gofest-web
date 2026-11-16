@@ -1,4 +1,5 @@
 import type { Request } from 'express';
+import { assertOwnedImage, normalizeImageKey } from '../uploads/upload.service';
 import { Prisma } from '@prisma/client';
 import { prisma } from '../../lib/prisma';
 import { env } from '../../config/env';
@@ -34,6 +35,7 @@ function toAuthUser(user: {
   name: string;
   email: string;
   phone: string | null;
+  avatarKey: string | null;
   role: UserRole;
   organizerProfile: { slug: string; status: string } | null;
   staffAssignments?: { id: string }[];
@@ -48,6 +50,7 @@ function toAuthUser(user: {
     name: user.name,
     email: user.email,
     phone: user.phone,
+    avatarKey: user.avatarKey,
     roles,
     organizerStatus: user.organizerProfile?.status ?? null,
     organizerSlug: user.organizerProfile?.slug ?? null,
@@ -285,11 +288,18 @@ export async function getMe(userId: string): Promise<AuthUser> {
 
 export async function updateProfile(
   userId: string,
-  input: { name: string; phone?: string },
+  input: { name: string; phone?: string; avatarKey?: string | null },
 ): Promise<AuthUser> {
+  await assertOwnedImage(input.avatarKey, userId, 'avatars');
   const user = await prisma.user.update({
     where: { id: userId },
-    data: { name: input.name, phone: input.phone ?? null },
+    data: {
+      name: input.name,
+      phone: input.phone ?? null,
+      ...(input.avatarKey !== undefined
+        ? { avatarKey: input.avatarKey ? normalizeImageKey(input.avatarKey) : null }
+        : {}),
+    },
     include: { organizerProfile: true, staffAssignments: { select: { id: true }, take: 1 } },
   });
   return toAuthUser(user);

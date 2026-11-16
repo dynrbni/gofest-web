@@ -5,14 +5,14 @@ import { rateLimit } from 'express-rate-limit';
 import { env } from '../../config/env';
 import { BadRequestError } from '../../lib/errors';
 import { created } from '../../lib/response';
-import { storePublicImage } from '../../lib/storage';
+import { imageFolders, saveUploadedImage, type ImageFolder } from './upload.service';
 
-const ALLOWED_FOLDERS = new Set(['events', 'organizers', 'avatars']);
+const ALLOWED_FOLDERS = new Set<string>(imageFolders);
 
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: env.MAX_UPLOAD_SIZE_MB * 1024 * 1024,
+    fileSize: 8 * 1024 * 1024,
     files: 1,
     fields: 4,
   },
@@ -40,32 +40,37 @@ const uploadLimiter = rateLimit({
 
 export const uploadRouter = Router();
 
-uploadRouter.post('/', requireAuth, uploadLimiter, (req, res, next) => {
-  upload.single('file')(req, res, (error: unknown) => {
-    if (error instanceof multer.MulterError) {
-      if (error.code === 'LIMIT_FILE_SIZE') {
-        return next(
-          new BadRequestError(
-            `Ukuran gambar maksimal ${env.MAX_UPLOAD_SIZE_MB} MB`,
-            [{ path: 'file', message: 'File terlalu besar' }],
-          ),
-        );
+uploadRouter.post(
+  '/',
+  requireAuth,
+  uploadLimiter,
+  (req, res, next) => {
+    upload.single('file')(req, res, (error: unknown) => {
+      if (error instanceof multer.MulterError) {
+        if (error.code === 'LIMIT_FILE_SIZE') {
+          return next(
+            new BadRequestError('Ukuran gambar maksimal 8 MB', [
+              { path: 'file', message: 'File terlalu besar' },
+            ]),
+          );
+        }
+        return next(new BadRequestError('Unggahan tidak valid'));
       }
-      return next(new BadRequestError('Unggahan tidak valid'));
+      if (error) return next(error);
+      return next();
+    });
+  },
+  async (req, res) => {
+    if (!req.file) {
+      throw new BadRequestError('Pilih gambar yang ingin diunggah', [
+        { path: 'file', message: 'File wajib diisi' },
+      ]);
     }
-    if (error) return next(error);
-    return next();
-  });
-}, async (req, res) => {
-  if (!req.file) {
-    throw new BadRequestError('Pilih gambar yang ingin diunggah', [
-      { path: 'file', message: 'File wajib diisi' },
-    ]);
-  }
-  const folder = typeof req.body.folder === 'string' ? req.body.folder : 'events';
-  if (!ALLOWED_FOLDERS.has(folder)) {
-    throw new BadRequestError('Folder unggahan tidak dikenal');
-  }
-  const stored = await storePublicImage(req.file.buffer, folder);
-  return created(res, stored);
-});
+    const folder = typeof req.body.folder === 'string' ? req.body.folder : 'events';
+    if (!ALLOWED_FOLDERS.has(folder)) {
+      throw new BadRequestError('Folder unggahan tidak dikenal');
+    }
+    const stored = await saveUploadedImage(req.file, folder as ImageFolder, req.auth!);
+    return created(res, stored);
+  },
+);

@@ -262,6 +262,7 @@ export async function requestPayout(
         tx,
       );
       await notifyAdmins(tx, {
+        category: 'PAYOUT',
         title: 'Permintaan withdrawal baru',
         message: `Withdrawal Rp${input.amount.toLocaleString('id-ID')} menunggu review.`,
         href: '/admin/payouts',
@@ -341,6 +342,7 @@ export async function reviewPayout(
       where: { id: payout.organizerId },
     });
     await notifyUser(tx, {
+      category: 'PAYOUT',
       userId: organizer.userId,
       title: `Withdrawal ${input.status === 'APPROVED' ? 'disetujui' : 'ditolak'}`,
       message: rejected

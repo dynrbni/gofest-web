@@ -7,6 +7,7 @@ import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from '.
 import { env } from '../../config/env';
 import { isOperationalAdmin } from '@gofest/shared';
 import type { refundSchema, refundReviewSchema, ListQuery } from './finance.schemas';
+import { notifyAdmins } from '../notifications/inbox.service';
 
 export async function requestRefund(input: z.infer<typeof refundSchema>, req: Request) {
   const existing = await prisma.refund.findUnique({
@@ -59,6 +60,12 @@ export async function requestRefund(input: z.infer<typeof refundSchema>, req: Re
       throw new BadRequestError('Nominal refund melebihi alokasi pembayaran');
     const refund = await tx.refund.create({
       data: { ...input, amount: input.ticketAmount + input.feeAmount },
+    });
+    await notifyAdmins(tx, {
+      category: 'REFUND',
+      title: 'Permintaan refund baru',
+      message: `${order.orderCode} · ${input.reason}`,
+      href: '/admin/refunds',
     });
     await writeAudit(
       {

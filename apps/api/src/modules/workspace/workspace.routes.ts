@@ -184,7 +184,12 @@ for (const [router, own] of [
   );
   router.get('/notifications', validate(listQuerySchema, 'query'), async (req, res) => {
     const query = req.query as unknown as ListQuery;
-    const [data, total, unread] = await Promise.all([
+    const categoryCounts = prisma.notification.groupBy({
+      by: ['category'],
+      where: { userId: req.auth!.userId, readAt: null },
+      _count: { _all: true },
+    });
+    const [data, total, categories] = await prisma.$transaction([
       prisma.notification.findMany({
         where: { userId: req.auth!.userId },
         orderBy: { createdAt: 'desc' },
@@ -192,15 +197,19 @@ for (const [router, own] of [
         skip: (query.page - 1) * query.limit,
       }),
       prisma.notification.count({ where: { userId: req.auth!.userId } }),
-      prisma.notification.count({ where: { userId: req.auth!.userId, readAt: null } }),
+      categoryCounts,
     ]);
+    const unreadByCategory = Object.fromEntries(
+      categories.map((item) => [item.category, item._count._all]),
+    );
+    const unread = categories.reduce((sum, item) => sum + item._count._all, 0);
     const meta = {
       page: query.page,
       limit: query.limit,
       total,
       totalPages: Math.max(1, Math.ceil(total / query.limit)),
     };
-    return ok(res, { notifications: data, unread, meta }, meta);
+    return ok(res, { notifications: data, unread, unreadByCategory, meta }, meta);
   });
   router.patch('/notifications/:id/read', async (req, res) => {
     const result = await prisma.notification.updateMany({

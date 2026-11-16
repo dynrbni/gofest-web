@@ -5,7 +5,7 @@ import { findEventCity } from '@gofest/shared';
 import { prisma } from '../../lib/prisma';
 import { writeAudit } from '../../lib/audit';
 import { ConflictError, ForbiddenError, NotFoundError } from '../../lib/errors';
-import { removePublicObject } from '../../lib/storage';
+import { assertOwnedImage } from '../uploads/upload.service';
 import { enqueueEmail } from '../notifications/email.service';
 import { notifyAdmins } from '../notifications/inbox.service';
 import { getPlatformSettings } from '../settings/settings.service';
@@ -310,6 +310,12 @@ function normalizeCoverKey(value: string | null | undefined): string | null | un
 }
 
 export async function createEvent(organizerId: string, input: EventInput, req: Request) {
+  await assertOwnedImage(
+    input.coverKey,
+    req.auth!.userId,
+    'events',
+    ['ADMIN', 'SUPERADMIN'].includes(req.auth!.role),
+  );
   await assertCategory(input.categoryId);
   const slugOwner = await prisma.event.findUnique({ where: { slug: input.slug } });
   if (slugOwner) throw new ConflictError('Slug event sudah dipakai', 'EVENT_SLUG_TAKEN');
@@ -383,6 +389,14 @@ export async function updateEvent(
   req: Request,
 ) {
   const current = await getOwnedEvent(eventId, organizerId);
+  if (input.coverKey !== undefined && normalizeCoverKey(input.coverKey) !== current.coverKey) {
+    await assertOwnedImage(
+      input.coverKey,
+      req.auth!.userId,
+      'events',
+      ['ADMIN', 'SUPERADMIN'].includes(req.auth!.role),
+    );
+  }
   if (current.status === 'CANCELLED' || current.status === 'COMPLETED') {
     throw new ConflictError('Event yang sudah dibatalkan atau selesai tidak dapat diubah');
   }
@@ -497,16 +511,6 @@ export async function updateEvent(
     return event;
   });
 
-  const previousCover = current.coverKey;
-  if (
-    input.coverKey !== undefined &&
-    previousCover &&
-    previousCover !== updated.coverKey &&
-    previousCover.startsWith('events/')
-  ) {
-    await removePublicObject(previousCover);
-  }
-
   return updated;
 }
 
@@ -537,9 +541,6 @@ export async function deleteEvent(eventId: string, organizerId: string, req: Req
       tx,
     );
   });
-  if (event.coverKey?.startsWith('events/')) {
-    await removePublicObject(event.coverKey);
-  }
   return { deleted: true };
 }
 
@@ -573,6 +574,7 @@ export async function submitEvent(eventId: string, organizerId: string, req: Req
     });
     if (!publishImmediately)
       await notifyAdmins(tx, {
+        category: 'EVENT_REVIEW',
         title: 'Pengajuan event baru',
         message: `${event.title} menunggu review.`,
         href: '/admin/events?status=PENDING_REVIEW',

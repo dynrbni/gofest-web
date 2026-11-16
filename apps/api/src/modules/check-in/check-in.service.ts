@@ -6,6 +6,7 @@ import { prisma } from '../../lib/prisma';
 import { sha256 } from '../../lib/crypto';
 import { ConflictError, ForbiddenError, NotFoundError } from '../../lib/errors';
 import { logger } from '../../lib/logger';
+import { notifyAdmins, notifyUser } from '../notifications/inbox.service';
 
 const SCAN_MESSAGES = {
   VALID: 'Tiket valid. Check-in berhasil.',
@@ -287,18 +288,41 @@ export async function scanTicket(input: ScanTicketInput, userId: string, req: Re
 
   let logId: string | null = null;
   try {
-    const log = await prisma.checkInLog.create({
-      data: {
-        ticketId: ticket?.id ?? null,
-        eventId: access.event.id,
-        staffId: userId,
-        result,
-        gate: input.gate ?? null,
-        idempotencyKey: input.idempotencyKey ?? null,
-        requestId: req.id ? String(req.id) : null,
-        scannedAt,
-      },
-      select: { id: true },
+    const log = await prisma.$transaction(async (tx) => {
+      const saved = await tx.checkInLog.create({
+        data: {
+          ticketId: ticket?.id ?? null,
+          eventId: access.event.id,
+          staffId: userId,
+          result,
+          gate: input.gate ?? null,
+          idempotencyKey: input.idempotencyKey ?? null,
+          requestId: req.id ? String(req.id) : null,
+          scannedAt,
+        },
+        select: { id: true },
+      });
+      if (result !== 'VALID') {
+        const message = `${access.event.title}: ${SCAN_MESSAGES[result]}`;
+        await notifyAdmins(tx, {
+          category: 'CHECK_IN',
+          title: 'Check-in perlu ditinjau',
+          message,
+          href: '/admin/check-in',
+        });
+        const organizer = await tx.organizerProfile.findUniqueOrThrow({
+          where: { id: access.event.organizerId },
+          select: { userId: true },
+        });
+        await notifyUser(tx, {
+          userId: organizer.userId,
+          category: 'CHECK_IN',
+          title: 'Check-in perlu ditinjau',
+          message,
+          href: '/creator/check-in',
+        });
+      }
+      return saved;
     });
     logId = log.id;
   } catch (error) {

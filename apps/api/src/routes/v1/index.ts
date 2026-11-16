@@ -24,6 +24,7 @@ import {
   creatorWorkspaceRouter,
 } from '../../modules/workspace/workspace.routes';
 import { adminEventRouter } from '../../modules/admin/admin-event.routes';
+import { cmsAdminRouter, cmsPublicRouter } from '../../modules/cms/cms.routes';
 
 export const v1Router = Router();
 
@@ -36,6 +37,8 @@ v1Router.get('/', (_req, res) => {
 });
 
 v1Router.use('/auth', authRouter);
+v1Router.use('/admin/cms', cmsAdminRouter);
+v1Router.use('/cms', cmsPublicRouter);
 v1Router.use('/admin', adminFinanceRouter, adminWorkspaceRouter, adminEventRouter);
 v1Router.use('/creator', creatorFinanceRouter, creatorWorkspaceRouter, organizerWorkspaceRouter);
 v1Router.use('/account/refunds', customerRefundRouter);

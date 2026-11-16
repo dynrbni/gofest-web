@@ -116,6 +116,7 @@ export const resetPasswordSchema = z.object({
 export const updateProfileSchema = z.object({
   name: z.string().trim().min(2).max(80),
   phone: phoneSchema,
+  avatarKey: z.string().max(300).nullable().optional(),
 });
 
 export const organizerApplicationSchema = z.object({
@@ -124,10 +125,29 @@ export const organizerApplicationSchema = z.object({
   description: z.string().trim().max(3000).optional(),
 });
 
+const publicProfileUrlSchema = z.union([
+  z
+    .string()
+    .trim()
+    .url()
+    .max(500)
+    .refine((value) => /^https?:\/\//i.test(value), 'Gunakan URL http atau https'),
+  z.literal(''),
+]);
+
 export const organizerUpdateSchema = organizerApplicationSchema.partial().extend({
   description: z.string().trim().max(3000).optional(),
   logoKey: z.string().max(300).optional().nullable(),
   bannerKey: z.string().max(300).optional().nullable(),
+  contactEmail: z
+    .union([z.string().email().max(254), z.literal('')])
+    .nullable()
+    .optional(),
+  contactPhone: z.string().trim().max(32).nullable().optional(),
+  location: z.string().trim().max(180).nullable().optional(),
+  websiteUrl: publicProfileUrlSchema.nullable().optional(),
+  instagramUrl: publicProfileUrlSchema.nullable().optional(),
+  tiktokUrl: publicProfileUrlSchema.nullable().optional(),
 });
 
 export const organizerReviewSchema = z

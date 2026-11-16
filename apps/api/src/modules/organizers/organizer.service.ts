@@ -5,6 +5,8 @@ import type { Request } from 'express';
 import { prisma } from '../../lib/prisma';
 import { ConflictError, ForbiddenError, NotFoundError } from '../../lib/errors';
 import { writeAudit } from '../../lib/audit';
+import { assertOwnedImage, normalizeImageKey } from '../uploads/upload.service';
+import { notifyAdmins } from '../notifications/inbox.service';
 
 const publicOrganizerSelect = {
   id: true,
@@ -13,6 +15,12 @@ const publicOrganizerSelect = {
   description: true,
   logoKey: true,
   bannerKey: true,
+  contactEmail: true,
+  contactPhone: true,
+  location: true,
+  websiteUrl: true,
+  instagramUrl: true,
+  tiktokUrl: true,
   status: true,
   createdAt: true,
 } as const;
@@ -56,6 +64,12 @@ export async function applyAsOrganizer(
       },
       tx,
     );
+    await notifyAdmins(tx, {
+      title: 'Pendaftaran organizer baru',
+      message: input.organizationName,
+      href: '/admin/organizers',
+      category: 'ORGANIZER',
+    });
     return profile;
   });
 }
@@ -81,6 +95,12 @@ export async function updateOwnOrganizer(
     description?: string;
     logoKey?: string | null;
     bannerKey?: string | null;
+    contactEmail?: string | null;
+    contactPhone?: string | null;
+    location?: string | null;
+    websiteUrl?: string | null;
+    instagramUrl?: string | null;
+    tiktokUrl?: string | null;
   },
   req: Request,
 ) {
@@ -98,6 +118,10 @@ export async function updateOwnOrganizer(
     const owner = await prisma.organizerProfile.findUnique({ where: { slug: input.slug } });
     if (owner) throw new ConflictError('Slug organizer sudah dipakai', 'ORGANIZER_SLUG_TAKEN');
   }
+  if (input.logoKey !== undefined && input.logoKey !== profile.logoKey)
+    await assertOwnedImage(input.logoKey, userId, 'organizers');
+  if (input.bannerKey !== undefined && input.bannerKey !== profile.bannerKey)
+    await assertOwnedImage(input.bannerKey, userId, 'organizers');
 
   return prisma.$transaction(async (tx) => {
     const updated = await tx.organizerProfile.update({
@@ -108,8 +132,26 @@ export async function updateOwnOrganizer(
           : {}),
         ...(input.slug !== undefined ? { slug: input.slug } : {}),
         ...(input.description !== undefined ? { description: input.description } : {}),
-        ...(input.logoKey !== undefined ? { logoKey: input.logoKey } : {}),
-        ...(input.bannerKey !== undefined ? { bannerKey: input.bannerKey } : {}),
+        ...(input.logoKey !== undefined
+          ? { logoKey: input.logoKey ? normalizeImageKey(input.logoKey) : null }
+          : {}),
+        ...(input.bannerKey !== undefined
+          ? { bannerKey: input.bannerKey ? normalizeImageKey(input.bannerKey) : null }
+          : {}),
+        ...Object.fromEntries(
+          (
+            [
+              'contactEmail',
+              'contactPhone',
+              'location',
+              'websiteUrl',
+              'instagramUrl',
+              'tiktokUrl',
+            ] as const
+          )
+            .filter((key) => input[key] !== undefined)
+            .map((key) => [key, input[key] || null]),
+        ),
       },
     });
     await writeAudit(

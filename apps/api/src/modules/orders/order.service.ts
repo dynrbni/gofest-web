@@ -24,6 +24,7 @@ import { logger } from '../../lib/logger';
 import { writeAudit } from '../../lib/audit';
 import { removePrivateObject, storePrivateFile } from '../../lib/storage';
 import { enqueueEmail } from '../notifications/email.service';
+import { notifyAdmins, notifyUser } from '../notifications/inbox.service';
 import { getPlatformSettings } from '../settings/settings.service';
 import { getPaymentProvider } from '../payments/provider';
 import type { VerifiedPaymentEvent } from '../payments/payment.provider';
@@ -615,6 +616,24 @@ export async function createOrder(input: CreateOrderInput, req: Request) {
 
       createdId = order.id;
       accessToken = token;
+
+      const organizer = await tx.organizerProfile.findUniqueOrThrow({
+        where: { id: event.organizerId },
+        select: { userId: true },
+      });
+      await notifyAdmins(tx, {
+        category: 'ORDER',
+        title: 'Pesanan baru',
+        message: `${order.orderCode} · ${event.title}`,
+        href: '/admin/orders',
+      });
+      await notifyUser(tx, {
+        userId: organizer.userId,
+        category: 'ORDER',
+        title: 'Pesanan event baru',
+        message: `${order.orderCode} · ${event.title}`,
+        href: '/creator/orders',
+      });
 
       await enqueueEmail(
         {

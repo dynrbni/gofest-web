@@ -26,6 +26,7 @@ export interface PaginationMeta {
 }
 
 export interface AuthUser {
+  avatarKey?: string | null;
   id: string;
   name: string;
   email: string;

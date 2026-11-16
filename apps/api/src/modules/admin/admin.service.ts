@@ -541,6 +541,7 @@ export async function reviewEvent(
       where: { id: event.organizerId },
     });
     await notifyUser(tx, {
+      category: 'EVENT',
       userId: organizer.userId,
       title: `Review event: ${input.status}`,
       message: input.note ?? `Status ${event.title} diperbarui menjadi ${input.status}.`,
