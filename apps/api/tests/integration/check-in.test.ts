@@ -169,6 +169,7 @@ describe('ticket scan', () => {
     expect(response.status).toBe(200);
     expect(response.body.data.result).toBe('WRONG_EVENT');
     expect(response.body.data.accepted).toBe(false);
+    expect(response.body.data.ticket).toBeNull();
 
     const stored = await prisma.ticket.findUniqueOrThrow({ where: { id: ticket.ticketId } });
     expect(stored.status).toBe('VALID');
@@ -225,6 +226,30 @@ describe('ticket scan', () => {
     expect(await prisma.checkInLog.count({ where: { eventId: event.id } })).toBe(1);
     const stored = await prisma.ticket.findUniqueOrThrow({ where: { id: ticket.ticketId } });
     expect(stored.status).toBe('CHECKED_IN');
+  });
+
+  it('menolak replay scan dari organizer lain meskipun pemanggil menggunakan event sendiri', async () => {
+    const first = await setupPublishedEvent(app, { price: 0 });
+    const other = await setupPublishedEvent(app, { price: 0 });
+    const ticket = await issueFreeTicket(first.organizer, first.event.id, first.ticketType.id);
+    const idempotencyKey = randomUUID();
+    expect(
+      (
+        await scan(first.organizer.agent, {
+          eventId: first.event.id,
+          ticketCode: ticket.ticketCode,
+          idempotencyKey,
+        })
+      ).status,
+    ).toBe(200);
+    const replay = await scan(other.organizer.agent, {
+      eventId: other.event.id,
+      ticketCode: ticket.ticketCode,
+      idempotencyKey,
+    });
+    expect(replay.status).toBe(409);
+    expect(replay.body.error.code).toBe('IDEMPOTENCY_CONFLICT');
+    expect(replay.body.data).toBeNull();
   });
 
   it('menyediakan daftar tiket dan ringkasan untuk organizer pemilik', async () => {

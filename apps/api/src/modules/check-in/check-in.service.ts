@@ -1,9 +1,10 @@
 import { Prisma } from '@prisma/client';
 import type { Request } from 'express';
 import type { ScanTicketInput } from '@gofest/shared';
+import { isOperationalAdmin } from '@gofest/shared';
 import { prisma } from '../../lib/prisma';
 import { sha256 } from '../../lib/crypto';
-import { ForbiddenError, NotFoundError } from '../../lib/errors';
+import { ConflictError, ForbiddenError, NotFoundError } from '../../lib/errors';
 import { logger } from '../../lib/logger';
 
 const SCAN_MESSAGES = {
@@ -26,6 +27,10 @@ export interface ScanAccess {
 }
 
 async function findEventAccess(eventId: string, userId: string): Promise<ScanAccess> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true, status: true, organizerProfile: { select: { status: true } } },
+  });
   const event = await prisma.event.findUnique({
     where: { id: eventId },
     select: {
@@ -42,7 +47,28 @@ async function findEventAccess(eventId: string, userId: string): Promise<ScanAcc
   });
   if (!event) throw new NotFoundError('Event tidak ditemukan', 'EVENT_NOT_FOUND');
 
-  if (event.organizer.userId === userId) {
+  if (
+    !isOperationalAdmin(user?.role) &&
+    user?.organizerProfile?.status === 'ACTIVE' &&
+    event.organizer.userId !== userId
+  ) {
+    throw new ForbiddenError(
+      'Creator hanya dapat mengakses check-in event sendiri',
+      'CHECK_IN_NOT_ASSIGNED',
+    );
+  }
+  if (event.organizer.userId === userId && !isOperationalAdmin(user?.role)) {
+    const permission = await prisma.rolePermission.findUnique({
+      where: { role_permission: { role: 'CREATOR', permission: 'check-in' } },
+    });
+    if (permission?.enabled === false)
+      throw new ForbiddenError('Akses check-in Creator dinonaktifkan');
+  }
+
+  if (
+    event.organizer.userId === userId ||
+    (user?.status === 'ACTIVE' && isOperationalAdmin(user.role))
+  ) {
     return {
       event: { id: event.id, title: event.title, organizerId: event.organizerId },
       accessRole: 'OWNER',
@@ -62,9 +88,25 @@ async function findEventAccess(eventId: string, userId: string): Promise<ScanAcc
 }
 
 export async function listStaffEvents(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true, status: true, organizerProfile: { select: { status: true } } },
+  });
+  const globalAccess = user?.status === 'ACTIVE' && isOperationalAdmin(user.role);
+  if (!globalAccess && user?.organizerProfile?.status === 'ACTIVE') {
+    const permission = await prisma.rolePermission.findUnique({
+      where: { role_permission: { role: 'CREATOR', permission: 'check-in' } },
+    });
+    if (permission?.enabled === false)
+      throw new ForbiddenError('Akses check-in Creator dinonaktifkan');
+  }
   const events = await prisma.event.findMany({
     where: {
-      OR: [{ organizer: { userId } }, { staff: { some: { userId } } }],
+      ...(globalAccess
+        ? {}
+        : user?.organizerProfile?.status === 'ACTIVE'
+          ? { organizer: { userId } }
+          : { staff: { some: { userId } } }),
     },
     orderBy: [{ startsAt: 'asc' }],
     select: {
@@ -174,13 +216,20 @@ export async function scanTicket(input: ScanTicketInput, userId: string, req: Re
     const existing = await prisma.checkInLog.findUnique({
       where: { idempotencyKey: input.idempotencyKey },
       select: {
+        eventId: true,
+        staffId: true,
         result: true,
         scannedAt: true,
         ticket: { select: scanTicketSelect },
       },
     });
     if (existing) {
-      return replayLog(existing);
+      if (existing.eventId !== input.eventId || existing.staffId !== userId)
+        throw new ConflictError('Idempotency key scan sudah digunakan', 'IDEMPOTENCY_CONFLICT');
+      return replayLog({
+        ...existing,
+        ticket: existing.ticket?.eventId === input.eventId ? existing.ticket : null,
+      });
     }
   }
 
@@ -205,6 +254,7 @@ export async function scanTicket(input: ScanTicketInput, userId: string, req: Re
     result = 'INVALID';
   } else if (ticket.eventId !== access.event.id) {
     result = 'WRONG_EVENT';
+    ticket = null;
   } else if (ticket.status === 'CANCELLED' || ticket.status === 'REFUNDED') {
     result = 'CANCELLED';
   } else if (ticket.status === 'CHECKED_IN') {
@@ -256,13 +306,20 @@ export async function scanTicket(input: ScanTicketInput, userId: string, req: Re
       const existing = await prisma.checkInLog.findUnique({
         where: { idempotencyKey: input.idempotencyKey! },
         select: {
+          eventId: true,
+          staffId: true,
           result: true,
           scannedAt: true,
           ticket: { select: scanTicketSelect },
         },
       });
       if (existing) {
-        return replayLog(existing);
+        if (existing.eventId !== input.eventId || existing.staffId !== userId)
+          throw new ConflictError('Idempotency key scan sudah digunakan', 'IDEMPOTENCY_CONFLICT');
+        return replayLog({
+          ...existing,
+          ticket: existing.ticket?.eventId === input.eventId ? existing.ticket : null,
+        });
       }
     }
     throw error;
@@ -323,7 +380,7 @@ export async function getCheckInSummary(eventId: string) {
         gate: true,
         scannedAt: true,
         staff: { select: { name: true } },
-        ticket: { select: { ticketCode: true, holderName: true } },
+        ticket: { select: { ticketCode: true, holderName: true, eventId: true } },
       },
     }),
     prisma.checkInLog.findFirst({
@@ -355,16 +412,13 @@ export async function getCheckInSummary(eventId: string) {
       gate: scan.gate,
       scannedAt: scan.scannedAt,
       staffName: scan.staff.name,
-      ticketCode: scan.ticket?.ticketCode ?? null,
-      holderName: scan.ticket?.holderName ?? null,
+      ticketCode: scan.ticket?.eventId === eventId ? scan.ticket.ticketCode : null,
+      holderName: scan.ticket?.eventId === eventId ? scan.ticket.holderName : null,
     })),
   };
 }
 
-export async function getOrganizerCheckInSummary(
-  eventId: string,
-  organizerId: string,
-) {
+export async function getOrganizerCheckInSummary(eventId: string, organizerId: string) {
   const event = await prisma.event.findUnique({
     where: { id: eventId },
     select: { organizerId: true },
