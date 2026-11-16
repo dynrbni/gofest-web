@@ -6,7 +6,7 @@ Implement the supplied customer-dashboard brief and push verified changes to the
 
 ## Next Step
 
-Implement and verify the customer-only read API from the approved implementation plan.
+Delivery complete. See docs/qa/customer-dashboard-2026-11-16.md for verification and backend dependencies.
 
 ### Phase 1: Audit and proposed design
 
@@ -22,13 +22,13 @@ Present the proposed design and get approval before application changes.
 
 ### Phase 3: Implementation
 
-**Status:** in_progress
+**Status:** complete
 
 Create a detailed implementation plan after design approval. Implement customer shell, real-data overview, ticket wallet/detail, order history/detail, profile, settings and truthful favorites availability.
 
 ### Phase 4: Verification and GitHub delivery
 
-**Status:** pending
+**Status:** complete
 
 Run lint/types/tests/build, real browser and responsive checks, document limitations, and commit/push each coherent verified change.
 

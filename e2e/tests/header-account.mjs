@@ -119,22 +119,22 @@ try {
   browser('wait', '[role=menu]');
   menuItem('Profil Saya');
   wait('location.pathname === "/account/profile"');
-  browser('wait', '#name');
+  browser('wait', '#account-name');
   accountMenu();
-  menuItem('Transaksi Saya');
+  menuItem('Riwayat Pesanan');
   wait('location.pathname === "/account/orders"');
   browser('wait', '--text', 'Riwayat Pesanan');
   accountMenu();
   menuItem('Tiket Saya');
   wait('location.pathname === "/account/tickets"');
   wait(
-    'document.querySelector("#my-tickets-heading")?.closest("section").getAttribute("aria-busy") === "false"',
+    'document.querySelector("#account-main section[aria-busy]")?.getAttribute("aria-busy") === "false"',
   );
   assert.equal(evaluate('document.querySelectorAll("main [role=alert]").length'), 0);
   browser('reload');
-  browser('wait', '#my-tickets-heading');
+  browser('wait', '#account-main h1');
   wait(
-    'document.querySelector("#my-tickets-heading")?.closest("section").getAttribute("aria-busy") === "false"',
+    'document.querySelector("#account-main section[aria-busy]")?.getAttribute("aria-busy") === "false"',
   );
   for (const width of [1440, 1024]) {
     browser('set', 'viewport', String(width), '1000');
@@ -145,7 +145,15 @@ try {
     );
     accountMenu();
     browser('wait', '[role=menu]');
-    assert.deepEqual(menuItems(), ['Profil Saya', 'Transaksi Saya', 'Tiket Saya', 'Keluar']);
+    assert.deepEqual(menuItems(), [
+      'Dashboard',
+      'Tiket Saya',
+      'Riwayat Pesanan',
+      'Event Favorit',
+      'Profil Saya',
+      'Pengaturan',
+      'Keluar',
+    ]);
     browser('press', 'Escape');
     wait('!document.querySelector("[role=menu]")');
   }
@@ -157,11 +165,16 @@ try {
       `Mobile account fits ${width}px`,
     );
   }
-  button('Buka menu');
-  browser('wait', '#mobile-navigation');
   assert.equal(
-    evaluate('document.getElementById("mobile-navigation").textContent.includes("Partner")'),
-    false,
+    evaluate('getComputedStyle(document.querySelector(".account-bottom-nav")).display'),
+    'grid',
+  );
+  accountMenu();
+  browser('wait', '[role=menu]');
+  assert.ok(menuItems().includes('Pengaturan'));
+  browser('press', 'Escape');
+  wait(
+    '!document.querySelector("[role=menu]") && !document.querySelector("header")?.closest("[aria-hidden=true]")',
   );
   browser('set', 'viewport', '1440', '1000');
   button('Pilih bahasa');
@@ -171,8 +184,18 @@ try {
   wait('!document.querySelector("[role=menu]")');
   browser('click', 'header button[aria-label^="Account menu for"]');
   browser('wait', '[role=menu]');
-  assert.deepEqual(menuItems(), ['My Profile', 'My Transactions', 'My Tickets', 'Log out']);
+  assert.deepEqual(menuItems(), [
+    'Dashboard',
+    'My Tickets',
+    'Order History',
+    'Favorite Events',
+    'My Profile',
+    'Settings',
+    'Log out',
+  ]);
   menuItem('Log out');
+  wait('location.pathname === "/login"');
+  open('/');
   browser('wait', 'header a[href="/login"]');
   assert.ok(evaluate('document.querySelector("header").textContent.includes("Partner with us")'));
   open('/account/tickets');

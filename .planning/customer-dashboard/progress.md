@@ -24,3 +24,13 @@
 - Dedicated shell, overview, wallet, transaction detail/history, profile, email-reset security, settings and truthful favorites availability are implemented. Local Poppins is scoped to customer UI.
 - Browser verification exposed and fixed duplicate unnamed aside landmarks and success-toast contrast. Header/account regression now passes with the dedicated customer navigation.
 - Full API regression: 101 tests pass. Lint/types and API/web production build pass. Customer interaction suite is still being completed.
+
+## Final verification and delivery
+
+- pnpm check passes: lint, shared/API/web types, 101 API tests and both production builds.
+- Customer E2E passes 40 route/viewport/accessibility combinations plus real date/search/status filtering, reload/Back, QR regeneration and print invocation, used-ticket non-reuse state, profile validation/save, email reset request, language persistence, loading/error/empty states and retry, logout and route protection. Header/account regression also passes.
+- Actual desktop/mobile screens visually inspected. Tightened the next-event poster to 200px on desktop and kept mobile ticket anatomy full-width. All checked widths have no horizontal overflow; normal interactions have zero runtime errors.
+- Independent new-password/confirmation visibility controls checked on the existing reset form at 320px; no password submission made during that UI-only check.
+- All browser test fixtures and the separate visual-inspection account/orders/mail/QR files were cleaned up; inventory belonging to their purchases/reservations was released.
+- Changes were committed and pushed in groups to origin/main: c35c32e (approved design), 48eb9b0 (private reads), 84b890b (owned ticket detail and API docs), 125959f (customer UI). Final QA artifacts and planning record are delivered in the final test/documentation commit.
+- Existing checkout-customer-fields.tsx local edit stays outside task commits. No database schema migration, public marketplace redesign, admin/organizer changes or payment/check-in write-flow changes were introduced by this task.
