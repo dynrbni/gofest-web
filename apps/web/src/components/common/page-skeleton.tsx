@@ -105,21 +105,55 @@ function WorkspaceSkeleton({ pathname }: { pathname: string }) {
   );
 }
 
-export function PageSkeleton({ pathname }: { pathname: string }) {
-  if (/^\/(login|register|forgot-password|reset-password)$/.test(pathname))
-    return (
-      <div className="auth-page">
-        <div className="auth-container">
-          <Skeleton className="hidden aspect-[3/2] w-full rounded-3xl md:block" />
-          <div className="w-full space-y-8">
-            <Skeleton className="h-11 w-40" />
+function AuthSkeleton({ pathname }: { pathname: string }) {
+  const register = pathname.replace(/\/+$/, '') === '/register';
+  return (
+    <div
+      className={`auth-page${register ? ' auth-page-compact' : ''}`}
+      data-auth-view={register ? 'register' : 'login'}
+    >
+      <div className="auth-container">
+        <div className="auth-form-slot">
+          <div className="auth-form-panel">
+            <div className="auth-form-header">
+              <Skeleton className="h-11 w-36" />
+              <Skeleton className="h-11 w-24 rounded-full" />
+            </div>
             <HeadingSkeleton />
-            <FormSkeleton />
-            <Skeleton className="mx-auto h-4 w-2/3" />
+            <div className="auth-form-card space-y-4">
+              <div className={register ? 'grid grid-cols-2 gap-4' : ''}>
+                {Array.from({ length: register ? 2 : 1 }, (_, index) => (
+                  <div key={index} className="space-y-2">
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-11 w-full" />
+                  </div>
+                ))}
+              </div>
+              {Array.from({ length: register ? 2 : 1 }, (_, index) => (
+                <div key={index} className="space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-11 w-full" />
+                </div>
+              ))}
+              {!register ? <Skeleton className="ml-auto h-4 w-28" /> : null}
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="mx-auto h-4 w-2/3" />
+            </div>
           </div>
         </div>
+        <div className="auth-mascot">
+          <Skeleton className="auth-mascot-art rounded-3xl" />
+          <Skeleton className="h-6 w-5/6" />
+          <Skeleton className="mt-4 h-4 w-3/4" />
+        </div>
       </div>
-    );
+    </div>
+  );
+}
+
+export function PageSkeleton({ pathname }: { pathname: string }) {
+  if (/^\/(login|register|forgot-password|reset-password)\/?$/.test(pathname))
+    return <AuthSkeleton pathname={pathname} />;
 
   if (/^\/(admin|organizer|account|staff)(\/|$)/.test(pathname))
     return <WorkspaceSkeleton pathname={pathname} />;
@@ -207,7 +241,7 @@ export function PageSkeleton({ pathname }: { pathname: string }) {
 }
 
 export function SiteSkeleton({ pathname }: { pathname: string }) {
-  if (/^\/(login|register|forgot-password|reset-password)$/.test(pathname))
+  if (/^\/(login|register|forgot-password|reset-password)\/?$/.test(pathname))
     return <PageSkeleton pathname={pathname} />;
   const checkout = /^\/(checkout|order)\//.test(pathname);
   return (

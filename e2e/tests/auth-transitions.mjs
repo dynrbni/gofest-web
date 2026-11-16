@@ -41,7 +41,18 @@ function startAudit() {
       if (audit.stopped) return;
       audit.loading ||= !!document.querySelector(loading);
       audit.frames.push({ path: location.pathname,
-        left: document.querySelector('.auth-form-slot')?.getBoundingClientRect().left,
+        left: window.__authSlot.getBoundingClientRect().left,
+        loading: !!document.querySelector('[data-route-loading]'),
+        blocked: !!window.__authMain.closest('[inert]'),
+        skeletonInteractive: !!document.querySelector('[data-route-loading] :is(a,button,input,select)'),
+        skeletonFits: !document.querySelector('[data-route-loading]') || document.querySelector('[data-route-loading] .auth-page').getBoundingClientRect().height <= innerHeight + 1,
+        skeletonSide: (() => {
+          const root = document.querySelector('[data-route-loading] .auth-page');
+          if (!root || innerWidth < 768) return true;
+          const form = root.querySelector('.auth-form-slot').getBoundingClientRect();
+          const art = root.querySelector('.auth-mascot').getBoundingClientRect();
+          return root.dataset.authView === 'register' ? form.right < art.left : form.left > art.right;
+        })(),
         headings: document.querySelectorAll('main h1').length,
         forms: document.querySelectorAll('main form').length,
         overflow: document.documentElement.scrollWidth > innerWidth + 1 });
@@ -52,7 +63,7 @@ function startAudit() {
 }
 function endAudit(path) {
   wait(
-    `location.pathname === ${JSON.stringify(path)} && performance.now() - window.__authAudit.started > 750`,
+    `location.pathname === ${JSON.stringify(path)} && !document.querySelector('[data-route-loading], [data-page-loading]') && performance.now() - window.__authAudit.started > 750`,
   );
   const audit = evaluate(`(() => {
     window.__authAudit.stopped = true;
@@ -61,7 +72,18 @@ function endAudit(path) {
       sameMain: window.__authMain === document.querySelector('main'),
       sameSlot: window.__authSlot === document.querySelector('.auth-form-slot') };
   })()`);
-  assert.equal(audit.loading, false, 'Switching forms never inserts a skeleton');
+  assert.equal(audit.loading, true, 'Switching forms shows a loading skeleton');
+  const loadingFrames = audit.frames.filter((frame) => frame.loading);
+  assert.ok(loadingFrames.length > 0, 'The skeleton is painted during navigation');
+  assert.ok(
+    loadingFrames.every((frame) => frame.blocked),
+    'Hidden forms cannot be interacted with',
+  );
+  assert.ok(loadingFrames.every((frame) => !frame.skeletonInteractive));
+  assert.ok(
+    loadingFrames.every((frame) => frame.skeletonFits && frame.skeletonSide),
+    'Skeleton fits the viewport and follows the destination form side',
+  );
   assert.equal(audit.sameMain && audit.sameSlot, true, 'The shared layout persists');
   assert.ok(audit.frames.length > 4, 'Observe actual frames during the switch');
   assert.ok(audit.frames.every((frame) => frame.headings === 1 && frame.forms === 1));
@@ -76,6 +98,11 @@ function endAudit(path) {
   assert.equal(
     evaluate('getComputedStyle(document.querySelector(".auth-form-slot")).transform'),
     'none',
+  );
+  assert.equal(
+    evaluate('getComputedStyle(document.querySelector(".auth-form-content")).animationName'),
+    'none',
+    'The loaded form appears without a fade or slide',
   );
 }
 function layout(view, width, height) {
@@ -133,7 +160,7 @@ try {
     endAudit('/login');
     layout('login', width, height);
     process.stdout.write(
-      `PASS instant column switch, distinct poses, no skeleton, accessibility at ${width}px\n`,
+      `PASS skeleton switch, destination layout, distinct poses, accessibility at ${width}px\n`,
     );
   }
   browser('set', 'viewport', '1440', '900');

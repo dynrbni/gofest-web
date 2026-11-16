@@ -1,5 +1,11 @@
 # Progress
 
+## Restore auth skeleton navigation, 2026-11-16
+
+- Followed the final user correction: restored the existing 320ms route skeleton for auth navigation and removed auth content/art fades. Login remains right and register left, with distinct mascot poses.
+- Auth placeholders now follow the destination columns and field rows, including logo/language header; the white canvas has no extra form box, navbar or footer. Mobile hides mascot placeholders. Real forms stay hidden and inert while the skeleton is visible; reduced motion disables pulsing.
+- Verification: five-width auth frame/navigation/accessibility suite, public/auth loading regression, web build/TypeScript and scoped ESLint. See docs/qa/auth-transitions-2026-11-16.md for the final behavior and checks.
+
 ## Calmer authentication switching, 2026-11-16
 
 - Removed the large column-crossing animation following user feedback. Login remains on the right and register on the left through direct CSS grid placement. A brief 140ms opacity fade keeps the new form visible and usable immediately; reduced motion disables the fade.

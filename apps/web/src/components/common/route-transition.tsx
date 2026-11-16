@@ -8,16 +8,12 @@ export function RouteTransition({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   const [readyPath, setReadyPath] = useState<string | null>(null);
   const auth = authPaths.has(pathname.replace(/\/+$/, ''));
-  const pending = !auth && readyPath !== pathname;
+  const pending = readyPath !== pathname;
 
   useEffect(() => {
-    if (auth) {
-      setReadyPath(pathname);
-      return;
-    }
     const timer = window.setTimeout(() => setReadyPath(pathname), 320);
     return () => window.clearTimeout(timer);
-  }, [pathname, auth]);
+  }, [pathname]);
 
   return (
     <>

@@ -135,20 +135,7 @@ try {
     for (const width of [320, 1440]) {
       browser('set', 'viewport', String(width), '900');
       open(path);
-      if (['/login', '/register', '/forgot-password'].includes(path)) {
-        assert.equal(
-          audit().pages.includes(path),
-          false,
-          `${path}: auth forms render without a runtime skeleton`,
-        );
-        assert.equal(
-          audit().routes.includes(path),
-          false,
-          `${path}: auth routes skip the loading overlay`,
-        );
-      } else {
-        assert.ok(audit().pages.includes(path), `${path}: page skeleton appears at ${width}px`);
-      }
+      assert.ok(audit().pages.includes(path), `${path}: page skeleton appears at ${width}px`);
       assert.equal(audit().moving, false, 'Reduced motion disables every skeleton animation');
       assert.equal(audit().interactive, false, 'Skeletons expose no fake interactive controls');
       assert.equal(audit().overflow, false, `${path}: skeleton fits ${width}px`);
@@ -165,11 +152,8 @@ try {
   ready();
   link('Masuk');
   ready();
-  assert.equal(
-    audit().routes.includes('/login'),
-    false,
-    'Switching auth forms never shows a route skeleton',
-  );
+  assert.ok(audit().routes.includes('/register'), 'Switching to register shows a route skeleton');
+  assert.ok(audit().routes.includes('/login'), 'Returning to login shows a route skeleton');
   assert.deepEqual(browser('errors').errors, [], 'No browser runtime errors');
 
   browser('network', 'route', '**/api/v1/events*', '--abort');
