@@ -1,5 +1,12 @@
 # Progress
 
+## Persistent account shell and shared dropdown, 2026-11-16
+
+- Kept the account sidebar/header mounted through SPA navigation and session checks, with lazy page/session skeletons confined to the main content. Private pages remain guarded by RequireAuth.
+- Added collapse beside the brand: an 88px rail retains the original G icon and menu icons, accessible labels and keyboard expansion. Tightened Overview spacing, aligned logout with navigation, and replaced the sidebar promotion with Kembali ke Buyer Area.
+- Unified home and dashboard avatar menus into one component with identical navigation, styles, dimensions and logout behavior.
+- Verification passed: 40 customer route/viewport/accessibility checks, persistent shell and real reload regressions, shared-dropdown/header suite, public loading and five-width auth transitions, production build, scoped lint and formatting. See docs/qa/account-shell-2026-11-16.md.
+
 ## Mobile discovery, event detail and checkout, 2026-11-16
 
 - Converted home event/category/city collections to horizontal shelves below 768px. Removed the 400px mobile hero height in favor of landscape proportions; kept desktop grids.

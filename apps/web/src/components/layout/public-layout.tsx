@@ -1,4 +1,3 @@
-
 import {
   ArrowRight,
   Handshake,
@@ -16,14 +15,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/lib/language';
 import { RouteContent } from '@/components/common/route-content';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { UserAccountMenu } from '@/components/common/user-account-menu';
 import { useAuth } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 import { Logo } from '@/components/common/brand-logo';
@@ -31,8 +23,7 @@ import { LanguageMenu } from '@/components/common/language-menu';
 
 function UserMenu() {
   const { t } = useLanguage();
-  const { user, logout, isLoading } = useAuth();
-  const navigate = useNavigate();
+  const { user, isLoading } = useAuth();
 
   if (isLoading) {
     return (
@@ -57,65 +48,7 @@ function UserMenu() {
     );
   }
 
-  const initials = user.name
-    .split(' ')
-    .slice(0, 2)
-    .map((part) => part.charAt(0))
-    .join('')
-    .toUpperCase();
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          className="flex size-11 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-blue-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-          aria-label={t(`Menu akun ${user.name}`, `Account menu for ${user.name}`)}
-        >
-          <span className="flex size-11 items-center justify-center rounded-full bg-blue-50 text-sm font-semibold text-blue-700">
-            {initials}
-          </span>
-        </button>
-      </DropdownMenuTrigger>
-
-      <DropdownMenuContent align="end" className="w-64 max-w-[calc(100vw-32px)] p-2">
-        <DropdownMenuLabel>
-          <span className="block break-words">{user.name}</span>
-          <span className="block truncate text-xs font-normal text-muted-foreground">
-            {user.email}
-          </span>
-        </DropdownMenuLabel>
-
-        <DropdownMenuSeparator />
-
-        <DropdownMenuItem onSelect={() => navigate('/account/profile')}>
-          <User className="mr-2 size-4" aria-hidden />
-          {t('Profil Saya', 'My Profile')}
-        </DropdownMenuItem>
-
-        <DropdownMenuItem onSelect={() => navigate('/account/orders')}>
-          <ReceiptText className="mr-2 size-4" aria-hidden />
-          {t('Transaksi Saya', 'My Transactions')}
-        </DropdownMenuItem>
-
-        <DropdownMenuItem onSelect={() => navigate('/account/tickets')}>
-          <Ticket className="mr-2 size-4" aria-hidden />
-          {t('Tiket Saya', 'My Tickets')}
-        </DropdownMenuItem>
-
-        <DropdownMenuSeparator />
-
-        <DropdownMenuItem
-          onSelect={() => {
-            void logout().then(() => navigate('/'));
-          }}
-          className="text-rose-700"
-        >
-          {t('Keluar', 'Log out')}
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
+  return <UserAccountMenu />;
 }
 
 function HeaderSearch({
@@ -175,9 +108,7 @@ export function PublicLayout() {
   const { user, logout, isLoading } = useAuth();
 
   const creatorLink =
-    user && user.roles.includes('ORGANIZER')
-      ? '/organizer/events/new'
-      : '/organizer/apply';
+    user && user.roles.includes('ORGANIZER') ? '/organizer/events/new' : '/organizer/apply';
 
   useEffect(() => {
     setMenuOpen(false);
@@ -203,9 +134,9 @@ export function PublicLayout() {
         {t('Langsung ke konten', 'Skip to content')}
       </a>
 
-    <header className="public-header sticky top-0 z-40 bg-white">
-      <div className="container flex h-16 min-h-16 shrink-0 items-center gap-3 py-0 sm:gap-5 lg:gap-7 md:h-[70px] md:min-h-[70px]">
-        <Logo />
+      <header className="public-header sticky top-0 z-40 bg-white">
+        <div className="container flex h-16 min-h-16 shrink-0 items-center gap-3 py-0 sm:gap-5 lg:gap-7 md:h-[70px] md:min-h-[70px]">
+          <Logo />
           <HeaderSearch />
 
           {/* Desktop Navigation Items */}
@@ -329,12 +260,8 @@ export function PublicLayout() {
                   </span>
 
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-bold text-slate-900">
-                      {user.name}
-                    </div>
-                    <div className="truncate text-xs text-slate-500">
-                      {user.email}
-                    </div>
+                    <div className="truncate text-sm font-bold text-slate-900">{user.name}</div>
+                    <div className="truncate text-xs text-slate-500">{user.email}</div>
                   </div>
                 </div>
 
@@ -432,11 +359,7 @@ export function PublicLayout() {
         ) : null}
       </header>
 
-      <div
-        id="page-content"
-        tabIndex={-1}
-        className="min-w-0 flex-1 focus:outline-none"
-      >
+      <div id="page-content" tabIndex={-1} className="min-w-0 flex-1 focus:outline-none">
         <RouteContent />
       </div>
 
@@ -455,15 +378,12 @@ export function PublicLayout() {
               </p>
 
               <Link to="/events" className="text-link mt-4">
-                {t('Temukan acara', 'Find events')}{' '}
-                <ArrowRight className="size-4" aria-hidden />
+                {t('Temukan acara', 'Find events')} <ArrowRight className="size-4" aria-hidden />
               </Link>
             </div>
 
             <div>
-              <h2 className="text-sm font-semibold">
-                {t('Jelajahi Gofest', 'Explore Gofest')}
-              </h2>
+              <h2 className="text-sm font-semibold">{t('Jelajahi Gofest', 'Explore Gofest')}</h2>
 
               <ul className="footer-links">
                 <li>
@@ -478,38 +398,26 @@ export function PublicLayout() {
                   </Link>
                 </li>
                 <li>
-                  <Link to={creatorLink}>
-                    {t('Jadi Partner Kami', 'Partner with us')}
-                  </Link>
+                  <Link to={creatorLink}>{t('Jadi Partner Kami', 'Partner with us')}</Link>
                 </li>
               </ul>
             </div>
 
             <div>
-              <h2 className="text-sm font-semibold">
-                {t('Informasi', 'Information')}
-              </h2>
+              <h2 className="text-sm font-semibold">{t('Informasi', 'Information')}</h2>
 
               <ul className="footer-links">
                 <li>
-                  <Link to="/terms">
-                    {t('Syarat & ketentuan', 'Terms & conditions')}
-                  </Link>
+                  <Link to="/terms">{t('Syarat & ketentuan', 'Terms & conditions')}</Link>
                 </li>
                 <li>
-                  <Link to="/privacy">
-                    {t('Kebijakan privasi', 'Privacy policy')}
-                  </Link>
+                  <Link to="/privacy">{t('Kebijakan privasi', 'Privacy policy')}</Link>
                 </li>
                 <li>
-                  <Link to="/organizer/apply">
-                    {t('Menjadi organizer', 'Become an organizer')}
-                  </Link>
+                  <Link to="/organizer/apply">{t('Menjadi organizer', 'Become an organizer')}</Link>
                 </li>
                 <li>
-                  <Link to="/account/profile">
-                    {t('Pengaturan akun', 'Account settings')}
-                  </Link>
+                  <Link to="/account/profile">{t('Pengaturan akun', 'Account settings')}</Link>
                 </li>
               </ul>
             </div>

@@ -27,8 +27,16 @@ const open = (path) => {
   browser('wait', 'main h1');
 };
 const button = (name) => browser('find', 'role', 'button', 'click', '--name', name, '--exact');
-const menuItem = (name) => browser('find', 'role', 'menuitem', 'click', '--name', name, '--exact');
-const accountMenu = () => browser('click', 'header button[aria-label^="Menu akun"]');
+const menuItem = (name) => {
+  const account = evaluate('!!document.querySelector(".user-account-menu[data-state=open]")');
+  browser('find', 'role', 'menuitem', 'click', '--name', name, '--exact');
+  if (account) wait('!document.querySelector("[role=menu]")');
+};
+const accountMenu = () => {
+  wait('!document.querySelector("[role=menu]")');
+  browser('click', 'header button[aria-label^="Menu akun"]');
+  browser('wait', '[role=menu][data-state=open]');
+};
 const menuItems = () =>
   evaluate(
     '[...document.querySelectorAll("[role=menuitem]")].map(item => item.textContent.trim())',
@@ -107,7 +115,25 @@ try {
   assert.ok(avatar.text.length <= 2, 'Only initials are visible in the avatar');
   assert.equal(avatar.svg, 0, 'Avatar has no dropdown arrow');
   accountMenu();
-  assert.deepEqual(menuItems(), ['Profil Saya', 'Transaksi Saya', 'Tiket Saya', 'Keluar']);
+  const sharedItems = [
+    'Dashboard',
+    'Tiket Saya',
+    'Riwayat Pesanan',
+    'Event Favorit',
+    'Profil Saya',
+    'Pengaturan',
+    'Keluar',
+  ];
+  assert.deepEqual(menuItems(), sharedItems);
+  const menuStyle = () =>
+    evaluate(`(() => {
+    const menu = document.querySelector('.user-account-menu');
+    const item = menu.querySelector('[role=menuitem]');
+    return {width: menu.getBoundingClientRect().width, font: getComputedStyle(menu).fontFamily,
+      size: getComputedStyle(item).fontSize, height: item.getBoundingClientRect().height,
+      padding: getComputedStyle(menu).padding, radius: getComputedStyle(menu).borderRadius};
+  })()`);
+  const homeMenuStyle = menuStyle();
   assert.equal(
     browser('a11y', '--selector', '[role=menu]').counts.violations,
     0,
@@ -121,6 +147,12 @@ try {
   wait('location.pathname === "/account/profile"');
   browser('wait', '#account-name');
   accountMenu();
+  assert.deepEqual(menuItems(), sharedItems, 'Home and dashboard use the same menu items');
+  assert.deepEqual(
+    menuStyle(),
+    homeMenuStyle,
+    'Home and dashboard dropdown dimensions and typography match',
+  );
   menuItem('Riwayat Pesanan');
   wait('location.pathname === "/account/orders"');
   browser('wait', '--text', 'Riwayat Pesanan');
@@ -194,7 +226,7 @@ try {
     'Log out',
   ]);
   menuItem('Log out');
-  wait('location.pathname === "/login"');
+  wait('location.pathname === "/"');
   open('/');
   browser('wait', 'header a[href="/login"]');
   assert.ok(evaluate('document.querySelector("header").textContent.includes("Partner with us")'));

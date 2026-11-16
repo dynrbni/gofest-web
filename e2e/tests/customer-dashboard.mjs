@@ -1,12 +1,35 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 const base = process.env.QA_BASE_URL ?? 'http://localhost:5173';
 const session = `gofest-customer-${process.pid}`;
 const email = `qa-customer-${Date.now()}@example.com`;
 const outputDir = '/tmp/gofest-customer-qa';
 mkdirSync(outputDir, { recursive: true });
+const temporary = mkdtempSync(join(tmpdir(), 'gofest-account-shell-'));
+const init = join(temporary, 'observe.js');
+writeFileSync(
+  init,
+  `
+  window.__accountLoading = { content: false, outside: false };
+  new MutationObserver(() => {
+    if (!location.pathname.startsWith('/account') || !document.querySelector('.customer-account')) return;
+    for (const node of document.querySelectorAll('[data-page-loading], [data-route-loading], [aria-busy=true]')) {
+      if (node.closest('#account-main')) window.__accountLoading.content = true;
+      else window.__accountLoading.outside = true;
+    }
+  }).observe(document, { childList: true, subtree: true, attributes: true, attributeFilter: ['aria-busy'] });
+  const originalFetch = window.fetch;
+  window.fetch = async (...args) => {
+    if (location.pathname.startsWith('/account') && String(args[0]).includes('/auth/me'))
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    return originalFetch(...args);
+  };
+`,
+);
 function fixture(action) {
   return execFileSync(
     'pnpm',
@@ -71,6 +94,7 @@ try {
       .find((line) => line.startsWith('FIXTURE:'))
       .slice(8),
   );
+  browser('--init-script', init, 'open');
   browser('set', 'viewport', '1440', '1000');
   browser('open', new URL('/login?next=/account', base).href);
   browser('wait', '#login-email');
@@ -82,6 +106,149 @@ try {
   assert.deepEqual(
     evaluate('[...document.querySelectorAll(".account-stat strong")].map(el=>el.textContent)'),
     ['3', '1', '3'],
+  );
+  evaluate(`(() => {
+    window.__accountShell = {
+      sidebar: document.querySelector('.account-sidebar'),
+      header: document.querySelector('.account-topbar'),
+      document: document.documentElement,
+    };
+    const originalFetch = window.fetch;
+    window.fetch = async (...args) => {
+      if (String(args[0]).includes('/account/history')) await new Promise(resolve => setTimeout(resolve, 1200));
+      return originalFetch(...args);
+    };
+  })()`);
+  assert.equal(
+    evaluate('document.querySelector(".account-buyer-link").textContent.trim()'),
+    'Kembali ke Buyer Area',
+  );
+  assert.equal(
+    evaluate('document.querySelector(".account-buyer-link").getAttribute("href")'),
+    '/events',
+  );
+  const alignment = evaluate(`(() => {
+    const navigation = document.querySelector('.account-nav-link').getBoundingClientRect();
+    const logout = document.querySelector('.account-logout').getBoundingClientRect();
+    return {navigation: navigation.x, logout: logout.x, width: navigation.width, logoutWidth: logout.width};
+  })()`);
+  assert.equal(alignment.logout, alignment.navigation, 'Logout aligns with sidebar links');
+  assert.equal(alignment.logoutWidth, alignment.width, 'Logout matches sidebar link width');
+  browser('click', '.account-navigation a[href="/account/orders"]');
+  wait(
+    'location.pathname === "/account/orders" && !!document.querySelector("#account-main [aria-busy=true]")',
+  );
+  assert.equal(
+    evaluate(`document.querySelector('.account-sidebar') === window.__accountShell.sidebar &&
+      document.querySelector('.account-topbar') === window.__accountShell.header &&
+      document.documentElement === window.__accountShell.document &&
+      !document.querySelector('[data-route-loading]') &&
+      !document.querySelector('.account-sidebar [aria-busy=true]') &&
+      !document.querySelector('.customer-account').closest('[inert]') &&
+      getComputedStyle(document.querySelector('.account-sidebar')).visibility === 'visible'`),
+    true,
+    'SPA loading updates content while the original sidebar and header stay visible and interactive',
+  );
+  wait('document.querySelectorAll(".account-order-row").length === 3');
+  assert.equal(
+    evaluate('!!document.querySelector(".account-brand .account-sidebar-toggle")'),
+    true,
+    'Collapse control is next to the Gofest wordmark',
+  );
+  assert.ok(
+    evaluate(
+      'document.querySelector(".account-nav-group").getBoundingClientRect().top - document.querySelector(".account-brand").getBoundingClientRect().bottom',
+    ) <= 8,
+    'Overview sits directly below the brand row',
+  );
+  button('Ciutkan sidebar');
+  assert.equal(
+    evaluate('getComputedStyle(document.querySelector(".account-sidebar")).display'),
+    'flex',
+  );
+  assert.equal(
+    evaluate('document.querySelector(".account-workspace").getBoundingClientRect().left'),
+    88,
+  );
+  assert.equal(
+    evaluate('document.querySelector(".account-sidebar-toggle").getAttribute("aria-expanded")'),
+    'false',
+  );
+  assert.equal(
+    evaluate('document.querySelector(".account-sidebar").getBoundingClientRect().width'),
+    88,
+  );
+  assert.equal(
+    evaluate('getComputedStyle(document.querySelector(".account-wordmark")).display'),
+    'none',
+  );
+  assert.equal(
+    evaluate('getComputedStyle(document.querySelector(".account-iconmark")).display'),
+    'flex',
+  );
+  assert.equal(
+    evaluate(
+      '[...document.querySelectorAll(".account-sidebar .account-nav-label")].every(node => getComputedStyle(node).display === "none")',
+    ),
+    true,
+  );
+  assert.equal(
+    evaluate(
+      '[...document.querySelectorAll(".account-navigation a")].every(node => !!node.getAttribute("aria-label"))',
+    ),
+    true,
+    'Icon navigation keeps accessible labels',
+  );
+  browser('click', '.user-account-trigger');
+  browser('find', 'role', 'menuitem', 'click', '--name', 'Tiket Saya', '--exact');
+  wait(
+    'location.pathname === "/account/tickets" && !!document.querySelector("main h1") && !document.querySelector("main [aria-busy=true]")',
+  );
+  assert.equal(
+    evaluate('getComputedStyle(document.querySelector(".account-sidebar")).display'),
+    'flex',
+    'Collapsed sidebar stays visible across account navigation',
+  );
+  assert.equal(
+    evaluate('document.querySelector(".account-sidebar").getBoundingClientRect().width'),
+    88,
+    'Sidebar stays collapsed after navigation',
+  );
+  assert.equal(
+    evaluate('document.querySelector(".account-sidebar") === window.__accountShell.sidebar'),
+    true,
+  );
+  browser('focus', '.account-sidebar-toggle');
+  browser('press', 'Enter');
+  assert.equal(
+    evaluate('getComputedStyle(document.querySelector(".account-sidebar")).display'),
+    'flex',
+    'Sidebar can be expanded with the keyboard',
+  );
+  assert.equal(
+    evaluate('document.querySelector(".account-sidebar").getBoundingClientRect().width'),
+    248,
+  );
+  browser('click', '.account-navigation a[href="/account"]');
+  wait(
+    'location.pathname === "/account" && document.querySelectorAll(".account-stat strong").length === 3',
+  );
+  browser('reload');
+  wait(
+    '!!document.querySelector(".account-sidebar") && !!document.querySelector("#account-main [data-page-loading]")',
+  );
+  assert.equal(
+    evaluate(
+      'document.querySelectorAll(".account-sidebar [class*=animate-pulse], .account-topbar [class*=animate-pulse]").length',
+    ),
+    0,
+    'A real reload shows the account shell while the session is checked',
+  );
+  wait('document.querySelectorAll(".account-stat strong").length === 3');
+  assert.deepEqual(
+    evaluate('window.__accountLoading'),
+    { content: true, outside: false },
+    'Reload skeletons stay inside page content',
   );
   assert.equal(evaluate('document.querySelector("h1").textContent.includes("Pengguna")'), true);
   assert.equal(
@@ -274,5 +441,6 @@ try {
     } catch {
       /* The failure may have already closed the browser session. */
     }
+    rmSync(temporary, { recursive: true, force: true });
   }
 }

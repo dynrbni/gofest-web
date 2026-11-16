@@ -72,15 +72,29 @@ function CatalogSkeleton() {
   );
 }
 
-function WorkspaceSkeleton({ pathname }: { pathname: string }) {
+function WorkspaceSkeleton({
+  pathname,
+  contentOnly = false,
+}: {
+  pathname: string;
+  contentOnly?: boolean;
+}) {
   const form = /\/(settings|profile|new|edit|apply)$/.test(pathname);
   return (
-    <div className="container grid min-h-[70vh] gap-8 py-8 lg:grid-cols-[220px_minmax(0,1fr)]">
-      <div className="hidden space-y-5 lg:block">
-        {Array.from({ length: 6 }, (_, index) => (
-          <Skeleton key={index} className="h-11 w-full" />
-        ))}
-      </div>
+    <div
+      className={
+        contentOnly
+          ? 'min-w-0'
+          : 'container grid min-h-[70vh] gap-8 py-8 lg:grid-cols-[220px_minmax(0,1fr)]'
+      }
+    >
+      {!contentOnly ? (
+        <div className="hidden space-y-5 lg:block">
+          {Array.from({ length: 6 }, (_, index) => (
+            <Skeleton key={index} className="h-11 w-full" />
+          ))}
+        </div>
+      ) : null}
       <div className="min-w-0 space-y-8">
         <HeadingSkeleton />
         {form ? (
@@ -158,7 +172,10 @@ export function PageSkeleton({ pathname }: { pathname: string }) {
   if (/^\/(login|register|forgot-password|reset-password)\/?$/.test(pathname))
     return <AuthSkeleton pathname={pathname} />;
 
-  if (/^\/(admin|organizer|account|staff)(\/|$)/.test(pathname))
+  if (/^\/account(\/|$)/.test(pathname))
+    return <WorkspaceSkeleton pathname={pathname} contentOnly />;
+
+  if (/^\/(admin|organizer|staff)(\/|$)/.test(pathname))
     return <WorkspaceSkeleton pathname={pathname} />;
 
   if (/^\/(checkout|order|ticket)\//.test(pathname))

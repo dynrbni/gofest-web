@@ -10,6 +10,7 @@ import { LoginPage } from '@/pages/auth/login';
 import { RegisterPage } from '@/pages/auth/register';
 import { ForgotPasswordPage } from '@/pages/auth/forgot-password';
 import { ResetPasswordPage } from '@/pages/auth/reset-password';
+import { AccountLayout } from '@/pages/account/account-layout';
 
 function lazyPage<Props extends object>(load: () => Promise<ComponentType<Props>>) {
   return lazy(async () => ({ default: await load() }));
@@ -18,9 +19,6 @@ function lazyPage<Props extends object>(load: () => Promise<ComponentType<Props>
 const HomePage = lazyPage(() => import('@/pages/public/home').then((m) => m.HomePage));
 const AccountTicketsPage = lazyPage(() =>
   import('@/pages/account/tickets').then((m) => m.AccountTicketsPage),
-);
-const AccountLayout = lazyPage(() =>
-  import('@/pages/account/account-layout').then((m) => m.AccountLayout),
 );
 const OrganizerShell = lazyPage(() =>
   import('@/pages/organizer/organizer-shell').then((m) => m.OrganizerShell),
@@ -193,11 +191,7 @@ export const router = createBrowserRouter([
       },
       {
         path: '/account',
-        element: (
-          <RequireAuth>
-            <AccountLayout />
-          </RequireAuth>
-        ),
+        element: <AccountLayout />,
         children: [
           { index: true, element: <AccountOverviewPage /> },
           { path: 'orders', element: <AccountOrdersPage /> },

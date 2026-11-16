@@ -2,30 +2,24 @@ import { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import {
   ArrowUpRight,
-  ChevronDown,
   Heart,
   House,
   LogOut,
+  PanelLeftClose,
+  PanelLeftOpen,
   ReceiptText,
   Settings,
   Ticket,
   UserRound,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useAuth } from '@/lib/auth';
+import { RequireAuth, useAuth } from '@/lib/auth';
 import { useLanguage } from '@/lib/language';
 import { errorMessage } from '@/lib/api';
 import { Logo } from '@/components/common/brand-logo';
 import { LanguageMenu } from '@/components/common/language-menu';
 import { RouteContent } from '@/components/common/route-content';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { AccountAvatar } from './account-components';
+import { UserAccountMenu } from '@/components/common/user-account-menu';
 import '@fontsource/poppins/latin-400.css';
 import '@fontsource/poppins/latin-500.css';
 import '@fontsource/poppins/latin-600.css';
@@ -36,6 +30,7 @@ export function AccountLayout() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [leaving, setLeaving] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const links = [
     { to: '/account', label: 'Dashboard', mobile: 'Home', icon: House },
     {
@@ -71,13 +66,42 @@ export function AccountLayout() {
     }
   }
   return (
-    <div className="customer-account">
+    <div className="customer-account" data-sidebar-collapsed={sidebarCollapsed}>
       <a href="#account-main" className="account-skip">
         {t('Langsung ke konten', 'Skip to content')}
       </a>
-      <aside className="account-sidebar no-print" aria-label={t('Area akun', 'Account area')}>
+      <aside
+        id="account-sidebar"
+        className="account-sidebar no-print"
+        aria-label={t('Area akun', 'Account area')}
+      >
         <div className="account-brand">
-          <Logo />
+          <Logo className="account-wordmark" />
+          <Link
+            to="/"
+            className="account-iconmark"
+            aria-label={t('Gofest, ke beranda', 'Gofest home')}
+          >
+            <img src="/assets/gofest-icon-192.png" alt="" width={192} height={192} />
+          </Link>
+          <button
+            type="button"
+            className="account-sidebar-toggle"
+            aria-label={
+              sidebarCollapsed
+                ? t('Perluas sidebar', 'Expand sidebar')
+                : t('Ciutkan sidebar', 'Collapse sidebar')
+            }
+            aria-expanded={!sidebarCollapsed}
+            aria-controls="account-sidebar"
+            onClick={() => setSidebarCollapsed((collapsed) => !collapsed)}
+          >
+            {sidebarCollapsed ? (
+              <PanelLeftOpen size={20} aria-hidden />
+            ) : (
+              <PanelLeftClose size={20} aria-hidden />
+            )}
+          </button>
         </div>
         <nav aria-label={t('Navigasi akun', 'Account navigation')} className="account-navigation">
           {links.map((item, index) => (
@@ -90,27 +114,40 @@ export function AccountLayout() {
               <NavLink
                 to={item.to}
                 end={item.to === '/account'}
+                aria-label={item.label}
+                title={sidebarCollapsed ? item.label : undefined}
                 className={({ isActive }) => `account-nav-link${isActive ? ' is-active' : ''}`}
               >
                 <item.icon size={19} aria-hidden />
-                {item.label}
+                <span className="account-nav-label">{item.label}</span>
               </NavLink>
             </div>
           ))}
         </nav>
         <div className="account-sidebar-footer">
-          <p>{t('Pengalaman berikutnya menantimu.', 'Your next experience awaits.')}</p>
-          <Link to="/events" className="account-text-link">
-            {t('Jelajahi event', 'Explore events')}
+          <Link
+            to="/events"
+            className="account-secondary account-buyer-link"
+            aria-label={t('Kembali ke Buyer Area', 'Back to Buyer Area')}
+            title={sidebarCollapsed ? t('Kembali ke Buyer Area', 'Back to Buyer Area') : undefined}
+          >
             <ArrowUpRight size={16} aria-hidden />
+            <span className="account-nav-label">
+              {t('Kembali ke Buyer Area', 'Back to Buyer Area')}
+            </span>
           </Link>
           <button
-            className="account-nav-link mt-6 w-full"
-            disabled={leaving}
+            type="button"
+            className="account-nav-link account-logout"
+            aria-label={leaving ? t('Keluar…', 'Signing out…') : t('Keluar', 'Log out')}
+            title={sidebarCollapsed ? t('Keluar', 'Log out') : undefined}
+            disabled={leaving || !user}
             onClick={() => void signOut()}
           >
             <LogOut size={19} aria-hidden />
-            {leaving ? t('Keluar…', 'Signing out…') : t('Keluar', 'Log out')}
+            <span className="account-nav-label">
+              {leaving ? t('Keluar…', 'Signing out…') : t('Keluar', 'Log out')}
+            </span>
           </button>
         </div>
       </aside>
@@ -128,47 +165,13 @@ export function AccountLayout() {
               <ArrowUpRight size={16} aria-hidden />
             </Link>
             <LanguageMenu />
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  className="account-user-trigger"
-                  aria-label={t(
-                    `Menu akun ${user?.name ?? ''}`,
-                    `Account menu for ${user?.name ?? ''}`,
-                  )}
-                >
-                  <AccountAvatar name={user?.name ?? ''} />
-                  <span className="account-user-name">{user?.name}</span>
-                  <ChevronDown size={16} aria-hidden />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="max-w-[calc(100vw-32px)]">
-                <p className="max-w-56 break-words px-2 py-2 text-sm font-medium">
-                  {user?.name}
-                  <span className="mt-1 block break-all text-xs font-normal text-slate-600">
-                    {user?.email}
-                  </span>
-                </p>
-                <DropdownMenuSeparator />
-                {links.map((item) => (
-                  <DropdownMenuItem key={item.to} asChild>
-                    <Link to={item.to}>
-                      <item.icon size={16} aria-hidden />
-                      {item.label}
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem disabled={leaving} onSelect={() => void signOut()}>
-                  <LogOut size={16} aria-hidden />
-                  {t('Keluar', 'Log out')}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <UserAccountMenu />
           </div>
         </header>
         <main id="account-main" className="account-main" tabIndex={-1}>
-          <RouteContent />
+          <RequireAuth>
+            <RouteContent />
+          </RequireAuth>
         </main>
       </div>
       <nav
