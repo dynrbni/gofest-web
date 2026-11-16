@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/lib/language';
-import { useReducedMotion } from '@/lib/hooks';
 
 type AuthView = 'login' | 'register';
 const views: AuthView[] = ['login', 'register'];
@@ -70,63 +69,18 @@ export function AuthLayout() {
   const { pathname } = useLocation();
   const { t } = useLanguage();
   const view = pathname.replace(/\/+$/, '') === '/register' ? 'register' : 'login';
-  const reducedMotion = useReducedMotion();
-  const previousView = useRef(view);
-  const container = useRef<HTMLDivElement>(null);
-  const formSlot = useRef<HTMLDivElement>(null);
-  const mascotSlot = useRef<HTMLElement>(null);
-  const animations = useRef<Animation[]>([]);
-
-  // Route changes animate; resizing the grid must settle immediately.
-  useLayoutEffect(() => {
-    const previous = previousView.current;
-    previousView.current = view;
-    const form = formSlot.current;
-    const mascot = mascotSlot.current;
-    const grid = container.current;
-    if (!form || !mascot || !grid) return;
-    const offset = form.offsetWidth + parseFloat(getComputedStyle(grid).columnGap);
-    const running = animations.current.some((animation) => animation.playState === 'running');
-    const from = running
-      ? [getComputedStyle(form).transform, getComputedStyle(mascot).transform]
-      : previous === 'register'
-        ? [`translateX(-${offset}px)`, `translateX(${offset}px)`]
-        : ['translateX(0)', 'translateX(0)'];
-    animations.current.forEach((animation) => animation.cancel());
-    if (previous === view || reducedMotion || !window.matchMedia('(min-width: 768px)').matches)
-      return;
-    animations.current = [form, mascot].map((element, index) =>
-      element.animate(
-        [{ transform: from[index] }, { transform: getComputedStyle(element).transform }],
-        { duration: 560, easing: 'cubic-bezier(0.22, 0.61, 0.36, 1)' },
-      ),
-    );
-  }, [view, reducedMotion]);
-
-  useEffect(() => {
-    const cancel = () => animations.current.forEach((animation) => animation.cancel());
-    window.addEventListener('resize', cancel);
-    return () => {
-      window.removeEventListener('resize', cancel);
-      cancel();
-    };
-  }, []);
   return (
     <main
       className={`auth-page${view === 'register' ? ' auth-page-compact' : ''}`}
       data-auth-view={view}
     >
-      <div ref={container} className="auth-container">
-        <div ref={formSlot} className="auth-form-slot">
+      <div className="auth-container">
+        <div className="auth-form-slot">
           <section className="auth-form-panel" aria-labelledby="auth-heading">
             <Outlet />
           </section>
         </div>
-        <aside
-          ref={mascotSlot}
-          className="auth-mascot"
-          aria-label={t('Maskot Gofest', 'Gofest mascots')}
-        >
+        <aside className="auth-mascot" aria-label={t('Maskot Gofest', 'Gofest mascots')}>
           <AuthMascots view={view} />
           <div>
             <p className="text-2xl font-semibold leading-snug text-blue-800">

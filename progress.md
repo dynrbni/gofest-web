@@ -1,5 +1,11 @@
 # Progress
 
+## Calmer authentication switching, 2026-11-16
+
+- Removed the large column-crossing animation following user feedback. Login remains on the right and register on the left through direct CSS grid placement. A brief 140ms opacity fade keeps the new form visible and usable immediately; reduced motion disables the fade.
+- Kept distinct decoded mascot poses, the persistent auth layout, and skeleton-free switching. Removed animation bookkeeping and resize listeners.
+- Verification: auth navigation/frame/accessibility checks pass at five viewport sizes, including Back, mobile, reduced motion, validation and password visibility. Web build/TypeScript and scoped ESLint pass. Full registration and public loading regressions are recorded in docs/qa/auth-transitions-2026-11-16.md.
+
 ## Auth column swap and mascot poses, 2026-11-16
 
 - Added two identity-preserving mascot pose assets using built-in imagegen: a welcoming otter/bunny/penguin group for login, and a high-five group for register. Original brand PNG and previous mascot assets remain unchanged. Asset paths, exact prompts and provenance are in docs/design/auth-mascot-poses.md.

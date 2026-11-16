@@ -50,7 +50,7 @@ function startAudit() {
     requestAnimationFrame(sample);
   })()`);
 }
-function endAudit(path, moving) {
+function endAudit(path) {
   wait(
     `location.pathname === ${JSON.stringify(path)} && performance.now() - window.__authAudit.started > 750`,
   );
@@ -69,11 +69,14 @@ function endAudit(path, moving) {
     audit.frames.every((frame) => !frame.overflow),
     'The animation never overflows the page',
   );
-  if (moving)
-    assert.ok(
-      new Set(audit.frames.map((frame) => Math.round(frame.left))).size > 4,
-      'Form visibly slides between columns',
-    );
+  assert.ok(
+    new Set(audit.frames.map((frame) => Math.round(frame.left))).size <= 2,
+    'Form switches directly to its column without travelling across the page',
+  );
+  assert.equal(
+    evaluate('getComputedStyle(document.querySelector(".auth-form-slot")).transform'),
+    'none',
+  );
 }
 function layout(view, width, height) {
   const bounds = evaluate(`(() => {
@@ -122,28 +125,28 @@ try {
     startAudit();
     browser('click', '.auth-switch a');
     browser('wait', '#register-name');
-    endAudit('/register', width >= 768);
+    endAudit('/register');
     layout('register', width, height);
     startAudit();
     browser('click', '.auth-switch a');
     browser('wait', '#login-email');
-    endAudit('/login', width >= 768);
+    endAudit('/login');
     layout('login', width, height);
     process.stdout.write(
-      `PASS login/right ↔ register/left, distinct poses, no skeleton, accessibility at ${width}px\n`,
+      `PASS instant column switch, distinct poses, no skeleton, accessibility at ${width}px\n`,
     );
   }
   browser('set', 'viewport', '1440', '900');
   startAudit();
   browser('back');
   browser('wait', '#register-name');
-  endAudit('/register', true);
+  endAudit('/register');
   layout('register', 1440, 900);
   browser('set', 'media', 'light', 'reduced-motion');
   startAudit();
   browser('click', '.auth-switch a');
   browser('wait', '#login-email');
-  endAudit('/login', false);
+  endAudit('/login');
   assert.equal(
     evaluate('getComputedStyle(document.querySelector(".auth-form-slot")).transitionDuration'),
     '0s',
