@@ -96,6 +96,12 @@ const adminNav: WorkspaceNavItem[] = [
   },
   {
     group: 'Content Management',
+    to: '/admin/featured-events',
+    label: 'Event Seru Untukmu',
+    icon: Calendar,
+  },
+  {
+    group: 'Content Management',
     to: '/admin/content?kind=HOMEPAGE',
     label: 'Homepage',
     icon: LayoutDashboard,
@@ -111,6 +117,23 @@ const adminNav: WorkspaceNavItem[] = [
   { group: 'Other', to: '/admin/notifications', label: 'Notifikasi', icon: Bell },
 ];
 const systemNav: WorkspaceNavItem[] = [
+  {
+    group: 'Website CMS',
+    to: '/admin/cms',
+    label: 'Website CMS',
+    icon: LayoutDashboard,
+    end: true,
+  },
+  { group: 'Website CMS', to: '/admin/cms/sections', label: 'Homepage', icon: Calendar },
+  { group: 'Website CMS', to: '/admin/cms/banners', label: 'Hero banners', icon: Image },
+  { group: 'Website CMS', to: '/admin/cms/pages', label: 'Halaman website', icon: FileText },
+  {
+    group: 'Website CMS',
+    to: '/admin/cms/navigation',
+    label: 'Navigasi website',
+    icon: ScrollText,
+  },
+  { group: 'Website CMS', to: '/admin/cms/settings', label: 'Branding & footer', icon: Settings },
   { group: 'Superadmin', to: '/admin/admins', label: 'Admin Management', icon: ShieldCheck },
   {
     group: 'Superadmin',

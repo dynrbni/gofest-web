@@ -34,7 +34,7 @@ function login(email, destination) {
   );
   browser('find', 'label', 'Email', 'fill', email);
   browser('find', 'label', 'Password', 'fill', process.env.QA_PASSWORD ?? 'admin123');
-  browser('find', 'role', 'button', 'click', '--name', 'Masuk', '--exact');
+  evaluate('document.querySelector("form").requestSubmit()');
   browser('wait', '--url', `**${destination}`);
   browser('wait', '--fn', 'Boolean(document.querySelector("main h1, main [role=alert]"))');
   browser('wait', '--fn', '!document.querySelector("main [aria-busy=true]")');

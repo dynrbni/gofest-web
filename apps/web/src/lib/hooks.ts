@@ -24,13 +24,19 @@ export function useDebouncedValue<T>(value: T, delay = 350): T {
   return debounced;
 }
 
-export function useDocumentTitle(title: string) {
+export function useDocumentTitle(title: string, { exact = false }: { exact?: boolean } = {}) {
   useEffect(() => {
-    document.title = title ? `${title} · Gofest` : 'Gofest';
+    const previousTitle = document.title;
+    const nextTitle = exact
+      ? title
+      : title
+        ? `${title} · ${document.documentElement.dataset.siteName ?? 'Gofest'}`
+        : 'Gofest';
+    document.title = nextTitle;
     return () => {
-      document.title = 'Gofest';
+      if (document.title === nextTitle) document.title = previousTitle;
     };
-  }, [title]);
+  }, [title, exact]);
 }
 
 export function useCountdown(target: string | null | undefined) {

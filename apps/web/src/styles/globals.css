@@ -951,3 +951,17 @@
     box-shadow: none !important;
   }
 }
+
+.public-shell .primary-action {
+  background-color: var(--cms-primary, #2563eb);
+  color: var(--cms-primary-ink, #fff);
+}
+.public-shell .text-link {
+  color: var(--cms-link, #1d4ed8);
+}
+.public-shell .section-title {
+  color: var(--cms-secondary-safe, #0f172a);
+}
+.public-shell .site-footer {
+  border-top: 3px solid var(--cms-secondary, #0f172a);
+}

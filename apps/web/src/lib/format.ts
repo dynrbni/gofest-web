@@ -1,8 +1,14 @@
-import { format, formatDistanceToNowStrict, isSameDay } from 'date-fns';
+import { format, formatDistanceToNowStrict } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
 import { formatInTimeZone, fromZonedTime } from 'date-fns-tz';
 
 export const DEFAULT_TZ = 'Asia/Jakarta';
+
+export function defaultTimeZone() {
+  return typeof document === 'undefined'
+    ? DEFAULT_TZ
+    : document.documentElement.dataset.siteTimezone || DEFAULT_TZ;
+}
 
 export function formatIDR(value: number | null | undefined) {
   if (value === null || value === undefined) return 'Gratis';
@@ -17,37 +23,33 @@ export function formatNumber(value: number) {
   return new Intl.NumberFormat('id-ID').format(value);
 }
 
-export function formatDateLong(iso: string, timeZone = DEFAULT_TZ) {
+export function formatDateLong(iso: string, timeZone = defaultTimeZone()) {
   return formatInTimeZone(new Date(iso), timeZone, 'd MMMM yyyy', { locale: localeId });
 }
 
-export function formatDateShort(iso: string, timeZone = DEFAULT_TZ) {
+export function formatDateShort(iso: string, timeZone = defaultTimeZone()) {
   return formatInTimeZone(new Date(iso), timeZone, 'd MMM yyyy', { locale: localeId });
 }
 
-export function formatDateTime(iso: string, timeZone = DEFAULT_TZ) {
+export function formatDateTime(iso: string, timeZone = defaultTimeZone()) {
   return formatInTimeZone(new Date(iso), timeZone, 'd MMM yyyy, HH.mm', { locale: localeId });
 }
 
-export function formatTime(iso: string, timeZone = DEFAULT_TZ) {
+export function formatTime(iso: string, timeZone = defaultTimeZone()) {
   return formatInTimeZone(new Date(iso), timeZone, 'HH.mm');
 }
 
-export function formatEventWhen(
-  startsAt: string,
-  endsAt: string,
-  timeZone = DEFAULT_TZ,
-) {
-  const start = new Date(startsAt);
-  const end = new Date(endsAt);
-  const sameDay = isSameDay(start, end);
+export function formatEventWhen(startsAt: string, endsAt: string, timeZone = defaultTimeZone()) {
+  const sameDay =
+    formatInTimeZone(new Date(startsAt), timeZone, 'yyyy-MM-dd') ===
+    formatInTimeZone(new Date(endsAt), timeZone, 'yyyy-MM-dd');
   if (sameDay) {
     return `${formatDateLong(startsAt, timeZone)} · ${formatTime(startsAt, timeZone)} sampai ${formatTime(endsAt, timeZone)}`;
   }
   return `${formatDateLong(startsAt, timeZone)} ${formatTime(startsAt, timeZone)} sampai ${formatDateLong(endsAt, timeZone)} ${formatTime(endsAt, timeZone)}`;
 }
 
-export function dateParts(iso: string, timeZone = DEFAULT_TZ) {
+export function dateParts(iso: string, timeZone = defaultTimeZone()) {
   const date = new Date(iso);
   return {
     day: formatInTimeZone(date, timeZone, 'dd'),
@@ -69,12 +71,12 @@ export function formatCountdown(ms: number) {
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
-export function toDateTimeInput(iso: string | null | undefined, timeZone = DEFAULT_TZ) {
+export function toDateTimeInput(iso: string | null | undefined, timeZone = defaultTimeZone()) {
   if (!iso) return '';
   return formatInTimeZone(new Date(iso), timeZone, "yyyy-MM-dd'T'HH:mm");
 }
 
-export function fromDateTimeInput(value: string, timeZone = DEFAULT_TZ) {
+export function fromDateTimeInput(value: string, timeZone = defaultTimeZone()) {
   if (!value) return null;
   return fromZonedTime(value, timeZone).toISOString();
 }

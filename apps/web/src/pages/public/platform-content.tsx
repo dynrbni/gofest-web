@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { api } from '@/lib/api';
 import type { ContentItem } from '@/pages/workspace/content';
 
-export function PlatformContent() {
+export function PlatformContent({ limit }: { limit?: number } = {}) {
   const query = useQuery({
     queryKey: ['public-content'],
     queryFn: () => api<{ items: ContentItem[] }>('/content'),
@@ -13,7 +13,7 @@ export function PlatformContent() {
   return (
     <section className="container py-6" aria-label="Informasi dan promosi GOFEST">
       <div className="grid gap-4 md:grid-cols-2">
-        {query.data.items.map((item) => {
+        {query.data.items.slice(0, limit).map((item) => {
           const content = (
             <>
               {item.imageUrl ? (

@@ -3,7 +3,7 @@ import { ArrowUpRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '@/lib/language';
 
-export function CityDestinations() {
+export function CityDestinations({ limit }: { limit?: number } = {}) {
   const { t } = useLanguage();
   return (
     <div
@@ -12,7 +12,7 @@ export function CityDestinations() {
       aria-label={t('Pilihan kota', 'City selection')}
       tabIndex={0}
     >
-      {EVENT_CITIES.map((city) => (
+      {EVENT_CITIES.slice(0, limit).map((city) => (
         <Link to={`/events/city/${city.slug}`} key={city.slug} className="city-destination group">
           <span className="city-name">
             {t('Kota', 'Explore')}

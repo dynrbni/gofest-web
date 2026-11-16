@@ -6,21 +6,26 @@ import { categoryName } from '@/lib/categories';
 import { useLanguage } from '@/lib/language';
 import { useCategories } from '@/lib/queries';
 
-export function EventCategories() {
+export function EventCategories({
+  title,
+  description,
+  limit,
+}: { title?: string; description?: string; limit?: number } = {}) {
   const query = useCategories();
   const { t, language } = useLanguage();
-  const categories = query.data?.categories ?? [];
+  const categories = (query.data?.categories ?? []).slice(0, limit);
 
   return (
     <section className="py-8 sm:py-10" aria-labelledby="categories-heading">
       <div className="home-section-heading">
         <h2 id="categories-heading" className="section-title">
-          {t('Kategori Event', 'Event categories')}
+          {title ?? t('Kategori Event', 'Event categories')}
         </h2>
         <Link to="/events" className="text-link">
           {t('Lihat semua', 'View all')}
         </Link>
       </div>
+      {description ? <p className="mt-2 text-sm text-slate-600">{description}</p> : null}
       <div className="mt-6 sm:mt-8" aria-busy={query.isFetching}>
         {query.isLoading ? (
           <div className="home-category-grid" role="status">

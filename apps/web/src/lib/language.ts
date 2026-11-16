@@ -3,8 +3,11 @@ import { useEffect, useSyncExternalStore } from 'react';
 export type Language = 'id' | 'en';
 const key = 'gofest-language';
 let current: Language = 'id';
+let explicitPreference = false;
 try {
-  if (localStorage.getItem(key) === 'en') current = 'en';
+  const saved = localStorage.getItem(key);
+  explicitPreference = saved === 'id' || saved === 'en';
+  if (saved === 'en') current = 'en';
 } catch {
   // Language switching also works when browser storage is unavailable.
 }
@@ -12,6 +15,7 @@ try {
 function subscribe(listener: () => void) {
   const onStorage = (event: StorageEvent) => {
     if (event.key !== key && event.key !== null) return;
+    explicitPreference = event.newValue === 'id' || event.newValue === 'en';
     current = event.newValue === 'en' ? 'en' : 'id';
     listener();
   };
@@ -23,6 +27,23 @@ function subscribe(listener: () => void) {
   };
 }
 
+export function applyDefaultLanguage(value: Language) {
+  if (explicitPreference || current === value) return;
+  current = value;
+  window.dispatchEvent(new Event(key));
+}
+
+function setLanguage(value: Language) {
+  current = value;
+  explicitPreference = true;
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    /* Keep the in-memory preference. */
+  }
+  window.dispatchEvent(new Event(key));
+}
+
 export function useLanguage() {
   const language = useSyncExternalStore(subscribe, () => current);
   useEffect(() => {
@@ -31,14 +52,6 @@ export function useLanguage() {
   return {
     language,
     t: (indonesian: string, english: string) => (language === 'en' ? english : indonesian),
-    setLanguage: (value: Language) => {
-      current = value;
-      try {
-        localStorage.setItem(key, value);
-      } catch {
-        /* Keep the in-memory preference. */
-      }
-      window.dispatchEvent(new Event(key));
-    },
+    setLanguage,
   };
 }

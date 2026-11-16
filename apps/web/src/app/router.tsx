@@ -1,5 +1,5 @@
 import { Navigate, Outlet, ScrollRestoration, createBrowserRouter } from 'react-router-dom';
-import { lazy, type ComponentType } from 'react';
+import { lazy, type ComponentType, type ReactNode } from 'react';
 import { RouteTransition } from '@/components/common/route-transition';
 import { BrandLogo } from '@/components/common/brand-logo';
 import { AuthProvider, RequireAuth } from '@/lib/auth';
@@ -17,6 +17,16 @@ function lazyPage<Props extends object>(load: () => Promise<ComponentType<Props>
 }
 
 const HomePage = lazyPage(() => import('@/pages/public/home').then((m) => m.HomePage));
+const CmsPage = lazyPage(() => import('@/pages/cms/cms-page').then((m) => m.CmsPage));
+const FeaturedEventsPage = lazyPage(() =>
+  import('@/pages/cms/cms-page').then((m) => m.FeaturedEventsPage),
+);
+const CmsPublicPage = lazyPage<{ slug?: string; fallback?: ReactNode }>(() =>
+  import('@/pages/public/cms-page').then((m) => m.CmsPublicPage),
+);
+const CmsPreviewPage = lazyPage(() =>
+  import('@/pages/public/cms-page').then((m) => m.CmsPreviewPage),
+);
 const AccountTicketsPage = lazyPage(() =>
   import('@/pages/account/tickets').then((m) => m.AccountTicketsPage),
 );
@@ -248,6 +258,14 @@ export const router = createBrowserRouter([
     errorElement: <RouteErrorPage />,
     children: [
       {
+        path: '/admin/cms/preview',
+        element: (
+          <RequireAuth roles={['ADMIN', 'SUPERADMIN']}>
+            <CmsPreviewPage />
+          </RequireAuth>
+        ),
+      },
+      {
         element: <CheckoutLayout />,
         children: [
           { path: '/checkout/:eventSlug', element: <CheckoutPage /> },
@@ -287,8 +305,14 @@ export const router = createBrowserRouter([
           { path: '/events/:slug', element: <EventDetailPage /> },
           { path: '/organizers/:slug', element: <OrganizerPublicPage /> },
           { path: '/ticket/:ticketCode', element: <TicketPage /> },
-          { path: '/terms', element: <TermsPage /> },
-          { path: '/privacy', element: <PrivacyPage /> },
+          { path: '/terms', element: <CmsPublicPage slug="terms" fallback={<TermsPage />} /> },
+          {
+            path: '/privacy',
+            element: <CmsPublicPage slug="privacy" fallback={<PrivacyPage />} />,
+          },
+          { path: '/pages/:slug', element: <CmsPublicPage /> },
+          { path: '/p/:slug', element: <CmsPublicPage /> },
+          { path: '/:pageSlug', element: <CmsPublicPage /> },
           { path: '*', element: <NotFoundPage /> },
         ],
       },
@@ -352,6 +376,15 @@ export const router = createBrowserRouter([
           { path: 'check-in/history', element: <CheckInOperationsPage /> },
           { path: 'staff', element: <CheckInOperationsPage /> },
           { path: 'content', element: <ContentManagementPage /> },
+          { path: 'featured-events', element: <FeaturedEventsPage /> },
+          {
+            path: 'cms/:module?',
+            element: (
+              <RequireAuth roles={['SUPERADMIN']}>
+                <CmsPage />
+              </RequireAuth>
+            ),
+          },
           { path: 'promotions', element: <EventToolsPage /> },
           { path: 'support', element: <SupportPage /> },
           { path: 'notifications', element: <NotificationsPage /> },

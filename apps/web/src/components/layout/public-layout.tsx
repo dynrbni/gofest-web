@@ -10,7 +10,7 @@ import {
   LayoutDashboard,
   LogOut,
 } from 'lucide-react';
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/lib/language';
 import { RouteContent } from '@/components/common/route-content';
@@ -18,7 +18,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { UserAccountMenu } from '@/components/common/user-account-menu';
 import { useAuth } from '@/lib/auth';
 import { cn } from '@/lib/utils';
-import { Logo } from '@/components/common/brand-logo';
+import { SiteLogo, CmsNavigation, PublishedSiteMetadata } from '@/components/common/site-branding';
+import { siteStyle } from '@/lib/cms-branding';
+import { useCmsSite } from '@/lib/cms';
+import { PageLoading, ErrorState } from '@/components/common/states';
 import { LanguageMenu } from '@/components/common/language-menu';
 
 function UserMenu() {
@@ -98,7 +101,9 @@ function HeaderSearch({
   );
 }
 
-export function PublicLayout() {
+export function PublicLayout({ children }: { children?: ReactNode } = {}) {
+  const cms = useCmsSite();
+  const settings = cms.data?.settings;
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
 
@@ -128,15 +133,57 @@ export function PublicLayout() {
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [menuOpen]);
 
+  if (cms.isLoading) return <PageLoading fullPage label="Memuat website" />;
+  if (!cms.data)
+    return (
+      <main className="container py-16">
+        <ErrorState error={cms.error} onRetry={() => void cms.refetch()} />
+        <Link to="/login" className="text-link">
+          Masuk ke akun
+        </Link>
+      </main>
+    );
+  if (settings?.maintenance && !cms.data.preview)
+    return (
+      <div className="public-shell min-h-screen" style={siteStyle(cms.data)}>
+        <PublishedSiteMetadata />
+        <main className="container flex min-h-screen max-w-2xl flex-col justify-center py-16">
+          <SiteLogo />
+          <h1 className="mt-8 text-3xl font-semibold">Website sedang dalam pemeliharaan</h1>
+          <p className="mt-4 text-slate-600">
+            {settings.maintenanceMessage ||
+              'Kami sedang memperbarui website. Silakan kembali beberapa saat lagi.'}
+          </p>
+          <Link to="/login" className="text-link mt-8">
+            Masuk ke akun
+          </Link>
+        </main>
+      </div>
+    );
+
   return (
-    <div className="public-shell flex min-h-screen flex-col">
+    <div style={siteStyle(cms.data)} className="public-shell flex min-h-screen flex-col">
+      <PublishedSiteMetadata />
+      {cms.data.preview ? (
+        <div className="bg-amber-100 px-4 py-3 text-center text-sm text-amber-950">
+          Pratinjau draft — perubahan ini belum dipublikasikan.{' '}
+          <Link to="/admin/cms" className="underline">
+            Kembali ke CMS
+          </Link>
+        </div>
+      ) : null}
+      {settings?.announcement ? (
+        <div className="bg-blue-50 px-4 py-3 text-center text-sm text-blue-950">
+          {settings.announcement}
+        </div>
+      ) : null}
       <a href="#page-content" className="skip-link">
         {t('Langsung ke konten', 'Skip to content')}
       </a>
 
       <header className="public-header sticky top-0 z-40 bg-white">
         <div className="container flex h-16 min-h-16 shrink-0 items-center gap-3 py-0 sm:gap-5 lg:gap-7 md:h-[70px] md:min-h-[70px]">
-          <Logo />
+          <SiteLogo />
           <HeaderSearch />
 
           {/* Desktop Navigation Items */}
@@ -210,6 +257,8 @@ export function PublicLayout() {
             </button>
           </div>
         </div>
+
+        <CmsNavigation placement="HEADER" className="container flex flex-wrap gap-x-6" />
 
         {/* Mobile Search Bar */}
         {mobileSearchOpen ? (
@@ -360,7 +409,7 @@ export function PublicLayout() {
       </header>
 
       <div id="page-content" tabIndex={-1} className="min-w-0 flex-1 focus:outline-none">
-        <RouteContent />
+        <RouteContent>{children}</RouteContent>
       </div>
 
       {/* Footer */}
@@ -368,63 +417,70 @@ export function PublicLayout() {
         <div className="container py-10 sm:py-12">
           <div className="grid gap-9 md:grid-cols-[1.5fr_1fr_1fr]">
             <div>
-              <Logo />
+              <SiteLogo footer />
 
               <p className="mt-4 max-w-sm text-sm leading-7 text-slate-600">
-                {t(
-                  'Tempat menemukan acara, bertemu orang baru, dan membawa pulang cerita. Pilih pengalamanmu berikutnya di Gofest.',
-                  'Find events, meet new people, and take home a story. Discover your next experience on Gofest.',
-                )}
+                {settings?.footerDescription}
               </p>
+              <div className="mt-3 flex flex-wrap gap-4 text-sm">
+                {settings?.email && (
+                  <a href={`mailto:${settings.email}`} className="text-link">
+                    {settings.email}
+                  </a>
+                )}
+                {settings?.phone && (
+                  <a href={`tel:${settings.phone}`} className="text-link">
+                    {settings.phone}
+                  </a>
+                )}
+                {settings?.whatsapp && (
+                  <a
+                    href={`https://wa.me/${settings.whatsapp.replace(/\D/g, '')}`}
+                    className="text-link"
+                  >
+                    WhatsApp
+                  </a>
+                )}
+              </div>
+              <div className="mt-2 flex flex-wrap gap-4 text-sm">
+                {(
+                  [
+                    ['Instagram', settings?.instagram],
+                    ['TikTok', settings?.tiktok],
+                    ['Media sosial', settings?.otherSocialUrl],
+                  ] as const
+                )
+                  .filter(([, url]) => url)
+                  .map(([label, url]) => (
+                    <a
+                      key={label}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-link"
+                    >
+                      {label}
+                    </a>
+                  ))}
+              </div>
 
               <Link to="/events" className="text-link mt-4">
                 {t('Temukan acara', 'Find events')} <ArrowRight className="size-4" aria-hidden />
               </Link>
             </div>
 
-            <div>
-              <h2 className="text-sm font-semibold">{t('Jelajahi Gofest', 'Explore Gofest')}</h2>
-
-              <ul className="footer-links">
-                <li>
-                  <Link to="/events">{t('Semua acara', 'All events')}</Link>
-                </li>
-                <li>
-                  <Link to="/events?category=musik">{t('Musik', 'Music')}</Link>
-                </li>
-                <li>
-                  <Link to="/account/orders">
-                    {t('Tiket & pesanan saya', 'My tickets & orders')}
-                  </Link>
-                </li>
-                <li>
-                  <Link to={creatorLink}>{t('Jadi Partner Kami', 'Partner with us')}</Link>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h2 className="text-sm font-semibold">{t('Informasi', 'Information')}</h2>
-
-              <ul className="footer-links">
-                <li>
-                  <Link to="/terms">{t('Syarat & ketentuan', 'Terms & conditions')}</Link>
-                </li>
-                <li>
-                  <Link to="/privacy">{t('Kebijakan privasi', 'Privacy policy')}</Link>
-                </li>
-                <li>
-                  <Link to="/organizer/apply">{t('Menjadi organizer', 'Become an organizer')}</Link>
-                </li>
-                <li>
-                  <Link to="/account/profile">{t('Pengaturan akun', 'Account settings')}</Link>
-                </li>
-              </ul>
+            <div className="md:col-span-2">
+              <h2 className="text-sm font-semibold">
+                {t('Jelajahi website', 'Explore the website')}
+              </h2>
+              <CmsNavigation placement="FOOTER" className="mt-3 grid gap-x-6 sm:grid-cols-2" />
             </div>
           </div>
 
           <div className="mt-9 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 text-xs text-slate-500">
-            <p>© {new Date().getFullYear()} Gofest Indonesia.</p>
+            <p>
+              © {new Date().getFullYear()} {settings?.copyright || settings?.websiteName}
+            </p>
             <p>{t('Setiap pertemuan punya cerita.', 'Every gathering has a story.')}</p>
           </div>
         </div>
