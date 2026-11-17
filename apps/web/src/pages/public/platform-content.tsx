@@ -3,7 +3,15 @@ import { Link } from 'react-router-dom';
 import { api } from '@/lib/api';
 import type { ContentItem } from '@/pages/workspace/content';
 
-export function PlatformContent({ limit }: { limit?: number } = {}) {
+export function PlatformContent({
+  limit,
+  title,
+  description,
+}: {
+  limit?: number;
+  title?: string;
+  description?: string;
+} = {}) {
   const query = useQuery({
     queryKey: ['public-content'],
     queryFn: () => api<{ items: ContentItem[] }>('/content'),
@@ -11,7 +19,13 @@ export function PlatformContent({ limit }: { limit?: number } = {}) {
   });
   if (!query.data?.items.length) return null;
   return (
-    <section className="container py-6" aria-label="Informasi dan promosi GOFEST">
+    <section className="container py-6" aria-label={title || 'Informasi dan promosi GOFEST'}>
+      {title ? (
+        <div className="mb-4">
+          <h2 className="section-title">{title}</h2>
+          {description ? <p className="mt-2 text-slate-600">{description}</p> : null}
+        </div>
+      ) : null}
       <div className="grid gap-4 md:grid-cols-2">
         {query.data.items.slice(0, limit).map((item) => {
           const content = (

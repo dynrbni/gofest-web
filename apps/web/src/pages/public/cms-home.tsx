@@ -68,26 +68,16 @@ export function CmsHomepage({ site }: { site: CmsSite }) {
               ) : (
                 <EventCarousel events={section.events} />
               )}
-              <div className="container py-5">
-                <h2 className="text-xl font-semibold">{section.title}</h2>
-                {section.subtitle && <p className="mt-2 text-sm font-medium">{section.subtitle}</p>}
-                {section.description && (
-                  <p className="mt-2 text-slate-600">{section.description}</p>
-                )}
-              </div>
             </section>
           );
         if (section.kind === 'promotion')
           return (
-            <section key={section.id} aria-label={section.title}>
-              <div className="container pt-6">
-                <h2 className="section-title">{section.title}</h2>
-                {section.description && (
-                  <p className="mt-2 text-slate-600">{section.description}</p>
-                )}
-              </div>
-              <PlatformContent limit={section.limit} />
-            </section>
+            <PlatformContent
+              key={section.id}
+              limit={section.limit}
+              title={section.title}
+              description={section.description}
+            />
           );
         if (section.kind === 'categories')
           return (
