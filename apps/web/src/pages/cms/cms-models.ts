@@ -1,4 +1,13 @@
-export type CmsModule = 'sections' | 'banners' | 'pages' | 'navigation' | 'settings';
+export type CmsModule = 'sections' | 'banners' | 'pages' | 'navigation' | 'settings' | 'cities';
+export interface CityDocument {
+  name: string;
+  slug: string;
+  imageKey: string;
+  accent: 'coral' | 'blue' | 'gold' | 'green' | 'cyan';
+  visible: boolean;
+  sortOrder: number;
+  builtInIllustration?: 'jakarta' | 'bandung' | 'yogyakarta' | 'surabaya' | 'denpasar';
+}
 export interface SectionDocument {
   title: string;
   subtitle: string;
@@ -12,6 +21,8 @@ export interface SectionDocument {
   layout: 'grid' | 'shelf';
 }
 export interface BannerDocument {
+  startsAt?: string;
+  endsAt?: string;
   title: string;
   subtitle: string;
   description: string;
@@ -65,7 +76,12 @@ export interface SettingsDocument {
   timezone: string;
 }
 export type CmsDocument =
-  SectionDocument | BannerDocument | PageDocument | NavigationDocument | SettingsDocument;
+  | SectionDocument
+  | BannerDocument
+  | PageDocument
+  | NavigationDocument
+  | SettingsDocument
+  | CityDocument;
 export interface CmsRecord {
   id: string;
   key: string;
@@ -86,15 +102,10 @@ export interface CmsEvent {
   city: string | null;
   status: string;
 }
-export const MODULES: { key: CmsModule | 'overview'; label: string; description: string }[] = [
-  {
-    key: 'overview',
-    label: 'Ringkasan',
-    description: 'Status website dan aktivitas publikasi terbaru.',
-  },
+export const MODULES: { key: CmsModule; label: string; description: string }[] = [
   {
     key: 'sections',
-    label: 'Homepage',
+    label: 'Beranda',
     description: 'Atur susunan, sumber acara, dan bagian yang tampil di beranda.',
   },
   {
@@ -107,11 +118,20 @@ export const MODULES: { key: CmsModule | 'overview'; label: string; description:
     label: 'Halaman',
     description: 'Tulis halaman informasi dengan konten dan metadata pencarian.',
   },
-  { key: 'navigation', label: 'Navigasi', description: 'Susun tautan header dan footer website.' },
+  {
+    key: 'navigation',
+    label: 'Menu & Footer',
+    description: 'Susun menu dan tampilan footer website.',
+  },
   {
     key: 'settings',
-    label: 'Branding & pengaturan',
+    label: 'Identitas Web',
     description: 'Atur identitas, SEO, footer, kontak, dan mode maintenance.',
+  },
+  {
+    key: 'cities',
+    label: 'Bagian Kota',
+    description: 'Kelola kota dan ilustrasi yang tampil di beranda.',
   },
 ];
 export function defaultDocument(module: CmsModule): CmsDocument {
@@ -131,6 +151,8 @@ export function defaultDocument(module: CmsModule): CmsDocument {
       };
     case 'banners':
       return {
+        startsAt: '',
+        endsAt: '',
         title: '',
         subtitle: '',
         description: '',
@@ -152,6 +174,8 @@ export function defaultDocument(module: CmsModule): CmsDocument {
         sortOrder: 0,
         external: false,
       };
+    case 'cities':
+      return { name: '', slug: '', imageKey: '', accent: 'blue', visible: true, sortOrder: 0 };
     case 'settings':
       return {
         websiteName: 'GOFEST',
@@ -182,6 +206,7 @@ export function defaultDocument(module: CmsModule): CmsDocument {
   }
 }
 export function recordTitle(record: CmsRecord) {
+  if ('name' in record.draft) return record.draft.name || 'Kota baru';
   if ('title' in record.draft) return record.draft.title || record.key;
   if ('label' in record.draft) return record.draft.label || record.key;
   return record.draft.websiteName;

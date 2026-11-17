@@ -96,19 +96,6 @@ const adminNav: WorkspaceNavItem[] = [
   },
   {
     group: 'Content Management',
-    to: '/admin/featured-events',
-    label: 'Event Seru Untukmu',
-    icon: Calendar,
-  },
-  {
-    group: 'Content Management',
-    to: '/admin/content?kind=HOMEPAGE',
-    label: 'Homepage',
-    icon: LayoutDashboard,
-  },
-  { group: 'Content Management', to: '/admin/content?kind=BANNER', label: 'Banner', icon: Image },
-  {
-    group: 'Content Management',
     to: '/admin/promotions',
     label: 'Promosi & voucher',
     icon: Ticket,
@@ -117,23 +104,16 @@ const adminNav: WorkspaceNavItem[] = [
   { group: 'Other', to: '/admin/notifications', label: 'Notifikasi', icon: Bell },
 ];
 const systemNav: WorkspaceNavItem[] = [
+  { group: 'Website', to: '/admin/cms/sections', label: 'Beranda', icon: LayoutDashboard },
+  { group: 'Website', to: '/admin/cms/banners', label: 'Banner', icon: Image },
+  { group: 'Website', to: '/admin/cms/pages', label: 'Halaman', icon: FileText },
   {
-    group: 'Website CMS',
-    to: '/admin/cms',
-    label: 'Website CMS',
-    icon: LayoutDashboard,
-    end: true,
-  },
-  { group: 'Website CMS', to: '/admin/cms/sections', label: 'Homepage', icon: Calendar },
-  { group: 'Website CMS', to: '/admin/cms/banners', label: 'Hero banners', icon: Image },
-  { group: 'Website CMS', to: '/admin/cms/pages', label: 'Halaman website', icon: FileText },
-  {
-    group: 'Website CMS',
+    group: 'Website',
     to: '/admin/cms/navigation',
-    label: 'Navigasi website',
+    label: 'Menu & Footer',
     icon: ScrollText,
   },
-  { group: 'Website CMS', to: '/admin/cms/settings', label: 'Branding & footer', icon: Settings },
+  { group: 'Website', to: '/admin/cms/settings', label: 'Identitas Web', icon: Settings },
   { group: 'Superadmin', to: '/admin/admins', label: 'Admin Management', icon: ShieldCheck },
   {
     group: 'Superadmin',
@@ -152,6 +132,12 @@ export function AdminLayout() {
     ...(superadmin
       ? systemNav
       : [
+          {
+            group: 'Website',
+            to: '/admin/featured-events',
+            label: 'Beranda',
+            icon: LayoutDashboard,
+          },
           {
             group: 'Other',
             to: '/admin/audit-logs',

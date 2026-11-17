@@ -380,7 +380,7 @@ export const router = createBrowserRouter([
           {
             path: 'cms/:module?',
             element: (
-              <RequireAuth roles={['SUPERADMIN']}>
+              <RequireAuth roles={['ADMIN', 'SUPERADMIN']}>
                 <CmsPage />
               </RequireAuth>
             ),
