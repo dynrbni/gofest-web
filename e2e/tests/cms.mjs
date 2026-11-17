@@ -57,14 +57,28 @@ function login(email, destination) {
   wait('document.querySelector("#login-email") && !document.querySelector("[inert] #login-email")');
   fill('Email', email);
   fill('Password', process.env.QA_PASSWORD ?? 'admin123');
-  click('Masuk');
+  evaluate('document.querySelector("form").requestSubmit()');
   browser('wait', '--url', `**${destination}`);
   wait('Boolean(document.querySelector("main h1"))');
 }
 function recordAction(title, action) {
   evaluate(
-    `(()=>{const heading=[...document.querySelectorAll('main section h2')].find(element=>element.textContent===${JSON.stringify(title)});if(!heading)throw Error('Record missing');const button=[...heading.closest('section').querySelectorAll('button')].find(element=>element.textContent.trim()===${JSON.stringify(action)});if(!button)throw Error('Action missing');button.click()})()`,
+    `(()=>{const heading=[...document.querySelectorAll('main h2,main h3,main td')].find(element=>element.textContent===${JSON.stringify(title)});if(!heading)throw Error('Record missing');const row=heading.closest('li,tr')??heading.closest('section');const button=[...row.querySelectorAll('button')].find(element=>element.textContent.trim().startsWith(${JSON.stringify(action)}));if(!button)throw Error('Action missing');button.click()})()`,
   );
+}
+function saved() {
+  wait(
+    "!document.querySelector('main')?.innerText.includes('Menyimpan perubahan...') && !document.querySelector('main')?.innerText.includes('Menunggu draft dan unggahan selesai...')",
+  );
+}
+function publish() {
+  saved();
+  wait(
+    "!Array.from(document.querySelectorAll('button')).find(b=>b.textContent==='Terbitkan ke website')?.disabled",
+  );
+  click('Terbitkan ke website');
+  confirm('Terbitkan ke website');
+  wait("document.querySelector('main')?.innerText.includes('0 perubahan belum diterbitkan')");
 }
 function confirm(label) {
   browser('wait', '[role=alertdialog]');
@@ -110,28 +124,38 @@ try {
       process.stdout.write(`PASS ${width}px ${path}\n`);
     }
     open('/admin/cms/pages');
-    click('Tambah konten');
-    browser('wait', '[role=dialog]');
-    wait(
-      'document.querySelector("[role=dialog]").getAnimations().every(animation=>animation.playState==="finished")',
-    );
+    click('Tambah halaman');
+    wait('Boolean(document.querySelector("main textarea"))');
     assertLayout(`${width}px CMS editor`);
     browser('screenshot', `${shots}/editor-${width}.png`);
-    click('Batal');
+    click('Tutup editor');
   }
   browser('set', 'viewport', '1440', '1000');
   open('/admin/cms/pages');
-  click('Tambah konten');
+  click('Tambah halaman');
   fill('Judul halaman', unique);
-  fill('Slug halaman', unique);
   fill('Isi halaman', `## Acara dan cerita\nKonten nyata pengujian ${unique}.`);
-  fill('Judul SEO halaman', `SEO ${unique}`);
-  click('Simpan draft');
-  wait('!document.querySelector("[role=dialog]")');
+  fill('Judul di hasil pencarian', `SEO ${unique}`);
+  saved();
   const page = api('/admin/cms/pages').data.items.find((item) => item.draft.slug === unique);
   assert.ok(page, 'UI creates persisted draft');
   created.pages.push(page.id);
   assert.equal(api(`/cms/pages/${unique}`).status, 404, 'draft absent publicly');
+  const concurrent = api(`/admin/cms/pages/${page.id}`, 'PATCH', {
+    document: { ...page.draft, seoDescription: 'Versi dari tab lain' },
+    expectedVersion: page.version,
+  });
+  assert.equal(concurrent.status, 200);
+  fill('Isi halaman', 'Perubahan dari editor yang masih memakai versi lama.');
+  wait('document.body.innerText.includes("Konten telah diubah di tempat lain")');
+  assert.equal(
+    evaluate('[...document.querySelectorAll("main textarea")].at(-1).value'),
+    'Versi dari tab lain',
+  );
+  click('Saya sudah memeriksa');
+  fill('Isi halaman', `## Acara dan cerita\nKonten nyata pengujian ${unique}.`);
+  saved();
+  process.stdout.write('PASS autosave conflict refetches latest version and supports recovery\n');
   open(`/admin/cms/preview?page=${unique}`);
   wait(`document.body.innerText.includes(${JSON.stringify(unique)})`);
   assert.ok(
@@ -139,9 +163,7 @@ try {
     'actual draft page preview renders Markdown',
   );
   open('/admin/cms/pages');
-  recordAction(unique, 'Publish');
-  confirm('Publikasikan');
-  wait(`document.body.innerText.includes('Terpublikasi')`);
+  publish();
   open(`/pages/${unique}`);
   wait(`document.querySelector('h1')?.textContent===${JSON.stringify(unique)}`);
   assert.ok(
@@ -150,8 +172,10 @@ try {
   );
   assert.equal(evaluate('document.title'), `SEO ${unique}`, 'published SEO title applied');
   open('/admin/cms/pages');
-  recordAction(unique, 'Unpublish');
-  confirm('Unpublish');
+  click(`Opsi ${unique}`);
+  click('Tarik dari website');
+  confirm('Tarik dari website');
+  wait(`fetch('/api/v1/cms/pages/${unique}').then(r=>r.status===404)`);
   assert.equal(api(`/cms/pages/${unique}`).status, 404, 'unpublish removes public page');
   process.stdout.write(
     'PASS page create draft / actual preview / publish / public SEO / unpublish\n',
@@ -163,10 +187,14 @@ try {
   assert.ok(featured, 'featured section seeded');
   featuredBackup = featured;
   open('/admin/featured-events');
-  click('Edit draft');
-  fill('Judul section', `Featured ${unique}`);
-  click('Simpan draft');
-  wait('!document.querySelector("[role=dialog]")');
+  fill('Judul bagian', `Featured ${unique}`);
+  evaluate(`document.querySelector('a[href="/admin/cms/banners"]').click()`);
+  browser('wait', '--url', '**/admin/cms/banners');
+  assert.equal(
+    api('/admin/cms/sections').data.items.find((item) => item.id === featured.id).draft.title,
+    `Featured ${unique}`,
+    'sidebar navigation waits for autosave',
+  );
   const currentPublic = api('/cms/site').data.sections.find(
     (item) => item.key === 'events-for-you',
   );
@@ -180,40 +208,49 @@ try {
   process.stdout.write('PASS featured draft title appears only in actual preview\n');
 
   open('/admin/cms/banners');
-  click('Tambah konten');
+  click('Tambah banner');
   fill('Judul banner', `Banner ${unique}`);
+  saved();
+  browser('find', 'role', 'tab', 'click', '--name', 'Gambar', '--exact');
   browser(
     'upload',
     'input[type=file]',
     process.env.QA_IMAGE ?? `${process.cwd()}/apps/web/public/assets/gofest-admin-logo.png`,
   );
   wait(
-    'document.querySelector("[role=dialog] img") && !document.querySelector("[role=dialog] [aria-busy=true]")',
+    'document.querySelector("main input[type=file]").closest("div[aria-busy]").querySelector("img") && !document.querySelector("main [aria-busy=true]")',
   );
   assert.equal(
-    evaluate('document.querySelector("[role=dialog] img").naturalWidth > 0'),
+    evaluate(
+      'document.querySelector("main input[type=file]").closest("div[aria-busy]").querySelector("img").naturalWidth > 0',
+    ),
     true,
     'real uploaded image preview loads',
   );
+  saved();
+  browser('find', 'role', 'tab', 'click', '--name', 'Konten', '--exact');
   fill('Teks tombol', 'Cari acara');
-  fill('Tautan tujuan banner', '/events');
-  click('Simpan draft');
-  wait('!document.querySelector("[role=dialog]")');
+  const destination = evaluate("[...document.querySelectorAll('main select')].find(element => element.labels?.[0]?.textContent.includes('Tujuan tombol'))?.id");
+  assert.ok(destination);
+  browser('select', `#${destination.replace(/([ #;?%&,.+*~':"!^$[\]()=>|/@])/g, '\\$1')}`, '/events');
+  saved();
   const banner = api('/admin/cms/banners').data.items.find(
     (item) => item.draft.title === `Banner ${unique}`,
   );
   assert.ok(banner?.draft.imageKey, 'banner image persists on server');
   created.banners.push(banner.id);
   uploadedKey = banner.draft.imageKey;
-  recordAction(`Banner ${unique}`, 'Edit draft');
-  wait('Boolean(document.querySelector("[role=dialog] img"))');
+  open('/admin/cms/banners');
+  recordAction(`Banner ${unique}`, 'Ubah');
+  browser('find', 'role', 'tab', 'click', '--name', 'Gambar', '--exact');
+  wait('Boolean(document.querySelector("main input[type=file]"))');
   assert.ok(
-    evaluate('document.querySelector("[role=dialog] img").src').includes(uploadedKey),
+    evaluate(
+      'document.querySelector("main input[type=file]").closest("div[aria-busy]").querySelector("img").src',
+    ).includes(uploadedKey),
     'banner survives reopening editor',
   );
-  click('Batal');
-  recordAction(`Banner ${unique}`, 'Publish');
-  confirm('Publikasikan');
+  publish();
   open('/');
   wait(`Boolean(document.querySelector('img[src*="${uploadedKey}"]'))`);
   assert.equal(
@@ -295,7 +332,7 @@ try {
     assert.ok(evaluate('document.body.innerText').includes(`Maintenance ${unique}`));
   }
   open('/admin/cms');
-  assert.equal(evaluate('document.querySelector("main h1").textContent'), 'Website CMS');
+  assert.equal(evaluate('document.querySelector("main h1").textContent'), 'Beranda');
   assert.equal(api('/auth/me').status, 200, 'authentication remains available during maintenance');
   browser('open', `${base}/login`);
   wait('Boolean(document.querySelector("#login-email")) || location.pathname==="/admin/dashboard"');
@@ -412,7 +449,11 @@ for (const [email, destination, allowed] of [
     assert.equal(api('/admin/cms/sections').status, allowed ? 200 : 403);
     assert.equal(api('/admin/cms/settings').status, 403);
     open('/admin/cms/settings');
-    assert.ok(evaluate('document.querySelector("main h1").textContent').includes('bukan untuk'));
+    assert.ok(
+      evaluate('document.querySelector("main h1").textContent').includes(
+        allowed ? 'tidak tersedia' : 'bukan untuk',
+      ),
+    );
     assert.equal(evaluate('Boolean(document.querySelector("input[type=color]"))'), false);
     process.stdout.write(`PASS ${email} CMS/featured role boundaries
 `);

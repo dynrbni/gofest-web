@@ -32,23 +32,32 @@ const ready = () =>
   wait(
     '!document.querySelector("[data-route-loading]") && document.querySelector("#city-event-results")?.getAttribute("aria-busy") === "false"',
   );
+const catalogReady = () =>
+  wait('document.querySelector("#event-results")?.getAttribute("aria-busy") === "false"');
 const heading = () =>
   evaluate('document.querySelector("main h1").textContent.replace(/\\s+/g, " ").trim()');
 
 try {
   browser('set', 'viewport', '1440', '1000');
   open('/');
-  evaluate('document.getElementById("cities-heading").scrollIntoView()');
+  evaluate('document.querySelector(".city-destinations").scrollIntoView()');
   browser('wait', '.city-destination');
   assert.deepEqual(
     evaluate(
       '[...document.querySelectorAll(".city-destination")].map(link => link.getAttribute("href"))',
     ),
-    cities.map(([slug]) => `/events/city/${slug}`),
+    cities.map(([slug]) => `/events?city=${slug}`),
   );
   link('Kota Jakarta');
-  ready();
-  assert.equal(new URL(browser('get', 'url').url).pathname, '/events/city/jakarta');
+  catalogReady();
+  assert.equal(new URL(browser('get', 'url').url).searchParams.get('city'), 'jakarta');
+  browser('find', 'role', 'button', 'click', '--name', 'Musik', '--exact');
+  wait('location.search.includes("category=musik")');
+  assert.equal(
+    new URL(browser('get', 'url').url).searchParams.get('city'),
+    'jakarta',
+    'Category preserves CMS city filter',
+  );
 
   for (const [slug, name, landmark] of cities) {
     open(`/events/city/${slug}?city=Bogor&category=film`);
@@ -119,6 +128,9 @@ try {
     'Invalid city never falls back to all events',
   );
   link('Kota Bandung');
+  catalogReady();
+  assert.equal(new URL(browser('get', 'url').url).searchParams.get('city'), 'bandung');
+  open('/events/city/bandung');
   ready();
   assert.equal(heading(), 'Event Menarik di Kota Bandung');
   link('Jelajahi kota lain');
@@ -127,6 +139,9 @@ try {
   assert.equal(evaluate('document.querySelectorAll(".city-destination").length'), 5);
   assert.equal(browser('a11y').counts.violations, 0, 'City directory accessibility');
   link('Kota Jakarta');
+  catalogReady();
+  assert.equal(new URL(browser('get', 'url').url).searchParams.get('city'), 'jakarta');
+  open('/events/city/jakarta');
   ready();
   browser('set', 'viewport', '1440', '1000');
   browser('find', 'role', 'button', 'click', '--name', 'Pilih bahasa', '--exact');

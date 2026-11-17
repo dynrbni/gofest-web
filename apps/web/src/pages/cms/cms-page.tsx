@@ -1,518 +1,517 @@
-import { useState } from 'react';
-import { Link, NavLink, useParams } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link, Navigate, useBlocker, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ExternalLink, FileText, Image, LayoutTemplate, Settings, Menu, Globe } from 'lucide-react';
+import { ExternalLink, Image, Plus, X } from 'lucide-react';
 import { toast } from 'sonner';
-import { api, errorMessage } from '@/lib/api';
+import { ApiError, api, errorMessage } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
+import { assetUrl } from '@/lib/assets';
 import { formatDateTime } from '@/lib/format';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { EmptyState, InlineError } from '@/components/common/states';
+import { EmptyState } from '@/components/common/states';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  Metric,
-  Panel,
-  QueryState,
-  Status,
-  WorkspaceHeading,
-} from '../workspace/workspace-components';
+import { Panel, QueryState, WorkspaceHeading, DataTable } from '../workspace/workspace-components';
 import { CmsFields } from './cms-fields';
+import { CmsCitiesPage } from './cms-cities';
+import { MenuFooter } from './cms-footer';
+import { CmsAutoEditor } from './cms-autosave';
+import { useCmsPending, setCmsOperation } from './cms-state';
+import { cmsSorted, useCmsRecords } from './cms-data';
+import { CmsItemMenu, CmsOrderButtons, CmsStatus, CmsVisibility } from './cms-controls';
 import {
-  defaultDocument,
   MODULES,
   recordTitle,
-  type CmsDocument,
+  type BannerDocument,
   type CmsModule,
   type CmsRecord,
+  type SectionDocument,
+  type SettingsDocument,
 } from './cms-models';
 
-const moduleIcons = {
-  overview: Globe,
-  sections: LayoutTemplate,
-  banners: Image,
-  pages: FileText,
-  navigation: Menu,
-  settings: Settings,
-};
-const MODULE_KEYS = new Set(MODULES.map((item) => item.key));
-const CORE_SECTIONS = new Set(['hero', 'promotions', 'events-for-you', 'categories', 'cities']);
-function refreshCms(client: ReturnType<typeof useQueryClient>) {
-  void client.invalidateQueries({ queryKey: ['cms'] });
-  void client.invalidateQueries({ queryKey: ['cms-site'] });
+interface Change {
+  collection: CmsModule;
+  id: string;
+  title: string;
+  version: number;
 }
+const SECTION_NAMES: Record<string, string> = {
+  hero: 'Banner utama',
+  promotions: 'Promosi',
+  'events-for-you': 'Event Seru Untukmu',
+  categories: 'Kategori Event',
+  cities: 'Jelajahi Event di Kotamu',
+};
 export function CmsPage() {
+  const pending = useCmsPending();
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      pending > 0 && currentLocation.pathname !== nextLocation.pathname,
+  );
+  useEffect(() => {
+    if (blocker.state === 'blocked' && !pending) blocker.proceed();
+  }, [blocker, pending]);
   const { module: moduleParam } = useParams();
-  const active = moduleParam ?? 'overview';
+  const active = moduleParam ?? 'sections';
+  const { user } = useAuth();
+  const superadmin = user?.roles.includes('SUPERADMIN');
   const module = MODULES.find((item) => item.key === active);
-  return (
-    <div className="space-y-6">
-      <WorkspaceHeading
-        title="Website CMS"
-        description="Kelola konten website. Simpan draft, periksa preview, lalu publikasikan untuk menerapkan perubahan ke website publik."
-        action={<PreviewLink />}
+  const changes = useQuery({
+    queryKey: ['cms', 'changes'],
+    queryFn: () => api<{ items: Change[] }>('/admin/cms/changes'),
+  });
+  const published = useQuery({
+    queryKey: ['cms', 'website-status'],
+    queryFn: () => api<{ settings: SettingsDocument }>('/cms/site'),
+  });
+  if (active === 'overview') return <Navigate to="/admin/cms/sections" replace />;
+  if (!module || (!superadmin && active !== 'sections'))
+    return (
+      <EmptyState
+        title="Halaman tidak tersedia"
+        description="Gunakan menu Beranda untuk mengelola rekomendasi event."
       />
-      <nav
-        aria-label="Modul Website CMS"
-        className="flex flex-wrap gap-2 border-b border-slate-200 pb-4"
-      >
-        {MODULES.map(({ key, label }) => {
-          const Icon = moduleIcons[key];
-          return (
-            <NavLink
-              key={key}
-              end
-              to={key === 'overview' ? '/admin/cms' : `/admin/cms/${key}`}
-              className={({ isActive }) =>
-                `inline-flex min-h-11 items-center gap-2 rounded-lg px-3 text-sm font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 ${isActive ? 'bg-blue-50 text-blue-800' : 'text-slate-600 hover:bg-slate-100'}`
-              }
-            >
-              <Icon className="h-4 w-4" aria-hidden />
-              {label}
-            </NavLink>
-          );
-        })}
-      </nav>
-      {!MODULE_KEYS.has(active as CmsModule) ? (
-        <EmptyState
-          title="Modul tidak ditemukan"
-          description="Pilih salah satu modul CMS di atas."
-        />
-      ) : active === 'overview' ? (
-        <CmsOverview />
-      ) : (
-        <CmsCollection
-          key={active}
-          module={active as CmsModule}
-          title={module?.label ?? ''}
-          description={module?.description ?? ''}
-        />
+    );
+  return (
+    <div className="space-y-6 pb-28">
+      {blocker.state === 'blocked' && pending > 0 && (
+        <p
+          role="status"
+          className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"
+        >
+          Menunggu draft tersimpan sebelum berpindah halaman. Jika ada pesan gagal simpan di form,
+          perbaiki isinya atau coba simpan kembali.
+        </p>
       )}
+      <WorkspaceHeading title={module.label} description={module.description} />
+      {active === 'sections' && (
+        <p className="text-sm text-slate-600">
+          {published.data?.settings.maintenance ? 'Website dalam pemeliharaan' : 'Website aktif'} ·{' '}
+          {changes.data?.items.length ?? 0} perubahan belum diterbitkan
+        </p>
+      )}
+      {active === 'sections' ? (
+        <HomepageSections />
+      ) : active === 'cities' ? (
+        <CmsCitiesPage />
+      ) : active === 'navigation' ? (
+        <MenuFooter />
+      ) : active === 'settings' ? (
+        <IdentitySettings />
+      ) : (
+        <ContentCollection key={active} module={active as 'banners' | 'pages'} />
+      )}
+      <PublishBar query={changes} />
     </div>
   );
 }
 export function FeaturedEventsPage() {
+  return <Navigate to="/admin/cms/sections" replace />;
+}
+function PublishBar({ query }: { query: ReturnType<typeof useQuery<{ items: Change[] }>> }) {
+  const client = useQueryClient();
+  const token = useRef({});
+  const pending = useCmsPending();
+  const mutation = useMutation({
+    onMutate: async () => {
+      setCmsOperation(token.current, true);
+      await client.cancelQueries({ queryKey: ['cms'] });
+    },
+    onSettled: () => setCmsOperation(token.current, false),
+    mutationFn: (items: Change[]) =>
+      api('/admin/cms/publish-all', {
+        method: 'POST',
+        body: {
+          items: items.map(({ collection, id, version }) => ({
+            collection,
+            id,
+            expectedVersion: version,
+          })),
+        },
+      }),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: ['cms'] });
+      void client.invalidateQueries({ queryKey: ['cms-site'] });
+      toast.success('Perubahan telah diterbitkan ke website');
+    },
+    onError: (error) => {
+      toast.error(
+        error instanceof ApiError && error.status === 409
+          ? 'Ada konten yang berubah. Daftar terbaru dimuat; periksa kembali sebelum menerbitkan.'
+          : errorMessage(error),
+      );
+      void client.invalidateQueries({ queryKey: ['cms'] });
+    },
+  });
+  const items = query.data?.items ?? [];
   return (
-    <div className="space-y-6">
-      <WorkspaceHeading
-        title="Event Seru Untukmu"
-        description="Pilih acara dan atur section rekomendasi pada beranda. Perubahan baru tampil setelah dipublikasikan."
-        action={<PreviewLink />}
-      />
-      <CmsCollection
-        module="sections"
-        title="Konfigurasi section"
-        description="Acara aktif yang sudah disetujui dapat ditambahkan. Urutan manual dapat diubah tanpa mengubah data acara."
-        featured
-      />
+    <div
+      className="sticky bottom-3 z-20 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-300 bg-white px-5 py-4 shadow-md"
+      role="region"
+      aria-label="Penerbitan website"
+    >
+      <div role="status">
+        <p className="text-sm font-semibold">{items.length} perubahan belum diterbitkan</p>
+        <p className="mt-1 text-xs text-slate-600">
+          {pending
+            ? 'Menunggu draft dan unggahan selesai...'
+            : 'Website menampilkan versi terakhir yang diterbitkan.'}
+        </p>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Button asChild variant="outline">
+          <a
+            href="/admin/cms/preview"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-disabled={pending > 0}
+            onClick={(event) => {
+              if (pending) event.preventDefault();
+            }}
+          >
+            <ExternalLink aria-hidden />
+            Preview<span className="sr-only"> (tab baru)</span>
+          </a>
+        </Button>
+        <ConfirmDialog
+          title="Terbitkan perubahan ke website?"
+          description={
+            <>
+              <p>Perubahan berikut akan diterapkan bersamaan:</p>
+              <ul className="mt-3 max-h-60 list-disc space-y-1 overflow-y-auto pl-5">
+                {items.map((item) => (
+                  <li key={`${item.collection}-${item.id}`}>{item.title}</li>
+                ))}
+              </ul>
+            </>
+          }
+          confirmLabel="Terbitkan ke website"
+          disabled={
+            pending > 0 || mutation.isPending || !items.length || query.isFetching || query.isError
+          }
+          trigger={
+            <Button
+              disabled={
+                pending > 0 ||
+                mutation.isPending ||
+                !items.length ||
+                query.isFetching ||
+                query.isError
+              }
+            >
+              {mutation.isPending ? 'Menerbitkan...' : 'Terbitkan ke website'}
+            </Button>
+          }
+          onConfirm={() => {
+            if (!pending) mutation.mutate(items);
+          }}
+        />
+      </div>
+      {query.isError && (
+        <p className="w-full text-sm text-red-700">
+          Daftar perubahan belum dapat dimuat.{' '}
+          <Button variant="outline" onClick={() => void query.refetch()}>
+            Coba lagi
+          </Button>
+        </p>
+      )}
     </div>
   );
 }
-function PreviewLink({ slug }: { slug?: string }) {
-  return (
-    <Button asChild variant="outline">
-      <a
-        href={`/admin/cms/preview${slug ? `?page=${encodeURIComponent(slug)}` : ''}`}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <ExternalLink className="mr-2 h-4 w-4" aria-hidden />
-        Preview website<span className="sr-only"> (tab baru)</span>
-      </a>
-    </Button>
-  );
-}
-interface Overview {
-  websiteStatus: 'ACTIVE' | 'MAINTENANCE';
-  counts: { published: number; draft: number; banners: number; sections: number };
-  lastUpdated: string | null;
-  activities: {
-    id: string;
-    action: string;
-    createdAt: string;
-    actor?: { name: string } | null;
-    user?: { name: string } | null;
-    entityType?: string;
-    entityId?: string;
-  }[];
-}
-function CmsOverview() {
-  const query = useQuery({
-    queryKey: ['cms', 'overview'],
-    queryFn: () => api<Overview>('/admin/cms/overview'),
-  });
+function HomepageSections() {
+  const query = useCmsRecords('sections');
+  const [editing, setEditing] = useState<string | null>(null);
+  const pending = useCmsPending();
+  const items = cmsSorted(query.data?.items ?? []).filter((item) => SECTION_NAMES[item.key]);
+  const selected =
+    items.find((item) => item.id === editing) ??
+    items.find((item) => item.key === 'events-for-you');
   return (
     <QueryState query={query}>
-      {query.data ? (
-        <div className="space-y-6">
-          <Panel
-            title="Status website"
-            action={<Status value={query.data.websiteStatus} />}
-            description={
-              query.data.lastUpdated
-                ? `Terakhir diperbarui ${formatDateTime(query.data.lastUpdated)}`
-                : 'Belum ada perubahan CMS.'
-            }
-          >
-            <p className="text-sm leading-6 text-slate-600">
-              {query.data.websiteStatus === 'MAINTENANCE'
-                ? 'Pengunjung melihat halaman maintenance. Dashboard internal tetap tersedia.'
-                : 'Website publik aktif dan menggunakan versi konten yang sudah dipublikasikan.'}
-            </p>
-            <Button asChild variant="outline" className="mt-4">
-              <Link to="/admin/cms/settings">Atur status & branding</Link>
-            </Button>
-          </Panel>
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <Metric label="Konten terpublikasi" value={query.data.counts.published} />
-            <Metric label="Draft tersimpan" value={query.data.counts.draft} />
-            <Metric label="Banner aktif" value={query.data.counts.banners} />
-            <Metric label="Section homepage" value={query.data.counts.sections} />
-          </div>
-          <Panel
-            title="Aktivitas CMS terbaru"
-            description="Perubahan dan publikasi yang tercatat di audit log."
-          >
-            {query.data.activities.length === 0 ? (
-              <p className="text-sm text-slate-600">Belum ada aktivitas CMS.</p>
-            ) : (
-              <ul className="divide-y divide-slate-100">
-                {query.data.activities.map((activity) => (
-                  <li
-                    key={activity.id}
-                    className="flex flex-wrap items-start justify-between gap-2 py-3"
-                  >
-                    <div>
-                      <p className="break-words text-sm font-medium text-slate-900">
-                        {activity.action.replaceAll('_', ' ')}
-                      </p>
-                      <p className="mt-1 text-xs text-slate-600">
-                        {activity.actor?.name ?? activity.user?.name ?? 'Administrator'}
-                        {activity.entityType ? ` · ${activity.entityType}` : ''}
-                      </p>
-                    </div>
-                    <time className="text-xs text-slate-600" dateTime={activity.createdAt}>
-                      {formatDateTime(activity.createdAt)}
-                    </time>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Panel>
-        </div>
-      ) : null}
+      <div className="grid items-start gap-6 xl:grid-cols-2">
+        <Panel
+          title="Bagian beranda"
+          description="Urutkan bagian sesuai tampilan di website publik."
+        >
+          <ul className="divide-y divide-slate-200">
+            {items.map((record) => {
+              const doc = record.draft as SectionDocument;
+              return (
+                <li
+                  key={record.id}
+                  className={`border-l-4 p-4 ${selected?.id === record.id && !['hero', 'cities'].includes(record.key) ? 'border-blue-600 bg-blue-50' : 'border-transparent'}`}
+                >
+                  <h3 className="text-sm font-semibold">{SECTION_NAMES[record.key]}</h3>
+                  <p className="mt-1 break-words text-xs leading-5 text-slate-600">
+                    {doc.title} ·{' '}
+                    {doc.kind === 'categories'
+                      ? `Maksimal ${doc.limit} kategori`
+                      : doc.kind === 'events'
+                        ? `${{ manual: 'Pilihan sendiri', popular: 'Paling laris', upcoming: 'Event terdekat', latest: 'Terbaru' }[doc.source]} · Maksimal ${doc.limit} event`
+                        : doc.kind === 'cities'
+                          ? 'Kota dan ilustrasi pilihan'
+                          : doc.kind === 'hero'
+                            ? 'Gambar dan pesan utama website'
+                            : 'Promosi yang aktif'}
+                  </p>
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <CmsOrderButtons module="sections" record={record} items={items} />
+                    <CmsVisibility module="sections" record={record} />
+                    {record.key === 'hero' || record.key === 'cities' ? (
+                      <Button asChild variant="outline">
+                        <Link to={`/admin/cms/${record.key === 'hero' ? 'banners' : 'cities'}`}>
+                          Ubah<span className="sr-only"> {SECTION_NAMES[record.key]}</span>
+                        </Link>
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        disabled={pending > 0}
+                        onClick={() => setEditing(record.id)}
+                      >
+                        Ubah<span className="sr-only"> {SECTION_NAMES[record.key]}</span>
+                      </Button>
+                    )}
+                    <CmsItemMenu module="sections" record={record} />
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+          {!items.length && (
+            <p className="text-sm text-slate-600">Bagian beranda belum tersedia.</p>
+          )}
+        </Panel>
+        {selected && (
+          <EditorPanel
+            module="sections"
+            record={selected}
+            title={SECTION_NAMES[selected.key] ?? recordTitle(selected)}
+          />
+        )}
+      </div>
     </QueryState>
   );
 }
-function CmsCollection({
-  module,
-  title,
-  description,
-  featured = false,
-}: {
-  module: CmsModule;
-  title: string;
-  description: string;
-  featured?: boolean;
-}) {
-  const client = useQueryClient();
-  const [editing, setEditing] = useState<CmsRecord | 'new' | null>(null);
-  const [search, setSearch] = useState('');
-  const query = useQuery({
-    queryKey: ['cms', module],
-    queryFn: () => api<{ items: CmsRecord[] }>(`/admin/cms/${module}`),
-  });
-  const items = (query.data?.items ?? []).filter(
-    (record) => !featured || record.key === 'events-for-you',
-  );
-  const filtered = items.filter((record) =>
-    `${recordTitle(record)} ${record.key}`.toLocaleLowerCase().includes(search.toLocaleLowerCase()),
-  );
-  const publish = useMutation({
-    mutationFn: ({ record, action }: { record: CmsRecord; action: 'publish' | 'unpublish' }) =>
-      api(`/admin/cms/${module}/${record.id}/${action}`, {
-        method: 'POST',
-        body: { expectedVersion: record.version },
-      }),
-    onSuccess: (_, { action }) => {
-      refreshCms(client);
-      toast.success(
-        action === 'publish' ? 'Konten dipublikasikan ke website' : 'Konten ditarik dari website',
-      );
-    },
-    onError: (error) => toast.error(errorMessage(error)),
-  });
-  const remove = useMutation({
-    mutationFn: (record: CmsRecord) =>
-      api(`/admin/cms/${module}/${record.id}`, { method: 'DELETE' }),
-    onSuccess: () => {
-      refreshCms(client);
-      toast.success('Konten dihapus');
-    },
-    onError: (error) => toast.error(errorMessage(error)),
-  });
-  const canCreate = !(featured || module === 'settings') || items.length === 0;
-  return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-semibold tracking-tight text-slate-950">{title}</h2>
-          <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600">{description}</p>
-        </div>
-        {canCreate ? (
-          <Button onClick={() => setEditing('new')}>
-            {module === 'settings' ? 'Atur website' : featured ? 'Atur section' : 'Tambah konten'}
-          </Button>
-        ) : null}
-      </div>
-      {!featured && module !== 'settings' ? (
-        <label className="grid max-w-md gap-2 text-sm font-medium">
-          Cari konten CMS
-          <Input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Judul atau kunci konten"
-          />
-        </label>
-      ) : null}
-      <QueryState query={query}>
-        {filtered.length === 0 ? (
-          <EmptyState
-            title={search ? 'Konten tidak ditemukan' : 'Belum ada konten'}
-            description={
-              search
-                ? 'Coba kata pencarian lain.'
-                : 'Tambahkan konten dan simpan sebagai draft sebelum dipublikasikan.'
-            }
-          />
-        ) : (
-          <div className="space-y-4">
-            {filtered.map((record) => (
-              <Panel
-                key={record.id}
-                title={recordTitle(record)}
-                description={`Versi ${record.version} · Diperbarui ${formatDateTime(record.updatedAt)}`}
-                action={<Status value={record.status} />}
-              >
-                <div className="space-y-4">
-                  <p className="text-sm leading-6 text-slate-600">
-                    {record.status === 'DRAFT'
-                      ? record.published
-                        ? 'Ada perubahan draft. Website masih menggunakan versi published sebelumnya.'
-                        : 'Draft belum ditampilkan di website publik.'
-                      : record.status === 'UNPUBLISHED'
-                        ? 'Konten tidak ditampilkan di website publik.'
-                        : `Terpublikasi${record.publishedAt ? ` ${formatDateTime(record.publishedAt)}` : ''}.`}
-                  </p>
-                  {'sortOrder' in record.draft ? (
-                    <p className="text-xs text-slate-600">
-                      Urutan tampil: {record.draft.sortOrder}
-                      {'visible' in record.draft
-                        ? ` · ${record.draft.visible ? 'Ditampilkan' : 'Disembunyikan'}`
-                        : ''}
-                    </p>
-                  ) : null}
-                  <div className="flex flex-wrap gap-2">
-                    <Button variant="outline" onClick={() => setEditing(record)}>
-                      Edit draft
-                    </Button>
-                    <PreviewLink slug={'slug' in record.draft ? record.draft.slug : undefined} />
-                    <ConfirmDialog
-                      title="Publikasikan perubahan?"
-                      description={`Draft ${recordTitle(record)} akan diterapkan pada website publik. Pastikan preview sudah diperiksa.`}
-                      confirmLabel="Publikasikan"
-                      trigger={
-                        <Button disabled={publish.isPending || remove.isPending}>Publish</Button>
-                      }
-                      onConfirm={() => publish.mutate({ record, action: 'publish' })}
-                    />
-                    {record.published ? (
-                      <ConfirmDialog
-                        title="Tarik konten dari website?"
-                        description={`${recordTitle(record)} akan disembunyikan dari website publik. Draft tetap tersimpan.`}
-                        confirmLabel="Unpublish"
-                        trigger={
-                          <Button
-                            variant="outline"
-                            disabled={publish.isPending || remove.isPending}
-                          >
-                            Unpublish
-                          </Button>
-                        }
-                        onConfirm={() => publish.mutate({ record, action: 'unpublish' })}
-                      />
-                    ) : null}
-                    {!featured &&
-                    module !== 'settings' &&
-                    (module !== 'sections' || !CORE_SECTIONS.has(record.key)) ? (
-                      <ConfirmDialog
-                        title="Hapus konten CMS?"
-                        description={`${recordTitle(record)} beserta versi published akan dihapus. Konten tidak lagi muncul pada website.`}
-                        destructive
-                        confirmLabel="Hapus konten"
-                        trigger={
-                          <Button
-                            variant="outline"
-                            disabled={remove.isPending || publish.isPending}
-                          >
-                            Hapus
-                          </Button>
-                        }
-                        onConfirm={() => remove.mutate(record)}
-                      />
-                    ) : null}
-                  </div>
-                </div>
-              </Panel>
-            ))}
-          </div>
-        )}
-      </QueryState>
-      {editing ? (
-        <CmsEditor
-          key={editing === 'new' ? 'new' : `${editing.id}-${editing.version}`}
-          module={module}
-          record={editing}
-          featured={featured}
-          onClose={() => setEditing(null)}
-        />
-      ) : null}
-    </div>
-  );
-}
-function CmsEditor({
+function EditorPanel({
   module,
   record,
-  featured,
+  title,
+  onCreated,
   onClose,
 }: {
   module: CmsModule;
   record: CmsRecord | 'new';
-  featured: boolean;
-  onClose: () => void;
+  title: string;
+  onCreated?: (record: CmsRecord) => void;
+  onClose?: () => void;
 }) {
-  const client = useQueryClient();
-  const initial =
-    record === 'new' ? defaultDocument(module) : { ...defaultDocument(module), ...record.draft };
-  if (featured && record === 'new' && 'title' in initial) initial.title = 'Event Seru Untukmu';
-  const [document, setDocument] = useState<CmsDocument>(initial);
-  const [key] = useState(() =>
-    record === 'new'
-      ? featured
-        ? 'events-for-you'
-        : module === 'settings'
-          ? 'general'
-          : `${module}-${crypto.randomUUID()}`
-      : record.key,
-  );
-  const [uploads, setUploads] = useState(0);
-  const [dirty, setDirty] = useState(false);
-  const [discard, setDiscard] = useState(false);
-  const save = useMutation({
-    mutationFn: () =>
-      api<{ item: CmsRecord }>(`/admin/cms/${module}${record === 'new' ? '' : `/${record.id}`}`, {
-        method: record === 'new' ? 'POST' : 'PATCH',
-        body: { ...(record === 'new' ? { key } : { expectedVersion: record.version }), document },
-      }),
-    onSuccess: () => {
-      refreshCms(client);
-      toast.success('Draft disimpan. Periksa preview sebelum publish.');
-      onClose();
-    },
-  });
-  const busy = save.isPending || uploads > 0;
-  function close() {
-    if (busy) return;
-    if (dirty) setDiscard(true);
-    else onClose();
-  }
+  const pending = useCmsPending();
   return (
-    <>
-      <Dialog
-        open
-        onOpenChange={(open) => {
-          if (!open) close();
-        }}
-      >
-        <DialogContent
-          className="max-h-[92dvh] max-w-3xl overflow-y-auto"
-          onPointerDownOutside={(event) => {
-            if (busy) event.preventDefault();
-          }}
-          onEscapeKeyDown={(event) => {
-            if (busy) event.preventDefault();
-          }}
-        >
-          <DialogHeader>
-            <DialogTitle>
-              {record === 'new' ? 'Tambah konten CMS' : `Edit ${recordTitle(record)}`}
-            </DialogTitle>
-            <DialogDescription>
-              Perubahan disimpan sebagai draft. Website publik tetap menggunakan versi yang telah
-              dipublikasikan.
-            </DialogDescription>
-          </DialogHeader>
-          <form
-            className="space-y-6"
-            onSubmit={(event) => {
-              event.preventDefault();
-              if (!busy) save.mutate();
-            }}
+    <Panel
+      title={title}
+      className="xl:sticky xl:top-6"
+      action={
+        onClose && (
+          <Button
+            variant="ghost"
+            size="icon"
+            disabled={pending > 0}
+            onClick={onClose}
+            aria-label="Tutup editor"
           >
-            <fieldset disabled={busy} className="min-w-0 space-y-5">
-              <CmsFields
-                module={module}
-                document={document}
-                featured={featured}
-                onBusy={(uploading) => setUploads((count) => count + (uploading ? 1 : -1))}
-                onChange={(value) => {
-                  setDocument(value);
-                  setDirty(true);
-                }}
-              />
-            </fieldset>
-            <InlineError error={save.error} />
-            <div className="sticky bottom-0 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-white py-4">
-              <p className="text-xs text-slate-600">
-                {uploads > 0 ? 'Tunggu unggahan selesai.' : 'Simpan draft sebelum membuka preview.'}
-              </p>
-              <div className="flex gap-2">
-                <Button type="button" variant="outline" disabled={busy} onClick={close}>
-                  Batal
-                </Button>
-                <Button type="submit" disabled={busy}>
-                  {save.isPending ? 'Menyimpan...' : 'Simpan draft'}
-                </Button>
-              </div>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
-      <Dialog open={discard} onOpenChange={setDiscard}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Buang perubahan yang belum disimpan?</DialogTitle>
-            <DialogDescription>
-              Perubahan di editor ini belum tersimpan sebagai draft. Gambar yang telah diunggah
-              tidak otomatis dipublikasikan.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-wrap justify-end gap-2">
-            <Button variant="outline" onClick={() => setDiscard(false)}>
-              Lanjut edit
-            </Button>
-            <Button variant="destructive" onClick={onClose}>
-              Buang perubahan
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </>
+            <X aria-hidden />
+          </Button>
+        )
+      }
+    >
+      <CmsAutoEditor
+        key={record === 'new' ? 'new' : record.id}
+        module={module}
+        record={record}
+        onCreated={onCreated}
+      >
+        {({ document, onChange, onBusy, busy }) => (
+          <fieldset disabled={busy} className="min-w-0">
+            <CmsFields
+              module={module}
+              document={document}
+              onChange={onChange}
+              featured={module === 'sections'}
+              onBusy={onBusy}
+            />
+          </fieldset>
+        )}
+      </CmsAutoEditor>
+    </Panel>
+  );
+}
+function ContentCollection({ module }: { module: 'banners' | 'pages' }) {
+  const query = useCmsRecords(module);
+  const [editing, setEditing] = useState<string | 'new' | null>(null);
+  const [search, setSearch] = useState('');
+  const pending = useCmsPending();
+  const items = cmsSorted(query.data?.items ?? []);
+  const selected = items.find((item) => item.id === editing);
+  const filtered = items.filter((item) =>
+    recordTitle(item).toLocaleLowerCase().includes(search.toLocaleLowerCase()),
+  );
+  return (
+    <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(340px,1fr)]">
+      <div className="min-w-0 space-y-4">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <label className="grid min-w-0 gap-2 text-sm font-medium">
+            Cari {module === 'pages' ? 'halaman' : 'banner'}
+            <Input value={search} onChange={(event) => setSearch(event.target.value)} />
+          </label>
+          <Button disabled={pending > 0} onClick={() => setEditing('new')}>
+            <Plus aria-hidden />
+            Tambah {module === 'pages' ? 'halaman' : 'banner'}
+          </Button>
+        </div>
+        <QueryState query={query}>
+          {!filtered.length ? (
+            <EmptyState
+              title={
+                search
+                  ? 'Tidak ditemukan'
+                  : `Belum ada ${module === 'pages' ? 'halaman' : 'banner'}`
+              }
+              description="Tambahkan konten, lalu terbitkan setelah draft siap."
+            />
+          ) : module === 'pages' ? (
+            <DataTable
+              headers={['Judul', 'Alamat halaman', 'Status', 'Diperbarui', 'Tindakan']}
+              caption="Daftar halaman website"
+            >
+              {filtered.map((record) => (
+                <tr
+                  key={record.id}
+                  className={
+                    record.id === editing
+                      ? 'bg-blue-50 [&_td:first-child]:border-l-4 [&_td:first-child]:border-blue-600'
+                      : ''
+                  }
+                >
+                  <td className="font-medium">{recordTitle(record)}</td>
+                  <td>/{'slug' in record.draft ? record.draft.slug : ''}</td>
+                  <td>
+                    <CmsStatus record={record} />
+                  </td>
+                  <td>{formatDateTime(record.updatedAt)}</td>
+                  <td>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="outline"
+                        disabled={pending > 0}
+                        onClick={() => setEditing(record.id)}
+                      >
+                        Ubah<span className="sr-only"> {recordTitle(record)}</span>
+                      </Button>
+                      <CmsItemMenu
+                        module={module}
+                        record={record}
+                        onDeleted={() => setEditing(null)}
+                      />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </DataTable>
+          ) : (
+            <ul className="divide-y rounded-xl border border-slate-200 bg-white">
+              {filtered.map((record) => {
+                const banner = record.draft as BannerDocument;
+                return (
+                  <li
+                    key={record.id}
+                    className={`border-l-4 p-4 ${editing === record.id ? 'border-blue-600 bg-blue-50' : 'border-transparent'}`}
+                  >
+                    <div className="flex items-start gap-3">
+                      {banner.imageKey ? (
+                        <img
+                          src={assetUrl(banner.imageKey)!}
+                          width={128}
+                          height={72}
+                          alt=""
+                          className="h-16 w-24 shrink-0 rounded object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-16 w-24 shrink-0 items-center justify-center rounded bg-slate-100">
+                          <Image aria-hidden />
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <h2 className="break-words font-semibold">{banner.title}</h2>
+                        <p className="mt-1 text-xs text-slate-600">
+                          {banner.startsAt
+                            ? formatDateTime(banner.startsAt)
+                            : 'Mulai saat diterbitkan'}
+                          {banner.endsAt
+                            ? ` sampai ${formatDateTime(banner.endsAt)}`
+                            : ' · Tanpa batas akhir'}
+                        </p>
+                        <CmsStatus record={record} />
+                      </div>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <CmsOrderButtons module={module} record={record} items={items} />
+                      <CmsVisibility module={module} record={record} />
+                      <Button
+                        variant="outline"
+                        disabled={pending > 0}
+                        onClick={() => setEditing(record.id)}
+                      >
+                        Ubah<span className="sr-only"> {banner.title}</span>
+                      </Button>
+                      <CmsItemMenu
+                        module={module}
+                        record={record}
+                        onDeleted={() => setEditing(null)}
+                      />
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </QueryState>
+      </div>
+      {selected || editing === 'new' ? (
+        <EditorPanel
+          module={module}
+          record={selected ?? 'new'}
+          title={
+            selected
+              ? `Ubah ${recordTitle(selected)}`
+              : `Tambah ${module === 'pages' ? 'halaman' : 'banner'}`
+          }
+          onCreated={(record) => setEditing(record.id)}
+          onClose={() => setEditing(null)}
+        />
+      ) : (
+        <Panel title="Pilih konten">
+          <p className="text-sm leading-6 text-slate-600">
+            Pilih Ubah pada {module === 'pages' ? 'halaman' : 'banner'} untuk menyuntingnya di sini.
+          </p>
+        </Panel>
+      )}
+    </div>
+  );
+}
+function IdentitySettings() {
+  const query = useCmsRecords('settings');
+  const record = query.data?.items.find((item) => item.key === 'general');
+  return (
+    <QueryState query={query}>
+      {record ? (
+        <EditorPanel module="settings" record={record} title="Pengaturan website" />
+      ) : (
+        <EmptyState
+          title="Pengaturan belum tersedia"
+          description="Jalankan migrasi dan seed website sebelum mengubah identitas."
+        />
+      )}
+    </QueryState>
   );
 }
