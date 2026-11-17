@@ -2,11 +2,10 @@ import { ArrowRight, MapPin, Megaphone } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { EventCard } from '@/components/common/event-presentation';
 import { EmptyState, PageLoading, ErrorState } from '@/components/common/states';
-import { EventCarousel } from '@/components/discovery/event-carousel';
+import { BannerCarousel, EventCarousel } from '@/components/discovery/event-carousel';
 import { EventCategories } from '@/components/discovery/event-categories';
 import { CityDestinations } from '@/components/discovery/city-destinations';
 import { useCmsSite, type CmsSite } from '@/lib/cms';
-import { assetUrl } from '@/lib/assets';
 import { PlatformContent } from './platform-content';
 
 export function CmsHomepage({ site }: { site: CmsSite }) {
@@ -26,45 +25,7 @@ export function CmsHomepage({ site }: { site: CmsSite }) {
           return (
             <section key={section.id} aria-label={section.title}>
               {banners.length ? (
-                <div className="space-y-4">
-                  {banners.map((banner) => (
-                    <div key={banner.id} className="relative isolate bg-slate-100">
-                      <picture>
-                        <source
-                          media="(max-width: 640px)"
-                          srcSet={assetUrl(banner.mobileImageKey || banner.imageKey)!}
-                        />
-                        <img
-                          src={assetUrl(banner.imageKey)!}
-                          alt={banner.title}
-                          width={1920}
-                          height={800}
-                          className="aspect-[12/5] max-h-[620px] w-full object-cover"
-                          fetchPriority="high"
-                        />
-                      </picture>
-                      {(banner.title ||
-                        banner.subtitle ||
-                        banner.description ||
-                        banner.ctaText) && (
-                        <div className="container py-5">
-                          <h2 className="text-2xl font-semibold">{banner.title}</h2>
-                          {banner.subtitle && (
-                            <p className="mt-2 text-slate-600">{banner.subtitle}</p>
-                          )}
-                          {banner.description && (
-                            <p className="mt-2 text-slate-600">{banner.description}</p>
-                          )}
-                          {banner.ctaUrl && (
-                            <a href={banner.ctaUrl} className="primary-action mt-4">
-                              {banner.ctaText || 'Lihat selengkapnya'}
-                            </a>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                <BannerCarousel banners={banners} />
               ) : (
                 <EventCarousel events={section.events} />
               )}
