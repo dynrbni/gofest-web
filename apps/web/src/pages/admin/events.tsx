@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Search, ExternalLink } from 'lucide-react';
+import { Search, ExternalLink, ArrowRight } from 'lucide-react';
 import { api, apiPage, errorMessage } from '@/lib/api';
 import { formatEventWhen } from '@/lib/format';
 import { useDebouncedValue, useDocumentTitle } from '@/lib/hooks';
@@ -174,14 +174,22 @@ export function AdminEventsPage() {
                     <td className="px-4 py-3">
                       <EventStatusBadge status={event.status} />
                     </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <Link
-                          to={`/admin/events/${event.id}`}
-                          className="rounded border border-slate-200 px-3 py-2 text-xs font-medium text-blue-700"
+                    <td className="min-w-[320px] px-4 py-3 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          asChild
+                          variant="outline"
+                          size="sm"
+                          className="min-h-11 shrink-0 border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800"
                         >
-                          Detail / kelola
-                        </Link>
+                          <Link
+                            to={`/admin/events/${event.id}/edit`}
+                            aria-label={`Kelola acara ${event.title}`}
+                          >
+                            Kelola acara
+                            <ArrowRight aria-hidden />
+                          </Link>
+                        </Button>
                         {event.status === 'PUBLISHED' ? (
                           <Link
                             to={`/events/${event.slug}`}
@@ -202,26 +210,30 @@ export function AdminEventsPage() {
                           'REJECTED',
                         ].includes(event.status) ? (
                           <>
-                            <button
+                            <Button
+                              size="sm"
+                              variant="secondary"
                               type="button"
                               onClick={() => {
                                 setReviewModal({ event, action: 'PUBLISHED' });
                                 setReviewNote('');
                               }}
-                              className="rounded bg-olive px-2.5 py-1 text-[11px] font-medium text-paper hover:bg-olive/90"
+                              className="min-h-11 shrink-0"
                             >
                               Publikasikan
-                            </button>
-                            <button
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
                               type="button"
                               onClick={() => {
                                 setReviewModal({ event, action: 'REJECTED' });
                                 setReviewNote('');
                               }}
-                              className="rounded border border-brick px-2.5 py-1 text-[11px] font-medium text-brick hover:bg-brick/10"
+                              className="min-h-11 shrink-0 text-red-700 hover:bg-red-50 hover:text-red-800"
                             >
                               Tolak
-                            </button>
+                            </Button>
                           </>
                         ) : null}
                       </div>

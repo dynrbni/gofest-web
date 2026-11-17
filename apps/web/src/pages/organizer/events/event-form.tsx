@@ -14,23 +14,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import type { EventManage } from '@/lib/models';
 import { ImageUploader } from '@/components/common/image-uploader';
-
-function toLocalDatetimeInput(iso?: string | null) {
-  if (!iso) return '';
-  const date = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, '0');
-  const yyyy = date.getFullYear();
-  const MM = pad(date.getMonth() + 1);
-  const dd = pad(date.getDate());
-  const hh = pad(date.getHours());
-  const mm = pad(date.getMinutes());
-  return `${yyyy}-${MM}-${dd}T${hh}:${mm}`;
-}
-
-function fromLocalDatetimeInput(localStr: string) {
-  if (!localStr) return undefined;
-  return new Date(localStr).toISOString();
-}
+import { EventFormSummary } from './event-summary';
+import { toDateTimeInput, fromDateTimeInput } from '@/lib/format';
 
 export function OrganizerEventFormPage({ isNew = false }: { isNew?: boolean }) {
   const { apiBase, base } = useWorkspace();
@@ -42,6 +27,7 @@ export function OrganizerEventFormPage({ isNew = false }: { isNew?: boolean }) {
 
   const eventQuery = useOrganizerEvent(isNew ? undefined : id, apiBase);
   const existingEvent = eventQuery.data?.event;
+  const timezone = existingEvent?.timezone ?? 'Asia/Jakarta';
 
   useDocumentTitle(isNew ? 'Buat Acara Baru' : 'Edit Informasi Acara');
 
@@ -82,15 +68,15 @@ export function OrganizerEventFormPage({ isNew = false }: { isNew?: boolean }) {
       setCity(existingEvent.city ?? '');
       setOnlineUrl(existingEvent.onlineAccessUrl ?? '');
       setOnlineNote(existingEvent.onlineAccessNote ?? '');
-      setStartsAt(toLocalDatetimeInput(existingEvent.startsAt));
-      setEndsAt(toLocalDatetimeInput(existingEvent.endsAt));
-      setSalesStartAt(toLocalDatetimeInput(existingEvent.salesStartAt));
-      setSalesEndAt(toLocalDatetimeInput(existingEvent.salesEndAt));
+      setStartsAt(toDateTimeInput(existingEvent.startsAt, timezone));
+      setEndsAt(toDateTimeInput(existingEvent.endsAt, timezone));
+      setSalesStartAt(toDateTimeInput(existingEvent.salesStartAt, timezone));
+      setSalesEndAt(toDateTimeInput(existingEvent.salesEndAt, timezone));
       setRules(existingEvent.rules ?? '');
       setRefundPolicy(existingEvent.refundPolicy ?? '');
       setCoverKey(existingEvent.coverKey);
     }
-  }, [existingEvent]);
+  }, [existingEvent, timezone]);
 
   function autoSlug(str: string) {
     return str
@@ -139,14 +125,14 @@ export function OrganizerEventFormPage({ isNew = false }: { isNew?: boolean }) {
       city: type === 'OFFLINE' ? city.trim() || null : null,
       onlineAccessUrl: type === 'ONLINE' ? onlineUrl.trim() || null : null,
       onlineAccessNote: type === 'ONLINE' ? onlineNote.trim() || null : null,
-      startsAt: fromLocalDatetimeInput(startsAt)!,
-      endsAt: fromLocalDatetimeInput(endsAt)!,
-      salesStartAt: fromLocalDatetimeInput(salesStartAt) || null,
-      salesEndAt: fromLocalDatetimeInput(salesEndAt) || null,
+      startsAt: fromDateTimeInput(startsAt, timezone)!,
+      endsAt: fromDateTimeInput(endsAt, timezone)!,
+      salesStartAt: fromDateTimeInput(salesStartAt, timezone) || null,
+      salesEndAt: fromDateTimeInput(salesEndAt, timezone) || null,
       rules: rules.trim() || null,
       refundPolicy: refundPolicy.trim() || null,
       coverKey: coverKey || null,
-      timezone: 'Asia/Jakarta',
+      timezone,
     };
 
     try {
@@ -183,7 +169,7 @@ export function OrganizerEventFormPage({ isNew = false }: { isNew?: boolean }) {
   }
 
   return (
-    <div className="max-w-3xl space-y-6">
+    <div className="space-y-6">
       {isNew ? (
         <div className="border-b border-warm-border pb-6">
           <Link
@@ -202,256 +188,269 @@ export function OrganizerEventFormPage({ isNew = false }: { isNew?: boolean }) {
         </div>
       ) : null}
 
-      <form
-        onSubmit={onSubmit}
-        className="space-y-6 rounded-md border border-warm-border bg-card p-6 sm:p-8"
-      >
-        <InlineError error={generalError} />
+      <div className="grid min-w-0 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <form
+          onSubmit={onSubmit}
+          className="min-w-0 space-y-6 rounded-md border border-warm-border bg-card p-6 sm:p-8"
+        >
+          <InlineError error={generalError} />
 
-        <div className="space-y-4">
-          <h2 className="text-base font-semibold text-ink">1. Informasi utama</h2>
-          <ImageUploader
-            label="Banner acara"
-            folder="events"
-            value={coverKey}
-            onChange={setCoverKey}
-            onUploadingChange={setUploading}
-            disabled={saving}
-            hint="Rekomendasi 1920 × 800 px. Gambar diterapkan setelah acara disimpan."
-          />
-
-          <Field label="Judul Acara" htmlFor="title" required error={errors.title}>
-            <Input
-              id="title"
-              value={title}
-              onChange={(e) => handleTitleChange(e.target.value)}
-              placeholder="Contoh: Senandung Senja Live Concert 2026"
-              required
+          <div className="space-y-4">
+            <h2 className="text-base font-semibold text-ink">1. Informasi utama</h2>
+            <ImageUploader
+              label="Banner acara"
+              folder="events"
+              value={coverKey}
+              onChange={setCoverKey}
+              onUploadingChange={setUploading}
+              disabled={saving}
+              hint="Rekomendasi 1920 × 800 px. Gambar diterapkan setelah acara disimpan."
             />
-          </Field>
 
-          <Field
-            label="Slug Tautan Publik"
-            htmlFor="slug"
-            hint="Tautan URL acara: gofest.id/events/slug-ini"
-            required
-            error={errors.slug}
-          >
-            <Input
-              id="slug"
-              value={slug}
-              onChange={(e) => setSlug(e.target.value)}
-              placeholder="contoh: senandung-senja-2026"
-              required
-            />
-          </Field>
+            <Field label="Judul Acara" htmlFor="title" required error={errors.title}>
+              <Input
+                id="title"
+                value={title}
+                onChange={(e) => handleTitleChange(e.target.value)}
+                placeholder="Contoh: Senandung Senja Live Concert 2026"
+                required
+              />
+            </Field>
 
-          <Field label="Kategori Acara" htmlFor="categoryId" required error={errors.categoryId}>
-            <select
-              id="categoryId"
-              value={categoryId}
-              onChange={(e) => setCategoryId(e.target.value)}
-              className="h-10 w-full rounded-md border border-ink/20 bg-card px-3 text-sm outline-none focus-visible:border-ink"
+            <Field
+              label="Slug Tautan Publik"
+              htmlFor="slug"
+              hint="Tautan URL acara: gofest.id/events/slug-ini"
               required
+              error={errors.slug}
             >
-              <option value="">Pilih kategori...</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
-          </Field>
-
-          <Field
-            label="Ringkasan Singkat"
-            htmlFor="summary"
-            hint="Satu atau dua kalimat pembuka untuk preview di halaman discovery (min. 20 karakter)"
-            required
-            error={errors.summary}
-          >
-            <Input
-              id="summary"
-              value={summary}
-              onChange={(e) => setSummary(e.target.value)}
-              placeholder="Malam perayaan musik indie bersama 6 musisi pilihan di panggung terbuka..."
-              required
-            />
-          </Field>
-
-          <Field
-            label="Deskripsi Lengkap"
-            htmlFor="description"
-            hint="Jelaskan detail line-up, susunan agenda, dan informasi penting bagi pengunjung (min. 40 karakter)"
-            required
-            error={errors.description}
-          >
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Tuliskan deskripsi lengkap acara..."
-              rows={6}
-              required
-            />
-          </Field>
-        </div>
-
-        <div className="space-y-4 border-t border-warm-border pt-6">
-          <h2 className="text-base font-semibold text-ink">2. Format & lokasi acara</h2>
-
-          <div className="flex gap-4">
-            <label className="flex items-center gap-2 text-sm font-medium">
-              <input
-                type="radio"
-                name="type"
-                value="OFFLINE"
-                checked={type === 'OFFLINE'}
-                onChange={() => setType('OFFLINE')}
+              <Input
+                id="slug"
+                value={slug}
+                onChange={(e) => setSlug(e.target.value)}
+                placeholder="contoh: senandung-senja-2026"
+                required
               />
-              Acara Tatap Muka (Offline)
-            </label>
-            <label className="flex items-center gap-2 text-sm font-medium">
-              <input
-                type="radio"
-                name="type"
-                value="ONLINE"
-                checked={type === 'ONLINE'}
-                onChange={() => setType('ONLINE')}
-              />
-              Acara Daring (Online)
-            </label>
-          </div>
+            </Field>
 
-          {type === 'OFFLINE' ? (
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="sm:col-span-2">
-                <Field label="Nama Tempat / Venue" htmlFor="venueName">
-                  <Input
-                    id="venueName"
-                    value={venueName}
-                    onChange={(e) => setVenueName(e.target.value)}
-                    placeholder="Contoh: Hall Basket Gelora Bung Karno"
-                  />
-                </Field>
-              </div>
-
-              <div>
-                <Field label="Kota" htmlFor="city">
-                  <Input
-                    id="city"
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    placeholder="Contoh: Jakarta Pusat"
-                  />
-                </Field>
-              </div>
-
-              <div>
-                <Field label="Alamat Lengkap" htmlFor="address">
-                  <Input
-                    id="address"
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    placeholder="Jl. Pintu Satu Senayan No. 1"
-                  />
-                </Field>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <Field
-                label="URL Akses Online"
-                htmlFor="onlineUrl"
-                hint="Tautan webinar/streaming (Hanya diberikan kepada pemegang tiket valid)"
+            <Field label="Kategori Acara" htmlFor="categoryId" required error={errors.categoryId}>
+              <select
+                id="categoryId"
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+                className="h-10 w-full rounded-md border border-ink/20 bg-card px-3 text-sm outline-none focus-visible:border-ink"
+                required
               >
-                <Input
-                  id="onlineUrl"
-                  value={onlineUrl}
-                  onChange={(e) => setOnlineUrl(e.target.value)}
-                  placeholder="https://zoom.us/j/..."
-                />
-              </Field>
+                <option value="">Pilih kategori...</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
 
-              <Field label="Catatan Akses Online" htmlFor="onlineNote">
-                <Input
-                  id="onlineNote"
-                  value={onlineNote}
-                  onChange={(e) => setOnlineNote(e.target.value)}
-                  placeholder="Password dan instruksi masuk akan dikirim 1 jam sebelum mulai"
-                />
-              </Field>
-            </div>
-          )}
-        </div>
-
-        <div className="space-y-4 border-t border-warm-border pt-6">
-          <h2 className="text-base font-semibold text-ink">3. Jadwal acara</h2>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Waktu Mulai Acara" htmlFor="startsAt" required error={errors.startsAt}>
+            <Field
+              label="Ringkasan Singkat"
+              htmlFor="summary"
+              hint="Satu atau dua kalimat pembuka untuk preview di halaman discovery (min. 20 karakter)"
+              required
+              error={errors.summary}
+            >
               <Input
-                id="startsAt"
-                type="datetime-local"
-                value={startsAt}
-                onChange={(e) => setStartsAt(e.target.value)}
+                id="summary"
+                value={summary}
+                onChange={(e) => setSummary(e.target.value)}
+                placeholder="Malam perayaan musik indie bersama 6 musisi pilihan di panggung terbuka..."
                 required
               />
             </Field>
 
-            <Field label="Waktu Selesai Acara" htmlFor="endsAt" required error={errors.endsAt}>
-              <Input
-                id="endsAt"
-                type="datetime-local"
-                value={endsAt}
-                onChange={(e) => setEndsAt(e.target.value)}
+            <Field
+              label="Deskripsi Lengkap"
+              htmlFor="description"
+              hint="Jelaskan detail line-up, susunan agenda, dan informasi penting bagi pengunjung (min. 40 karakter)"
+              required
+              error={errors.description}
+            >
+              <Textarea
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Tuliskan deskripsi lengkap acara..."
+                rows={6}
                 required
               />
             </Field>
           </div>
-        </div>
 
-        <div className="space-y-4 border-t border-warm-border pt-6">
-          <h2 className="text-base font-semibold text-ink">4. Ketentuan & aturan</h2>
+          <div className="space-y-4 border-t border-warm-border pt-6">
+            <h2 className="text-base font-semibold text-ink">2. Format & lokasi acara</h2>
 
-          <Field
-            label="Aturan Masuk / Catatan Pengunjung"
-            htmlFor="rules"
-            hint="Contoh: Dilarang membawa makanan luar, batas usia minimal 17 tahun"
-          >
-            <Textarea
-              id="rules"
-              value={rules}
-              onChange={(e) => setRules(e.target.value)}
-              placeholder="Aturan umum masuk venue..."
-              rows={3}
-            />
-          </Field>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 text-sm font-medium">
+                <input
+                  type="radio"
+                  name="type"
+                  value="OFFLINE"
+                  checked={type === 'OFFLINE'}
+                  onChange={() => setType('OFFLINE')}
+                />
+                Acara Tatap Muka (Offline)
+              </label>
+              <label className="flex items-center gap-2 text-sm font-medium">
+                <input
+                  type="radio"
+                  name="type"
+                  value="ONLINE"
+                  checked={type === 'ONLINE'}
+                  onChange={() => setType('ONLINE')}
+                />
+                Acara Daring (Online)
+              </label>
+            </div>
 
-          <Field
-            label="Kebijakan Refund"
-            htmlFor="refundPolicy"
-            hint="Jelaskan ketentuan pengembalian dana jika acara dibatalkan atau dipindah tanggal"
-          >
-            <Textarea
-              id="refundPolicy"
-              value={refundPolicy}
-              onChange={(e) => setRefundPolicy(e.target.value)}
-              placeholder="Kebijakan pengembalian dana..."
-              rows={3}
-            />
-          </Field>
-        </div>
+            {type === 'OFFLINE' ? (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="sm:col-span-2">
+                  <Field label="Nama Tempat / Venue" htmlFor="venueName">
+                    <Input
+                      id="venueName"
+                      value={venueName}
+                      onChange={(e) => setVenueName(e.target.value)}
+                      placeholder="Contoh: Hall Basket Gelora Bung Karno"
+                    />
+                  </Field>
+                </div>
 
-        <div className="flex justify-end gap-3 border-t border-warm-border pt-6">
-          <Button type="button" variant="outline" onClick={() => navigate(-1)}>
-            Batal
-          </Button>
-          <Button type="submit" disabled={saving || uploading}>
-            {saving ? 'Menyimpan...' : isNew ? 'Simpan & Lanjut ke Tiket' : 'Simpan Perubahan'}
-          </Button>
-        </div>
-      </form>
+                <div>
+                  <Field label="Kota" htmlFor="city">
+                    <Input
+                      id="city"
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      placeholder="Contoh: Jakarta Pusat"
+                    />
+                  </Field>
+                </div>
+
+                <div>
+                  <Field label="Alamat Lengkap" htmlFor="address">
+                    <Input
+                      id="address"
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      placeholder="Jl. Pintu Satu Senayan No. 1"
+                    />
+                  </Field>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <Field
+                  label="URL Akses Online"
+                  htmlFor="onlineUrl"
+                  hint="Tautan webinar/streaming (Hanya diberikan kepada pemegang tiket valid)"
+                >
+                  <Input
+                    id="onlineUrl"
+                    value={onlineUrl}
+                    onChange={(e) => setOnlineUrl(e.target.value)}
+                    placeholder="https://zoom.us/j/..."
+                  />
+                </Field>
+
+                <Field label="Catatan Akses Online" htmlFor="onlineNote">
+                  <Input
+                    id="onlineNote"
+                    value={onlineNote}
+                    onChange={(e) => setOnlineNote(e.target.value)}
+                    placeholder="Password dan instruksi masuk akan dikirim 1 jam sebelum mulai"
+                  />
+                </Field>
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-4 border-t border-warm-border pt-6">
+            <h2 className="text-base font-semibold text-ink">3. Jadwal acara</h2>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Waktu Mulai Acara" htmlFor="startsAt" required error={errors.startsAt}>
+                <Input
+                  id="startsAt"
+                  type="datetime-local"
+                  value={startsAt}
+                  onChange={(e) => setStartsAt(e.target.value)}
+                  required
+                />
+              </Field>
+
+              <Field label="Waktu Selesai Acara" htmlFor="endsAt" required error={errors.endsAt}>
+                <Input
+                  id="endsAt"
+                  type="datetime-local"
+                  value={endsAt}
+                  onChange={(e) => setEndsAt(e.target.value)}
+                  required
+                />
+              </Field>
+            </div>
+          </div>
+
+          <div className="space-y-4 border-t border-warm-border pt-6">
+            <h2 className="text-base font-semibold text-ink">4. Ketentuan & aturan</h2>
+
+            <Field
+              label="Aturan Masuk / Catatan Pengunjung"
+              htmlFor="rules"
+              hint="Contoh: Dilarang membawa makanan luar, batas usia minimal 17 tahun"
+            >
+              <Textarea
+                id="rules"
+                value={rules}
+                onChange={(e) => setRules(e.target.value)}
+                placeholder="Aturan umum masuk venue..."
+                rows={3}
+              />
+            </Field>
+
+            <Field
+              label="Kebijakan Refund"
+              htmlFor="refundPolicy"
+              hint="Jelaskan ketentuan pengembalian dana jika acara dibatalkan atau dipindah tanggal"
+            >
+              <Textarea
+                id="refundPolicy"
+                value={refundPolicy}
+                onChange={(e) => setRefundPolicy(e.target.value)}
+                placeholder="Kebijakan pengembalian dana..."
+                rows={3}
+              />
+            </Field>
+          </div>
+
+          <div className="flex justify-end gap-3 border-t border-warm-border pt-6">
+            <Button type="button" variant="outline" onClick={() => navigate(-1)}>
+              Batal
+            </Button>
+            <Button type="submit" disabled={saving || uploading}>
+              {saving ? 'Menyimpan...' : isNew ? 'Simpan & Lanjut ke Tiket' : 'Simpan Perubahan'}
+            </Button>
+          </div>
+        </form>
+        <EventFormSummary
+          title={title}
+          coverKey={coverKey}
+          type={type}
+          venueName={venueName}
+          address={address}
+          city={city}
+          startsAt={startsAt}
+          endsAt={endsAt}
+          timezone={timezone}
+        />
+      </div>
     </div>
   );
 }
