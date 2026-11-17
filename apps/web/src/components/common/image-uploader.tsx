@@ -4,7 +4,7 @@ import { assetUrl } from '@/lib/assets';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
-type ImageFolder = 'events' | 'organizers' | 'avatars' | 'cms';
+type ImageFolder = 'events' | 'organizers' | 'avatars' | 'cms' | 'cms-cities';
 interface ImageUploaderProps {
   label: string;
   folder: ImageFolder;
@@ -29,6 +29,7 @@ export function ImageUploader({
   const [preview, setPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [dragging, setDragging] = useState(false);
   const mounted = useRef(true);
   useEffect(() => {
     mounted.current = true;
@@ -42,11 +43,19 @@ export function ImageUploader({
     },
     [preview],
   );
-  const maxMB = folder === 'avatars' ? 2 : 8;
+  const cityIllustration = folder === 'cms-cities';
+  const maxMB = folder === 'avatars' || cityIllustration ? 2 : 8;
+  const formats = cityIllustration
+    ? ['image/png', 'image/webp']
+    : ['image/jpeg', 'image/png', 'image/webp'];
   async function upload(file: File) {
     setError(null);
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      setError('Pilih gambar JPG, PNG, atau WebP.');
+    if (!formats.includes(file.type)) {
+      setError(
+        cityIllustration
+          ? 'Pilih ilustrasi PNG atau WebP transparan.'
+          : 'Pilih gambar JPG, PNG, atau WebP.',
+      );
       return;
     }
     if (file.size > maxMB * 1024 * 1024) {
@@ -74,23 +83,45 @@ export function ImageUploader({
   }
   const image = preview ?? assetUrl(value);
   return (
-    <div className="space-y-3" aria-busy={uploading}>
+    <div
+      className={`space-y-3 ${cityIllustration ? `rounded-lg border-2 border-dashed p-4 ${dragging ? 'border-blue-500 bg-blue-50' : 'border-slate-200'}` : ''}`}
+      aria-busy={uploading}
+      onDragOver={(event) => {
+        if (!cityIllustration) return;
+        event.preventDefault();
+        if (!disabled && !uploading) setDragging(true);
+      }}
+      onDragLeave={() => setDragging(false)}
+      onDrop={(event) => {
+        if (!cityIllustration) return;
+        event.preventDefault();
+        setDragging(false);
+        const file = event.dataTransfer.files[0];
+        if (file && !disabled && !uploading) void upload(file);
+      }}
+    >
       <label htmlFor={id} className="block text-sm font-medium">
         {label}
       </label>
       <p id={`${id}-hint`} className="text-xs leading-5 text-slate-600">
-        {hint} JPG, PNG, WebP. Maksimal {maxMB} MB.
+        {hint}{' '}
+        {cityIllustration
+          ? 'PNG/WebP transparan, persegi, minimal 600 × 600 px.'
+          : 'JPG, PNG, WebP.'}{' '}
+        Maksimal {maxMB} MB.
       </p>
       {image ? (
         <img
           src={image}
           alt={`Pratinjau ${label.toLowerCase()}`}
-          width={folder === 'avatars' ? 160 : 1500}
-          height={folder === 'avatars' ? 160 : 500}
+          width={folder === 'avatars' ? 160 : cityIllustration ? 600 : 1500}
+          height={folder === 'avatars' ? 160 : cityIllustration ? 600 : 500}
           className={
-            folder === 'avatars'
-              ? 'size-24 rounded-full border border-slate-200 object-cover'
-              : 'aspect-[3/1] w-full rounded-lg border border-slate-200 bg-slate-50 object-cover'
+            cityIllustration
+              ? 'mx-auto aspect-square w-40 object-contain'
+              : folder === 'avatars'
+                ? 'size-24 rounded-full border border-slate-200 object-cover'
+                : 'aspect-[3/1] w-full rounded-lg border border-slate-200 bg-slate-50 object-cover'
           }
         />
       ) : (
@@ -102,8 +133,8 @@ export function ImageUploader({
         ref={input}
         id={id}
         type="file"
-        accept="image/jpeg,image/png,image/webp"
-        className="h-auto py-2"
+        accept={formats.join(',')}
+        className={cityIllustration ? 'sr-only' : 'h-auto py-2'}
         disabled={disabled || uploading}
         aria-describedby={`${id}-hint${error ? ` ${id}-error` : ''}`}
         aria-invalid={Boolean(error)}
@@ -113,6 +144,16 @@ export function ImageUploader({
           if (file) void upload(file);
         }}
       />
+      {cityIllustration && !value ? (
+        <Button
+          type="button"
+          variant="outline"
+          disabled={disabled || uploading}
+          onClick={() => input.current?.click()}
+        >
+          Pilih ilustrasi
+        </Button>
+      ) : null}
       {value ? (
         <div className="flex flex-wrap gap-2">
           <Button
