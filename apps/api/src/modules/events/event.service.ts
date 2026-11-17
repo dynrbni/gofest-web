@@ -1,13 +1,14 @@
 import { Prisma } from '@prisma/client';
 import type { Request } from 'express';
 import type { EventListQuery } from '@gofest/shared';
-import { findEventCity } from '@gofest/shared';
+import { EVENT_CITIES, findEventCity } from '@gofest/shared';
 import { prisma } from '../../lib/prisma';
 import { writeAudit } from '../../lib/audit';
 import { ConflictError, ForbiddenError, NotFoundError } from '../../lib/errors';
 import { assertOwnedImage } from '../uploads/upload.service';
 import { enqueueEmail } from '../notifications/email.service';
 import { notifyAdmins } from '../notifications/inbox.service';
+import { citySchema } from '../cms/cms.schemas';
 import { getPlatformSettings } from '../settings/settings.service';
 
 type EventInput = {
@@ -100,7 +101,34 @@ export async function listPublicEvents(query: EventListQuery) {
       Prisma.sql`lower(btrim(e."city")) IN (${Prisma.join(city.aliases.map((alias) => alias.toLowerCase()))})`,
     );
   } else if (query.city) {
-    conditions.push(Prisma.sql`coalesce(e."city", '') ILIKE ${`%${query.city}%`}`);
+    const rows = await prisma.cmsCity.findMany({
+      where: { published: { not: Prisma.DbNull } },
+      select: { published: true },
+    });
+    const city = rows
+      .flatMap((row) => {
+        const parsed = citySchema.safeParse(row.published);
+        return parsed.success ? [parsed.data] : [];
+      })
+      .find((entry) => entry.slug === query.city);
+    const builtIn = city
+      ? EVENT_CITIES.find((entry) =>
+          entry.aliases.some((alias) => alias.toLowerCase() === city.name.toLowerCase()),
+        )
+      : findEventCity(query.city);
+    if (city || builtIn) {
+      const aliases = [
+        ...new Set(
+          [...(builtIn?.aliases ?? []), ...(city ? [city.name] : [])].map((name) =>
+            name.toLowerCase(),
+          ),
+        ),
+      ];
+      conditions.push(
+        Prisma.sql`e."type"::text = 'OFFLINE'`,
+        Prisma.sql`lower(btrim(e."city")) IN (${Prisma.join(aliases)})`,
+      );
+    } else conditions.push(Prisma.sql`coalesce(e."city", '') ILIKE ${`%${query.city}%`}`);
   }
   if (query.dateFrom) {
     conditions.push(Prisma.sql`e."startsAt" >= ${new Date(query.dateFrom)}`);

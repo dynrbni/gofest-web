@@ -21,6 +21,8 @@ import {
   pageSchema,
   type CmsCollection,
   type SectionDocument,
+  type PublishAllCmsInput,
+  citySchema,
 } from './cms.schemas';
 import { defaultSections, defaultWebsite } from './cms.defaults';
 import { cmsStore, type CmsDb, type CmsRow } from './cms.repository';
@@ -44,6 +46,7 @@ async function validateReferences(
   document: Prisma.InputJsonObject,
   req: Request,
   db: CmsDb,
+  currentId: string | undefined = req.params.id,
 ) {
   if (collection === 'sections') {
     if (req.auth!.role !== 'SUPERADMIN' && document.kind !== 'events')
@@ -70,11 +73,29 @@ async function validateReferences(
     const slug = document.slug;
     const conflict = records.some(
       (row) =>
-        row.id !== req.params.id &&
+        row.id !== currentId &&
         ((row.draft as { slug?: string }).slug === slug ||
           (row.published as { slug?: string } | null)?.slug === slug),
     );
     if (conflict) throw new ConflictError('Slug halaman sudah digunakan');
+  }
+  if (collection === 'cities') {
+    if (document.builtInIllustration) {
+      const existing = currentId ? await db.cmsCity.findUnique({ where: { id: currentId } }) : null;
+      const current = existing?.draft as { builtInIllustration?: string } | undefined;
+      const published = existing?.published as { builtInIllustration?: string } | null;
+      if (
+        !existing ||
+        (current?.builtInIllustration !== document.builtInIllustration &&
+          published?.builtInIllustration !== document.builtInIllustration)
+      )
+        throw new BadRequestError('Ilustrasi bawaan hanya tersedia pada kota yang dimigrasikan');
+    }
+    if (document.imageKey) {
+      const media = await db.mediaAsset.findUnique({ where: { key: String(document.imageKey) } });
+      if (!media || media.folder !== 'cms-cities')
+        throw new BadRequestError('Gunakan unggahan ilustrasi kota yang memenuhi persyaratan');
+    }
   }
   if (
     collection === 'navigation' &&
@@ -142,6 +163,38 @@ export async function listCms(collection: CmsCollection, req: Request) {
         : items.filter((item) => item.key === 'events-for-you'),
   };
 }
+function citySlugBase(name: string) {
+  return (
+    name
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 100) || 'kota'
+  );
+}
+async function deriveCitySlug(document: Prisma.InputJsonObject, id: string | undefined, db: CmsDb) {
+  await db.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('gofest-cms-city-slugs'))`;
+  const rows = await db.cmsCity.findMany({
+    select: { id: true, slug: true, draft: true, published: true },
+  });
+  const reserved = new Set(
+    rows
+      .filter((row) => row.id !== id)
+      .flatMap((row) =>
+        [
+          row.slug,
+          (row.draft as { slug?: string }).slug,
+          (row.published as { slug?: string } | null)?.slug,
+        ].filter(Boolean),
+      ),
+  );
+  const base = citySlugBase(String(document.name));
+  let slug = base;
+  for (let suffix = 2; reserved.has(slug); suffix += 1) slug = `${base}-${suffix}`;
+  return { ...document, slug };
+}
 export async function saveCms(
   collection: CmsCollection,
   id: string | undefined,
@@ -157,7 +210,12 @@ export async function saveCms(
     authorize(collection, key, req);
     if (collection === 'settings' && key !== 'general')
       throw new BadRequestError('Pengaturan website menggunakan key general');
-    const document = parseDocument(collection, input.document);
+    const cityInput =
+      collection === 'cities' && input.document && typeof input.document === 'object'
+        ? { ...input.document, slug: undefined }
+        : input.document;
+    let document = parseDocument(collection, cityInput);
+    if (collection === 'cities') document = await deriveCitySlug(document, existing?.id, tx);
     await validateReferences(collection, document, req, tx);
     let row: CmsRow;
     if (existing) {
@@ -190,6 +248,16 @@ export async function saveCms(
       });
     }
     if (collection === 'sections') await featuredRows(tx, row.id, document, 'DRAFT');
+    await tx.cmsRevision.create({
+      data: {
+        collection,
+        entityId: row.id,
+        version: row.version,
+        document,
+        action: 'SAVE_DRAFT',
+        actorUserId: req.auth!.userId,
+      },
+    });
     await writeAudit(
       {
         actorUserId: req.auth!.userId,
@@ -204,6 +272,61 @@ export async function saveCms(
     return { item: row };
   });
 }
+async function publishInTransaction(
+  tx: Prisma.TransactionClient,
+  collection: CmsCollection,
+  id: string,
+  version: number,
+  publish: boolean,
+  req: Request,
+) {
+  const store = cmsStore(collection, tx);
+  const row = await store.findUnique({ where: { id } });
+  if (!row) throw new NotFoundError('Konten CMS tidak ditemukan');
+  authorize(collection, row.key, req);
+  const document = parseDocument(collection, row.draft);
+  if (publish) await validateReferences(collection, document, req, tx, id);
+  if (publish && collection === 'banners' && !document.imageKey)
+    throw new BadRequestError('Unggah gambar banner sebelum publikasi');
+  const result = await store.updateMany({
+    where: { id, version },
+    data: {
+      status: publish ? 'PUBLISHED' : 'UNPUBLISHED',
+      published: publish ? document : Prisma.DbNull,
+      publishedAt: publish ? new Date() : row.publishedAt,
+      publishedByUserId: req.auth!.userId,
+      updatedByUserId: req.auth!.userId,
+      version: { increment: 1 },
+    },
+  });
+  if (!result.count) throw new ConflictError('Konten berubah. Muat ulang sebelum publikasi.');
+  if (collection === 'sections') {
+    if (publish) await featuredRows(tx, id, document, 'PUBLISHED');
+    else await tx.featuredEvent.deleteMany({ where: { sectionId: id, stage: 'PUBLISHED' } });
+  }
+  await tx.cmsRevision.create({
+    data: {
+      collection,
+      entityId: id,
+      version: version + 1,
+      document,
+      action: publish ? 'PUBLISH' : 'UNPUBLISH',
+      actorUserId: req.auth!.userId,
+    },
+  });
+  await writeAudit(
+    {
+      actorUserId: req.auth!.userId,
+      action: publish ? 'CMS_PUBLISH' : 'CMS_UNPUBLISH',
+      resourceType: 'CMS',
+      resourceId: id,
+      metadata: { collection, key: row.key, version: version + 1 },
+      req,
+    },
+    tx,
+  );
+  return { item: await store.findUnique({ where: { id } }) };
+}
 export async function publishCms(
   collection: CmsCollection,
   id: string,
@@ -211,54 +334,85 @@ export async function publishCms(
   publish: boolean,
   req: Request,
 ) {
-  return prisma.$transaction(async (tx) => {
-    const store = cmsStore(collection, tx);
-    const row = await store.findUnique({ where: { id } });
-    if (!row) throw new NotFoundError('Konten CMS tidak ditemukan');
-    authorize(collection, row.key, req);
-    const document = parseDocument(collection, row.draft);
-    if (publish) await validateReferences(collection, document, req, tx);
-    if (publish && collection === 'banners' && !document.imageKey)
-      throw new BadRequestError('Unggah gambar banner sebelum publikasi');
-    const result = await store.updateMany({
-      where: { id, version },
-      data: {
-        status: publish ? 'PUBLISHED' : 'UNPUBLISHED',
-        published: publish ? document : Prisma.DbNull,
-        publishedAt: publish ? new Date() : row.publishedAt,
-        publishedByUserId: req.auth!.userId,
-        updatedByUserId: req.auth!.userId,
-        version: { increment: 1 },
-      },
-    });
-    if (!result.count) throw new ConflictError('Konten berubah. Muat ulang sebelum publikasi.');
-    if (collection === 'sections') {
-      if (publish) await featuredRows(tx, id, document, 'PUBLISHED');
-      else await tx.featuredEvent.deleteMany({ where: { sectionId: id, stage: 'PUBLISHED' } });
-    }
-    await tx.cmsRevision.create({
-      data: {
-        collection,
-        entityId: id,
-        version: version + 1,
-        document,
-        action: publish ? 'PUBLISH' : 'UNPUBLISH',
-        actorUserId: req.auth!.userId,
-      },
-    });
-    await writeAudit(
-      {
-        actorUserId: req.auth!.userId,
-        action: publish ? 'CMS_PUBLISH' : 'CMS_UNPUBLISH',
-        resourceType: 'CMS',
-        resourceId: id,
-        metadata: { collection, key: row.key, version: version + 1 },
-        req,
-      },
-      tx,
-    );
-    return { item: await store.findUnique({ where: { id } }) };
-  });
+  return prisma.$transaction((tx) =>
+    publishInTransaction(tx, collection, id, version, publish, req),
+  );
+}
+function normalizedChanged(collection: CmsCollection, row: CmsRow) {
+  if (row.status !== 'DRAFT') return false;
+  if (!row.published) return true;
+  const draft = documentSchemas[collection].safeParse(row.draft);
+  const published = documentSchemas[collection].safeParse(row.published);
+  return (
+    !draft.success ||
+    !published.success ||
+    JSON.stringify(draft.data) !== JSON.stringify(published.data)
+  );
+}
+function cmsTitle(row: CmsRow) {
+  const document = row.draft as {
+    title?: string;
+    name?: string;
+    label?: string;
+    websiteName?: string;
+  };
+  return document.title || document.name || document.label || document.websiteName || row.key;
+}
+export async function cmsChanges(req: Request) {
+  const groups = await Promise.all(
+    cmsCollections.map(async (collection) => ({
+      collection,
+      rows: await cmsStore(collection).findMany(),
+    })),
+  );
+  return {
+    items: groups.flatMap(({ collection, rows }) =>
+      rows
+        .filter(
+          (row) =>
+            (req.auth!.role === 'SUPERADMIN' ||
+              (collection === 'sections' && row.key === 'events-for-you')) &&
+            normalizedChanged(collection, row),
+        )
+        .map((row) => ({ collection, id: row.id, title: cmsTitle(row), version: row.version })),
+    ),
+  };
+}
+export async function publishAllCms(input: PublishAllCmsInput, req: Request) {
+  // A stable lock order prevents two batches from locking the same records in opposite order.
+  const items = [...input.items].sort((a, b) =>
+    `${a.collection}:${a.id}`.localeCompare(`${b.collection}:${b.id}`),
+  );
+  return prisma.$transaction(
+    async (tx) => {
+      const result = [];
+      for (const entry of items) {
+        const { item } = await publishInTransaction(
+          tx,
+          entry.collection,
+          entry.id,
+          entry.expectedVersion,
+          true,
+          req,
+        );
+        result.push({ collection: entry.collection, item });
+      }
+      return { items: result };
+    },
+    { timeout: 15000 },
+  );
+}
+export async function cmsRevisions(collection: CmsCollection, id: string, req: Request) {
+  const row = await cmsStore(collection).findUnique({ where: { id } });
+  if (!row) throw new NotFoundError('Konten CMS tidak ditemukan');
+  authorize(collection, row.key, req);
+  return {
+    items: await prisma.cmsRevision.findMany({
+      where: { collection, entityId: id },
+      orderBy: { version: 'desc' },
+      take: 50,
+    }),
+  };
 }
 export async function deleteCms(collection: CmsCollection, id: string, req: Request) {
   return prisma.$transaction(async (tx) => {
@@ -427,7 +581,14 @@ export async function getCmsSite(previewReq?: Request) {
       events: await sectionEvents(item),
     })),
   );
-  const banners = read('banners', bannerSchema);
+  const now = Date.now();
+  const banners = read('banners', bannerSchema).filter(
+    (banner) =>
+      previewReq?.auth?.role === 'SUPERADMIN' ||
+      ((!banner.startsAt || new Date(banner.startsAt).getTime() <= now) &&
+        (!banner.endsAt || new Date(banner.endsAt).getTime() > now)),
+  );
+  const cities = read('cities', citySchema).sort((a, b) => a.sortOrder - b.sortOrder);
   const navigation = read('navigation', navigationSchema);
   const pages = previewReq ? read('pages', pageSchema) : undefined;
   const updatedAt =
@@ -440,6 +601,7 @@ export async function getCmsSite(previewReq?: Request) {
     sections,
     banners,
     navigation,
+    cities,
     pages,
     updatedAt,
     preview: Boolean(previewReq),

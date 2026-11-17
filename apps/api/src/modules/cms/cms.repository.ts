@@ -18,11 +18,30 @@ interface CmsStore {
 
 // All CMS entities share versioned publication columns while keeping separate tables.
 export function cmsStore(collection: CmsCollection, db: CmsDb = prisma): CmsStore {
+  const cities: CmsStore = {
+    findMany: (args) => db.cmsCity.findMany(args),
+    findUnique: (args) => db.cmsCity.findUnique(args),
+    create: (args) =>
+      db.cmsCity.create({
+        ...args,
+        data: { ...args.data, slug: (args.data.draft as { slug: string }).slug },
+      }),
+    updateMany: (args) =>
+      db.cmsCity.updateMany({
+        ...args,
+        data: {
+          ...args.data,
+          ...(args.data.draft ? { slug: (args.data.draft as { slug: string }).slug } : {}),
+        },
+      }),
+    deleteMany: (args) => db.cmsCity.deleteMany(args),
+  };
   return {
     sections: db.cmsSection,
     banners: db.cmsBanner,
     pages: db.cmsPage,
     navigation: db.cmsNavigationItem,
     settings: db.websiteSetting,
+    cities,
   }[collection];
 }

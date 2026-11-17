@@ -1,6 +1,13 @@
 import { z } from 'zod';
 
-export const cmsCollections = ['sections', 'banners', 'pages', 'navigation', 'settings'] as const;
+export const cmsCollections = [
+  'sections',
+  'banners',
+  'pages',
+  'navigation',
+  'settings',
+  'cities',
+] as const;
 export type CmsCollection = (typeof cmsCollections)[number];
 export const collectionSchema = z.enum(cmsCollections);
 const text = (max = 500) => z.string().trim().max(max).default('');
@@ -45,6 +52,7 @@ export const sectionSchema = z
     layout: z.enum(['grid', 'shelf']).default('grid'),
   })
   .strict();
+const scheduleDate = z.string().datetime({ offset: true }).or(z.literal('')).optional().default('');
 export const bannerSchema = z
   .object({
     title: z.string().trim().min(1).max(200),
@@ -54,9 +62,16 @@ export const bannerSchema = z
     mobileImageKey: image,
     ctaText: text(100),
     ctaUrl: destination,
+    startsAt: scheduleDate,
+    endsAt: scheduleDate,
     ...common,
   })
-  .strict();
+  .strict()
+  .refine(
+    (value) =>
+      !value.startsAt || !value.endsAt || new Date(value.startsAt) < new Date(value.endsAt),
+    { message: 'Waktu selesai harus setelah waktu mulai', path: ['endsAt'] },
+  );
 const reservedSlugs = new Set([
   'admin',
   'creator',
@@ -141,12 +156,30 @@ export const websiteSchema = z
       }, 'Timezone tidak valid'),
   })
   .strict();
+export const cityAccents = ['coral', 'blue', 'gold', 'green', 'cyan'] as const;
+export const citySchema = z
+  .object({
+    name: z.string().trim().min(1).max(100),
+    slug: z
+      .string()
+      .max(140)
+      .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+      .optional(),
+    imageKey: image,
+    accent: z.enum(cityAccents).default('blue'),
+    builtInIllustration: z
+      .enum(['jakarta', 'bandung', 'yogyakarta', 'surabaya', 'denpasar'])
+      .optional(),
+    ...common,
+  })
+  .strict();
 export const documentSchemas = {
   sections: sectionSchema,
   banners: bannerSchema,
   pages: pageSchema,
   navigation: navigationSchema,
   settings: websiteSchema,
+  cities: citySchema,
 };
 export const saveCmsSchema = z
   .object({
@@ -163,3 +196,26 @@ export const saveCmsSchema = z
   .strict();
 export const publishCmsSchema = z.object({ expectedVersion: z.number().int().positive() }).strict();
 export type SectionDocument = z.infer<typeof sectionSchema>;
+
+export const publishAllCmsSchema = z
+  .object({
+    items: z
+      .array(
+        z
+          .object({
+            collection: collectionSchema,
+            id: z.string().min(1).max(100),
+            expectedVersion: z.number().int().positive(),
+          })
+          .strict(),
+      )
+      .min(1)
+      .max(200),
+  })
+  .strict()
+  .refine(
+    ({ items }) =>
+      new Set(items.map((item) => `${item.collection}:${item.id}`)).size === items.length,
+    'Konten tidak boleh duplikat',
+  );
+export type PublishAllCmsInput = z.infer<typeof publishAllCmsSchema>;

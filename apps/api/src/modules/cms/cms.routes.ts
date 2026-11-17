@@ -3,9 +3,17 @@ import { z } from 'zod';
 import { requireAuth, requireAdmin, requireSuperadmin } from '../../middleware/auth';
 import { validate } from '../../middleware/validate';
 import { created, ok } from '../../lib/response';
-import { collectionSchema, saveCmsSchema, publishCmsSchema } from './cms.schemas';
+import {
+  collectionSchema,
+  saveCmsSchema,
+  publishCmsSchema,
+  publishAllCmsSchema,
+} from './cms.schemas';
 import {
   cmsEvents,
+  cmsChanges,
+  cmsRevisions,
+  publishAllCms,
   cmsOverview,
   deleteCms,
   getCmsPage,
@@ -32,6 +40,13 @@ const eventQuery = z.object({
 });
 cmsAdminRouter.get('/events', validate(eventQuery, 'query'), async (req, res) =>
   ok(res, await cmsEvents(eventQuery.parse(req.query))),
+);
+cmsAdminRouter.get('/changes', async (req, res) => ok(res, await cmsChanges(req)));
+cmsAdminRouter.post('/publish-all', validate(publishAllCmsSchema), async (req, res) =>
+  ok(res, await publishAllCms(req.body, req)),
+);
+cmsAdminRouter.get('/:collection/:id/revisions', async (req, res) =>
+  ok(res, await cmsRevisions(collectionSchema.parse(req.params.collection), req.params.id!, req)),
 );
 cmsAdminRouter.get('/:collection', async (req, res) =>
   ok(res, await listCms(collectionSchema.parse(req.params.collection), req)),
