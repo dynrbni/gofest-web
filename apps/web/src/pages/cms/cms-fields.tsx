@@ -77,19 +77,36 @@ function Toggle({
   return (
     <button
       type="button"
-      aria-pressed={checked}
+      role="switch"
+      aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className="flex min-h-11 w-full items-center justify-between gap-4 rounded-lg border border-slate-200 px-3 py-2 text-left text-sm font-medium text-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600"
+      className="flex min-h-11 w-full items-center justify-between gap-4 rounded-lg border border-slate-200 px-3 py-2 text-left text-sm font-medium text-slate-800 transition-colors hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600"
     >
-      {label}
-      <span
-        aria-hidden
-        className={cn(
-          'flex h-6 w-11 shrink-0 items-center rounded-full p-1',
-          checked ? 'justify-end bg-blue-700' : 'justify-start bg-slate-300',
-        )}
-      >
-        <span className="size-4 rounded-full bg-white" />
+      <span>{label}</span>
+      <span className="flex items-center gap-2">
+        <span
+          className={cn(
+            'inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-semibold',
+            checked
+              ? 'border border-emerald-200 bg-emerald-50 text-emerald-800'
+              : 'border border-slate-200 bg-slate-100 text-slate-500',
+          )}
+        >
+          <span
+            className={cn('size-1.5 rounded-full', checked ? 'bg-emerald-500' : 'bg-slate-400')}
+            aria-hidden
+          />
+          {checked ? 'Aktif' : 'Nonaktif'}
+        </span>
+        <span
+          aria-hidden
+          className={cn(
+            'flex h-6 w-11 shrink-0 items-center rounded-full p-1 transition-colors',
+            checked ? 'justify-end bg-emerald-600' : 'justify-start bg-slate-300',
+          )}
+        >
+          <span className="size-4 rounded-full bg-white shadow-xs" />
+        </span>
       </span>
     </button>
   );

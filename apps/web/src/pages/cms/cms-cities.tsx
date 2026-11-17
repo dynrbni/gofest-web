@@ -16,7 +16,7 @@ import { Panel, QueryState } from '../workspace/workspace-components';
 import { CmsAutoEditor } from './cms-autosave';
 import { setCmsPending, useCmsPending } from './cms-state';
 import { useCmsRecords, useCmsUpdate } from './cms-data';
-import { CmsItemMenu, CmsOrderButtons } from './cms-controls';
+import { CmsItemMenu, CmsOrderButtons, CmsVisibility } from './cms-controls';
 import type { CityDocument, CmsDocument, CmsRecord, SectionDocument } from './cms-models';
 
 function blankCity(order: number): CityDocument {
@@ -149,23 +149,8 @@ export function CmsCitiesPage() {
                       </div>
                       <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                         <CmsOrderButtons module="cities" record={record} items={records} />
-                        <div className="flex gap-2">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            aria-pressed={city.visible}
-                            aria-label={`${city.visible ? 'Sembunyikan' : 'Tampilkan'} ${city.name}`}
-                            disabled={update.isPending || pending > 0}
-                            onClick={() =>
-                              update.mutate({
-                                module: 'cities',
-                                record,
-                                document: { ...city, visible: !city.visible },
-                              })
-                            }
-                          >
-                            {city.visible ? 'Tampil' : 'Tersembunyi'}
-                          </Button>
+                        <div className="flex items-center gap-2">
+                          <CmsVisibility module="cities" record={record} />
                           <Button
                             type="button"
                             variant="outline"

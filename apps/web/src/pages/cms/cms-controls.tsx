@@ -4,6 +4,7 @@ import { ArrowDown, ArrowUp, MoreHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
 import { api, errorMessage } from '@/lib/api';
 import { formatDateTime } from '@/lib/format';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/common/confirm-dialog';
 import {
@@ -27,20 +28,80 @@ export function CmsVisibility({ record, module }: { record: CmsRecord; module: C
   const pending = useCmsPending();
   if (!('visible' in record.draft)) return null;
   const visible = record.draft.visible;
+  const title = recordTitle(record);
+
+  function handleToggle() {
+    update.mutate(
+      { module, record, document: { ...record.draft, visible: !visible } },
+      {
+        onSuccess: () => {
+          if (!visible) {
+            toast.success(`"${title}" berhasil diaktifkan dan sekarang tampil di website!`);
+          } else {
+            toast.info(`"${title}" telah dinonaktifkan (disembunyikan dari website).`);
+          }
+        },
+      },
+    );
+  }
+
   return (
-    <Button
-      type="button"
-      variant="outline"
-      aria-pressed={visible}
-      aria-label={`${visible ? 'Sembunyikan' : 'Tampilkan'} ${recordTitle(record)}`}
-      disabled={pending > 0 || update.isPending}
-      onClick={() =>
-        update.mutate({ module, record, document: { ...record.draft, visible: !visible } })
+    <ConfirmDialog
+      title={visible ? 'Sembunyikan konten dari website?' : 'Tampilkan konten di website?'}
+      description={
+        visible ? (
+          <p>
+            Bagian <strong>"{title}"</strong> akan dinonaktifkan dan disembunyikan dari website publik.
+          </p>
+        ) : (
+          <p>
+            Bagian <strong>"{title}"</strong> akan diaktifkan dan ditampilkan di website publik.
+          </p>
+        )
       }
-      className={visible ? 'border-blue-200 bg-blue-50 text-blue-800' : ''}
-    >
-      {visible ? 'Tampil' : 'Tersembunyi'}
-    </Button>
+      confirmLabel={visible ? 'Ya, Sembunyikan' : 'Ya, Tampilkan'}
+      destructive={visible}
+      disabled={pending > 0 || update.isPending}
+      onConfirm={handleToggle}
+      trigger={
+        <button
+          type="button"
+          role="switch"
+          aria-checked={visible}
+          aria-label={`${visible ? 'Sembunyikan' : 'Tampilkan'} ${title}`}
+          title={
+            visible
+              ? 'Status: Aktif (Klik untuk menyembunyikan)'
+              : 'Status: Nonaktif (Klik untuk menampilkan)'
+          }
+          disabled={pending > 0 || update.isPending}
+          className={cn(
+            'inline-flex min-h-10 items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600',
+            visible
+              ? 'border-emerald-300 bg-emerald-50 text-emerald-800 hover:border-emerald-400 hover:bg-emerald-100'
+              : 'border-slate-300 bg-slate-50 text-slate-600 hover:border-slate-400 hover:bg-slate-100',
+          )}
+        >
+          <span
+            className={cn(
+              'size-2 shrink-0 rounded-full',
+              visible ? 'bg-emerald-500' : 'bg-slate-400',
+            )}
+            aria-hidden
+          />
+          <span>{visible ? 'Aktif (Tampil)' : 'Nonaktif (Sembunyi)'}</span>
+          <span
+            aria-hidden
+            className={cn(
+              'flex h-4 w-7 shrink-0 items-center rounded-full p-0.5 transition-colors',
+              visible ? 'justify-end bg-emerald-600' : 'justify-start bg-slate-300',
+            )}
+          >
+            <span className="size-3 rounded-full bg-white shadow-xs" />
+          </span>
+        </button>
+      }
+    />
   );
 }
 export function CmsOrderButtons({
