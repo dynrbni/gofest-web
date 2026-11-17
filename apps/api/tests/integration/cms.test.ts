@@ -136,7 +136,14 @@ describe('website CMS publication and permissions', () => {
     expect(withdrawn.status).toBe(200);
     expect(withdrawn.body.data.item.status).toBe('UNPUBLISHED');
     expect((await request(app).get('/api/v1/cms/pages/tentang-kami')).status).toBe(404);
-    expect(await prisma.cmsRevision.count({ where: { entityId: item.id } })).toBe(2);
+    expect(
+      await prisma.cmsRevision.count({
+        where: { entityId: item.id, action: { in: ['PUBLISH', 'UNPUBLISH'] } },
+      }),
+    ).toBe(2);
+    expect(
+      await prisma.cmsRevision.count({ where: { entityId: item.id, action: 'SAVE_DRAFT' } }),
+    ).toBe(2);
     expect(
       await prisma.auditLog.count({ where: { resourceType: 'CMS', resourceId: item.id } }),
     ).toBe(4);
