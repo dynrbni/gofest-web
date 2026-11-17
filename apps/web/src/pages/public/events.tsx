@@ -10,13 +10,15 @@ import { useDocumentTitle } from '@/lib/hooks';
 import { useLanguage } from '@/lib/language';
 import { usePublicEvents, type EventFilters } from '@/lib/queries';
 import { cn } from '@/lib/utils';
+import { useCmsSite } from '@/lib/cms';
+import { findEventCity } from '@gofest/shared';
 
-type CatalogFilters = Pick<EventFilters, 'q' | 'category' | 'page' | 'limit'>;
+type CatalogFilters = Pick<EventFilters, 'q' | 'category' | 'city' | 'page' | 'limit'>;
 type Patch = Partial<Omit<CatalogFilters, 'limit'>>;
 
 function catalogParams(params: URLSearchParams) {
   const next = new URLSearchParams();
-  for (const key of ['q', 'category', 'page']) {
+  for (const key of ['q', 'category', 'city', 'page']) {
     const value = params.get(key);
     if (value) next.set(key, value);
   }
@@ -28,6 +30,7 @@ function readFilters(params: URLSearchParams): CatalogFilters {
   return {
     q: params.get('q') || undefined,
     category: params.get('category') || undefined,
+    city: params.get('city') || undefined,
     page: Number.isFinite(page) && page > 0 ? Math.floor(page) : 1,
     limit: 12,
   };
@@ -39,6 +42,11 @@ export function EventsPage() {
   const [params, setParams] = useSearchParams();
   const filters = useMemo(() => readFilters(params), [params]);
   const eventsQuery = usePublicEvents(filters);
+  const cms = useCmsSite();
+  const cityName =
+    cms.data?.cities?.find((city) => city.slug === filters.city)?.name ??
+    findEventCity(filters.city)?.name ??
+    filters.city;
 
   useEffect(() => {
     const next = catalogParams(params);
@@ -64,6 +72,19 @@ export function EventsPage() {
         {t('Cari event seru favoritmu', 'Find your next favourite event')}
       </h1>
       <CategoryRibbon selected={filters.category} onSelect={(category) => update({ category })} />
+      {filters.city ? (
+        <button
+          type="button"
+          className="mb-5 inline-flex min-h-11 max-w-full items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 text-sm font-medium text-blue-700"
+          onClick={() => update({ city: undefined })}
+          aria-label={`${t('Hapus filter kota', 'Clear city filter')}: ${cityName}`}
+        >
+          <span className="min-w-0 break-words">
+            {t('Kota', 'City')}: {cityName}
+          </span>
+          <X className="size-4 shrink-0" aria-hidden />
+        </button>
+      ) : null}
       {filters.q ? (
         <div className="mb-5">
           <button

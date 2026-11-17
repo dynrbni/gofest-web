@@ -8,6 +8,7 @@ import type {
   PageDocument,
   SectionDocument,
   SettingsDocument,
+  CityDocument,
 } from '@/pages/cms/cms-models';
 
 type Entry<T> = T & { id: string; key: string };
@@ -17,6 +18,7 @@ export interface CmsSite {
   banners: Entry<BannerDocument>[];
   navigation: Entry<NavigationDocument>[];
   pages?: Entry<PageDocument>[];
+  cities?: Entry<CityDocument>[];
   updatedAt: string | null;
   preview: boolean;
 }

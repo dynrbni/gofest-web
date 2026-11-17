@@ -117,7 +117,7 @@ export function CmsHomepage({ site }: { site: CmsSite }) {
               </div>
               {section.subtitle && <p className="mt-2 text-sm font-medium">{section.subtitle}</p>}
               {section.description && <p className="mt-2 text-slate-600">{section.description}</p>}
-              <CityDestinations limit={section.limit} />
+              <CityDestinations limit={section.limit} cities={site.cities} />
             </section>
           );
         return (
