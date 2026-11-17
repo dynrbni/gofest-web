@@ -4,6 +4,7 @@ import { prisma } from '../src/lib/prisma';
 import { hashPassword } from '../src/lib/password';
 import { storePublicImage } from '../src/lib/storage';
 import { env } from '../src/config/env';
+import { seedCmsCities } from './cms.seed';
 import { seedDashboard } from './dashboard.seed';
 
 interface SeedTicket {
@@ -382,6 +383,7 @@ async function main() {
   });
 
   await seedDashboard();
+  await seedCmsCities();
   console.log('Seed selesai.');
   console.log(`Admin demo: ${adminEmail}`);
   console.log(`Organizer demo: ${organizerEmail}`);
