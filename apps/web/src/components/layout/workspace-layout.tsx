@@ -1,11 +1,12 @@
 import {
   ArrowUpRight,
   Bell,
-  ChevronLeft,
   ChevronRight,
   ChevronDown,
   LogOut,
   Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
   Search,
 } from 'lucide-react';
 import { useState, type ReactNode, type FormEvent } from 'react';
@@ -145,33 +146,62 @@ export function WorkspaceLayout({
       <div className="flex min-h-screen">
         <aside
           className={cn(
-            'sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-slate-200 bg-white lg:flex',
-            collapsed ? 'w-[76px]' : 'w-[250px]',
+            'sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-slate-200 bg-white lg:flex transition-[width] duration-300 ease-in-out overflow-hidden',
+            collapsed ? 'w-[88px]' : 'w-[260px]',
           )}
         >
-          <div className="flex h-[84px] shrink-0 items-center justify-between gap-2 px-4">
-            {!collapsed ? <Logo variant={logoVariant} /> : null}
+          <div
+            className={cn(
+              'flex h-20 shrink-0 items-center justify-between transition-all duration-300',
+              collapsed ? 'px-0 justify-center gap-0' : 'px-4 gap-2',
+            )}
+          >
+            {!collapsed ? (
+              <Logo variant={logoVariant} />
+            ) : (
+              <Link
+                to="/"
+                className="flex size-11 items-center justify-center shrink-0"
+                aria-label="Gofest, ke beranda"
+              >
+                <img
+                  src="/assets/gofest-icon-192.png"
+                  alt="Gofest"
+                  className="size-8 object-contain"
+                  width={32}
+                  height={32}
+                />
+              </Link>
+            )}
             <button
-              className="flex size-10 shrink-0 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100"
-              aria-label={collapsed ? 'Perluas sidebar' : 'Perkecil sidebar'}
+              type="button"
+              className="account-sidebar-toggle inline-flex size-11 shrink-0 items-center justify-center rounded-[9px] border border-slate-200 bg-white text-slate-600 shadow-xs hover:bg-slate-100 hover:text-slate-900 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600"
+              aria-label={collapsed ? 'Perluas sidebar' : 'Ciutkan sidebar'}
               aria-expanded={!collapsed}
               onClick={() => setCollapsed(!collapsed)}
             >
-              {collapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
+              {collapsed ? (
+                <PanelLeftOpen className="size-5" aria-hidden />
+              ) : (
+                <PanelLeftClose className="size-5" aria-hidden />
+              )}
             </button>
           </div>
           <div data-workspace-sidebar-scroll className="min-h-0 flex-1 overflow-y-auto px-3 pb-5">
             {navigation(collapsed)}
           </div>
-          <div className="shrink-0 border-t border-slate-200 p-4">
+          <div className="shrink-0 border-t border-slate-200 p-3.5 transition-all duration-300">
             <Link
               to="/account/profile"
-              className="flex min-h-11 items-center gap-3 text-sm"
+              className={cn(
+                'flex min-h-11 items-center gap-3 text-sm rounded-lg hover:bg-slate-50 transition-colors',
+                collapsed ? 'justify-center px-0' : 'px-2',
+              )}
               title={user?.email}
             >
-              <UserAvatar name={user?.name ?? ''} avatarKey={user?.avatarKey} className="size-7" />
+              <UserAvatar name={user?.name ?? ''} avatarKey={user?.avatarKey} className="size-8 shrink-0" />
               {!collapsed ? (
-                <div className="min-w-0">
+                <div className="min-w-0 overflow-hidden">
                   <p className="truncate font-medium text-slate-900">{user?.name}</p>
                   <p className="truncate text-xs text-slate-600">{workspace}</p>
                 </div>
@@ -204,7 +234,7 @@ export function WorkspaceLayout({
                   <div className="mt-6">{navigation(false)}</div>
                 </SheetContent>
               </Sheet>
-              <Logo variant={logoVariant} className={cn('lg:hidden', collapsed && 'lg:block')} />
+              <Logo variant={logoVariant} className="lg:hidden" />
               <div className="hidden min-w-0 sm:block">
                 <p className="text-xs text-slate-500">{workspace}</p>
                 <p className="mt-1 truncate text-sm font-medium text-slate-900">

@@ -54,6 +54,8 @@ body:has(.customer-account) :where([role='menuitem'], [role='alertdialog'] butto
   flex-direction: column;
   z-index: 30;
   overflow-y: auto;
+  overflow-x: hidden;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .account-brand {
   height: 80px;
@@ -63,6 +65,7 @@ body:has(.customer-account) :where([role='menuitem'], [role='alertdialog'] butto
   justify-content: space-between;
   gap: 12px;
   padding: 0 16px;
+  transition: padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .account-brand img {
   height: 40px;
@@ -166,13 +169,17 @@ body:has(.customer-account) :where([role='menuitem'], [role='alertdialog'] butto
   border-radius: 9px;
   color: #475569;
   background: #fff;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
 }
 .account-sidebar-toggle:hover {
   background: #f1f5f9;
+  color: #0f172a;
 }
 .account-workspace {
   margin-left: 248px;
   min-width: 0;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .account-topbar {
   height: 80px;
