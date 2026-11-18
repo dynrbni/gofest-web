@@ -466,19 +466,25 @@ model CheckInLog {
 }
 
 model RefreshSession {
-  id         String    @id @default(cuid())
-  userId     String
-  tokenHash  String    @unique
-  expiresAt  DateTime  @db.Timestamptz(3)
-  revokedAt  DateTime? @db.Timestamptz(3)
-  lastUsedAt DateTime? @db.Timestamptz(3)
-  ip         String?
-  userAgent  String?
-  createdAt  DateTime  @default(now()) @db.Timestamptz(3)
+  id               String    @id @default(cuid())
+  userId           String
+  tokenHash        String    @unique
+  familyId         String    @default(cuid())
+  rotatedToId      String?
+  expiresAt        DateTime  @db.Timestamptz(3)
+  revokedAt        DateTime? @db.Timestamptz(3)
+  revocationReason String?
+  lastUsedAt       DateTime? @db.Timestamptz(3)
+  lastReauthAt     DateTime? @db.Timestamptz(3)
+  ip               String?
+  userAgent        String?
+  deviceInfo       String?
+  createdAt        DateTime  @default(now()) @db.Timestamptz(3)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, revokedAt])
+  @@index([familyId])
   @@index([expiresAt])
   @@map("refresh_sessions")
 }

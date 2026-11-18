@@ -11,6 +11,7 @@ import {
   requireAdmin,
   requireActiveOrganizer,
   requireSuperadmin,
+  requireReauth,
 } from '../../middleware/auth';
 import { validate } from '../../middleware/validate';
 import { ok, created } from '../../lib/response';
@@ -78,6 +79,7 @@ adminWorkspaceRouter.patch(
 adminWorkspaceRouter.post(
   '/admins/:id/reset-password',
   requireSuperadmin,
+  requireReauth,
   validate(resetAdminSchema),
   async (req, res) => ok(res, await resetAdminPassword(req.params.id!, req.body.password, req)),
 );
@@ -87,6 +89,7 @@ adminWorkspaceRouter.get('/permissions', requireSuperadmin, async (_req, res) =>
 adminWorkspaceRouter.patch(
   '/permissions',
   requireSuperadmin,
+  requireReauth,
   validate(permissionSchema),
   async (req, res) => ok(res, { permission: await updatePermission(req.body, req) }),
 );

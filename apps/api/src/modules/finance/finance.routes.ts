@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { requireAuth, requireAdmin, requireActiveOrganizer } from '../../middleware/auth';
+import { requireAuth, requireAdmin, requireActiveOrganizer, requireReauth } from '../../middleware/auth';
 import { validate } from '../../middleware/validate';
 import { created, ok } from '../../lib/response';
 import {
@@ -100,16 +100,16 @@ for (const [router, own] of [
 creatorFinanceRouter.get('/bank-accounts', async (req, res) =>
   ok(res, { accounts: await listBanks(req.auth!.organizerId!) }),
 );
-creatorFinanceRouter.post('/bank-accounts', validate(bankSchema), async (req, res) =>
+creatorFinanceRouter.post('/bank-accounts', requireReauth, validate(bankSchema), async (req, res) =>
   created(res, { account: await addBank(req.auth!.organizerId!, req.body, req) }),
 );
-creatorFinanceRouter.delete('/bank-accounts/:id', async (req, res) =>
+creatorFinanceRouter.delete('/bank-accounts/:id', requireReauth, async (req, res) =>
   ok(res, await removeBank(req.auth!.organizerId!, req.params.id!, req)),
 );
 creatorFinanceRouter.post('/payouts', validate(payoutSchema), async (req, res) =>
   created(res, { payout: await requestPayout(req.auth!.organizerId!, req.body, req) }),
 );
-adminFinanceRouter.patch('/payouts/:id/review', validate(payoutReviewSchema), async (req, res) =>
+adminFinanceRouter.patch('/payouts/:id/review', requireReauth, validate(payoutReviewSchema), async (req, res) =>
   ok(res, { payout: await reviewPayout(req.params.id!, req.body, req) }),
 );
 adminFinanceRouter.post('/refunds', validate(refundSchema), async (req, res) =>

@@ -1,11 +1,23 @@
 import type { NextFunction, Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
-import { ACCESS_COOKIE, verifyAccessToken } from '../lib/tokens';
+import { ACCESS_COOKIE, verifyAccessToken, verifyReauthToken } from '../lib/tokens';
 import { ForbiddenError, UnauthorizedError } from '../lib/errors';
+import { verifyPassword } from '../lib/password';
 import { isOperationalAdmin } from '@gofest/shared';
 
+function extractToken(req: Request): string | undefined {
+  const authHeader = req.get('authorization') || req.headers.authorization;
+  if (authHeader && typeof authHeader === 'string') {
+    const [scheme, token] = authHeader.split(' ');
+    if (scheme?.toLowerCase() === 'bearer' && token) {
+      return token.trim();
+    }
+  }
+  return req.cookies?.[ACCESS_COOKIE] as string | undefined;
+}
+
 async function resolveAuth(req: Request): Promise<void> {
-  const token = req.cookies?.[ACCESS_COOKIE] as string | undefined;
+  const token = extractToken(req);
   if (!token) {
     throw new UnauthorizedError('Sesi tidak ditemukan. Silakan masuk.', 'SESSION_NOT_FOUND');
   }
@@ -15,6 +27,19 @@ async function resolveAuth(req: Request): Promise<void> {
     payload = verifyAccessToken(token);
   } catch {
     throw new UnauthorizedError('Sesi sudah berakhir. Silakan masuk lagi.', 'SESSION_EXPIRED');
+  }
+
+  if (payload.sessionId) {
+    const session = await prisma.refreshSession.findUnique({
+      where: { id: payload.sessionId },
+      select: { id: true, revokedAt: true, expiresAt: true, familyId: true },
+    });
+    if (!session || session.revokedAt || session.expiresAt <= new Date()) {
+      throw new UnauthorizedError(
+        'Sesi sudah dicabut atau berakhir. Silakan masuk lagi.',
+        'SESSION_REVOKED',
+      );
+    }
   }
 
   const user = await prisma.user.findUnique({
@@ -31,6 +56,8 @@ async function resolveAuth(req: Request): Promise<void> {
     role: user.role,
     organizerId: user.organizerProfile?.id ?? null,
     organizerStatus: user.organizerProfile?.status ?? null,
+    sessionId: payload.sessionId,
+    familyId: payload.familyId,
   };
 }
 
@@ -47,6 +74,55 @@ export async function optionalAuth(req: Request, _res: Response, next: NextFunct
     req.auth = undefined;
   }
   return next();
+}
+
+export async function requireReauth(req: Request, _res: Response, next: NextFunction) {
+  if (!req.auth) {
+    await resolveAuth(req);
+  }
+  const userId = req.auth!.userId;
+
+  // 1. Check header x-reauth-token
+  const headerToken = req.get('x-reauth-token');
+  if (headerToken) {
+    try {
+      const decoded = verifyReauthToken(headerToken);
+      if (decoded.sub === userId) {
+        return next();
+      }
+    } catch {
+      // Invalid or expired re-auth token; fall through to other checks
+    }
+  }
+
+  // 2. Check inline password if supplied in request body
+  const inlinePassword = req.body?.reauthPassword || req.body?.password;
+  if (inlinePassword && typeof inlinePassword === 'string') {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (user && (await verifyPassword(user.passwordHash, inlinePassword))) {
+      return next();
+    }
+  }
+
+  // 3. Check session recency (grace period: active session created/reauthed within 15 mins)
+  if (req.auth?.sessionId) {
+    const session = await prisma.refreshSession.findUnique({
+      where: { id: req.auth.sessionId },
+      select: { createdAt: true, lastReauthAt: true },
+    });
+    if (session) {
+      const authTime = session.lastReauthAt ?? session.createdAt;
+      const ageMs = Date.now() - authTime.getTime();
+      if (ageMs < 15 * 60 * 1000) {
+        return next();
+      }
+    }
+  }
+
+  throw new ForbiddenError(
+    'Tindakan ini memerlukan re-autentikasi password untuk keamanan.',
+    'REAUTH_REQUIRED',
+  );
 }
 
 export function requireAdmin(req: Request, _res: Response, next: NextFunction) {

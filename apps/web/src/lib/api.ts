@@ -31,17 +31,43 @@ interface RequestOptions extends Omit<RequestInit, 'body'> {
 
 const API_BASE = (import.meta.env.VITE_API_URL?.trim() || '/api/v1').replace(/\/+$/, '');
 
+let inMemoryAccessToken: string | null = null;
 let refreshPromise: Promise<boolean> | null = null;
+
+export function setAccessToken(token: string | null) {
+  inMemoryAccessToken = token;
+}
+
+export function getAccessToken(): string | null {
+  return inMemoryAccessToken;
+}
 
 async function refreshSession(): Promise<boolean> {
   if (!refreshPromise) {
     refreshPromise = fetch(`${API_BASE}/auth/refresh`, {
       method: 'POST',
       credentials: 'include',
-      headers: { Accept: 'application/json' },
+      headers: {
+        Accept: 'application/json',
+      },
     })
-      .then((response) => response.ok)
-      .catch(() => false)
+      .then(async (response) => {
+        if (!response.ok) {
+          setAccessToken(null);
+          return false;
+        }
+        const envelope = (await parseResponse(response)) as {
+          data?: { accessToken?: string };
+        } | null;
+        if (envelope?.data?.accessToken) {
+          setAccessToken(envelope.data.accessToken);
+        }
+        return true;
+      })
+      .catch(() => {
+        setAccessToken(null);
+        return false;
+      })
       .finally(() => {
         refreshPromise = null;
       });
@@ -79,6 +105,9 @@ async function request<T>(
   const headers = new Headers(rawHeaders);
   headers.set('Accept', 'application/json');
   if (orderToken) headers.set('x-order-token', orderToken);
+  if (inMemoryAccessToken && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${inMemoryAccessToken}`);
+  }
 
   let payloadBody: BodyInit | undefined;
   if (body instanceof FormData) {
@@ -111,13 +140,11 @@ async function request<T>(
     } | null;
     const code = envelope?.error?.code ?? 'REQUEST_FAILED';
 
-    if (
-      response.status === 401 &&
-      code === 'SESSION_EXPIRED' &&
-      !isRetry &&
-      !skipRefresh &&
-      !path.startsWith('/auth/')
-    ) {
+    const isAuthRoute =
+      path.startsWith('/auth/login') ||
+      path.startsWith('/auth/register') ||
+      path.startsWith('/auth/refresh');
+    if (response.status === 401 && !isRetry && !skipRefresh && !isAuthRoute) {
       const refreshed = await refreshSession();
       if (refreshed) {
         return request<T>(path, options, true);

@@ -2,7 +2,7 @@ import type { AuthUser } from '@gofest/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, type ReactNode } from 'react';
 import { useLocation, useNavigate, Navigate } from 'react-router-dom';
-import { api, ApiError } from './api';
+import { api, ApiError, setAccessToken } from './api';
 import { AuthContext, useAuth, type AuthContextValue } from './auth-context';
 import { PageLoading } from '@/components/common/states';
 
@@ -27,10 +27,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginMutation = useMutation({
     mutationFn: async (input: { email: string; password: string; rememberMe?: boolean }) => {
-      const data = await api<{ user: AuthUser }>('/auth/login', {
+      const data = await api<{ user: AuthUser; accessToken?: string }>('/auth/login', {
         method: 'POST',
         body: input,
       });
+      if (data.accessToken) setAccessToken(data.accessToken);
       return data.user;
     },
     onSuccess: (user) => {
@@ -47,10 +48,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       phone?: string;
       password: string;
     }) => {
-      const data = await api<{ user: AuthUser }>('/auth/register', {
+      const data = await api<{ user: AuthUser; accessToken?: string }>('/auth/register', {
         method: 'POST',
         body: input,
       });
+      if (data.accessToken) setAccessToken(data.accessToken);
       return data.user;
     },
     onSuccess: (user) => {
@@ -63,6 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await api('/auth/logout', { method: 'POST' });
     },
     onSettled: () => {
+      setAccessToken(null);
       queryClient.setQueryData(['me'], null);
       queryClient.clear();
     },

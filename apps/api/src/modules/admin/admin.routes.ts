@@ -18,7 +18,7 @@ import {
   type EventManageQuery,
   type OrderListQuery,
 } from '@gofest/shared';
-import { requireAdmin, requireAuth, requireSuperadmin } from '../../middleware/auth';
+import { requireAdmin, requireAuth, requireSuperadmin, requireReauth } from '../../middleware/auth';
 import { validate } from '../../middleware/validate';
 import { created, ok } from '../../lib/response';
 import {
@@ -136,6 +136,7 @@ adminRouter.get('/settings', requireSuperadmin, async (_req, res) => {
 adminRouter.patch(
   '/settings',
   requireSuperadmin,
+  requireReauth,
   validate(platformSettingsSchema),
   async (req, res) => {
     const settings = await updatePlatformSettings(req.body, req);
