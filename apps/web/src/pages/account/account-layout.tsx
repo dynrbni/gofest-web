@@ -6,7 +6,6 @@ import {
   House,
   LogOut,
   PanelLeftClose,
-  PanelLeftOpen,
   ReceiptText,
   Settings,
   Ticket,
@@ -76,32 +75,39 @@ export function AccountLayout() {
         aria-label={t('Area akun', 'Account area')}
       >
         <div className="account-brand">
-          <Logo className="account-wordmark" />
-          <Link
-            to="/"
-            className="account-iconmark"
-            aria-label={t('Gofest, ke beranda', 'Gofest home')}
-          >
-            <img src="/assets/gofest-icon-192.png" alt="" width={192} height={192} />
-          </Link>
-          <button
-            type="button"
-            className="account-sidebar-toggle"
-            aria-label={
-              sidebarCollapsed
-                ? t('Perluas sidebar', 'Expand sidebar')
-                : t('Ciutkan sidebar', 'Collapse sidebar')
-            }
-            aria-expanded={!sidebarCollapsed}
-            aria-controls="account-sidebar"
-            onClick={() => setSidebarCollapsed((collapsed) => !collapsed)}
-          >
-            {sidebarCollapsed ? (
-              <PanelLeftOpen size={20} aria-hidden />
-            ) : (
-              <PanelLeftClose size={20} aria-hidden />
-            )}
-          </button>
+          {!sidebarCollapsed ? (
+            <>
+              <Logo className="account-wordmark" />
+              <button
+                type="button"
+                className="account-sidebar-toggle"
+                aria-label={t('Ciutkan sidebar', 'Collapse sidebar')}
+                aria-expanded={true}
+                aria-controls="account-sidebar"
+                onClick={() => setSidebarCollapsed(true)}
+                title={t('Ciutkan sidebar', 'Collapse sidebar')}
+              >
+                <PanelLeftClose size={20} aria-hidden />
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              className="account-iconmark-toggle"
+              aria-label={t('Buka navigasi sidebar', 'Expand sidebar')}
+              aria-expanded={false}
+              aria-controls="account-sidebar"
+              onClick={() => setSidebarCollapsed(false)}
+              title={t('Klik untuk membuka sidebar', 'Click to expand sidebar')}
+            >
+              <img
+                src="/assets/gofest-icon-192.png"
+                alt="Gofest"
+                width={36}
+                height={36}
+              />
+            </button>
+          )}
         </div>
         <nav aria-label={t('Navigasi akun', 'Account navigation')} className="account-navigation">
           {links.map((item, index) => (

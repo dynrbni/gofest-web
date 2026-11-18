@@ -350,6 +350,10 @@ export async function reviewPayout(
         : 'Disetujui secara internal. Menunggu integrasi payout provider; belum ada transfer.',
       href: '/creator/payouts',
     });
+    await tx.notification.updateMany({
+      where: { category: 'PAYOUT', readAt: null },
+      data: { readAt: new Date() },
+    });
   });
   return getPayout(id);
 }

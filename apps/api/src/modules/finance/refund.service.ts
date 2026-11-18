@@ -189,6 +189,10 @@ export async function reviewRefund(
       },
       tx,
     );
+    await tx.notification.updateMany({
+      where: { category: 'REFUND', readAt: null },
+      data: { readAt: new Date() },
+    });
     return result;
   });
 }

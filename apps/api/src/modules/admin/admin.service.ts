@@ -397,6 +397,10 @@ export async function reviewOrganizer(
       },
       tx,
     );
+    await tx.notification.updateMany({
+      where: { category: 'ORGANIZER', readAt: null },
+      data: { readAt: new Date() },
+    });
   });
 
   return getAdminOrganizer(organizerId);
@@ -562,6 +566,10 @@ export async function reviewEvent(
       },
       tx,
     );
+    await tx.notification.updateMany({
+      where: { category: 'EVENT_REVIEW', readAt: null },
+      data: { readAt: new Date() },
+    });
   });
 
   return getAdminEvent(eventId);

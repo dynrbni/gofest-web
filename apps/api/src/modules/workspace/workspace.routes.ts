@@ -187,6 +187,33 @@ for (const [router, own] of [
   );
   router.get('/notifications', validate(listQuerySchema, 'query'), async (req, res) => {
     const query = req.query as unknown as ListQuery;
+
+    // Automatically reconcile stale admin notifications where underlying items are already resolved
+    if (['ADMIN', 'SUPERADMIN'].includes(req.auth!.role)) {
+      const [pendingEvents, pendingOrganizers, pendingPayouts, pendingRefunds] = await Promise.all([
+        prisma.event.count({ where: { status: 'PENDING_REVIEW' } }),
+        prisma.organizerProfile.count({ where: { status: 'PENDING' } }),
+        prisma.payoutRequest.count({ where: { status: 'PENDING' } }),
+        prisma.refund.count({ where: { status: 'PENDING' } }),
+      ]);
+      const resolvedCategories: string[] = [];
+      if (pendingEvents === 0) resolvedCategories.push('EVENT_REVIEW');
+      if (pendingOrganizers === 0) resolvedCategories.push('ORGANIZER');
+      if (pendingPayouts === 0) resolvedCategories.push('PAYOUT');
+      if (pendingRefunds === 0) resolvedCategories.push('REFUND');
+
+      if (resolvedCategories.length > 0) {
+        await prisma.notification.updateMany({
+          where: {
+            userId: req.auth!.userId,
+            category: { in: resolvedCategories },
+            readAt: null,
+          },
+          data: { readAt: new Date() },
+        });
+      }
+    }
+
     const categoryCounts = prisma.notification.groupBy({
       by: ['category'],
       where: { userId: req.auth!.userId, readAt: null },
@@ -221,6 +248,23 @@ for (const [router, own] of [
     });
     if (!result.count) throw new NotFoundError();
     return ok(res, { read: true });
+  });
+  router.post('/notifications/read-category', async (req, res) => {
+    const category = req.body?.category as string | undefined;
+    if (category) {
+      await prisma.notification.updateMany({
+        where: { userId: req.auth!.userId, category, readAt: null },
+        data: { readAt: new Date() },
+      });
+    }
+    return ok(res, { success: true });
+  });
+  router.post('/notifications/read-all', async (req, res) => {
+    await prisma.notification.updateMany({
+      where: { userId: req.auth!.userId, readAt: null },
+      data: { readAt: new Date() },
+    });
+    return ok(res, { success: true });
   });
   router.get('/events/:id/history', async (req, res) => {
     if (
