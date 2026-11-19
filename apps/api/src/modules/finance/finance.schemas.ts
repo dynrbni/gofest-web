@@ -61,6 +61,10 @@ export const listQuerySchema = z.object({
   status: z.string().max(40).optional(),
 });
 export type ListQuery = z.infer<typeof listQuerySchema>;
+export const eventReportsQuerySchema = listQuerySchema.extend({
+  withSales: z.literal('true').optional(),
+});
+export type EventReportsQuery = z.infer<typeof eventReportsQuerySchema>;
 export const ledgerQuerySchema = listQuerySchema.extend({
   from: z.string().datetime({ offset: true }).optional(),
   to: z.string().datetime({ offset: true }).optional(),

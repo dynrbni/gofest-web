@@ -1,5 +1,10 @@
 import { Router } from 'express';
-import { requireAuth, requireAdmin, requireActiveOrganizer, requireReauth } from '../../middleware/auth';
+import {
+  requireAuth,
+  requireAdmin,
+  requireActiveOrganizer,
+  requireReauth,
+} from '../../middleware/auth';
 import { validate } from '../../middleware/validate';
 import { created, ok } from '../../lib/response';
 import {
@@ -27,6 +32,8 @@ import {
   periodSchema,
   listQuerySchema,
   ledgerQuerySchema,
+  eventReportsQuerySchema,
+  type EventReportsQuery,
   type PeriodQuery,
   type ListQuery,
 } from './finance.schemas';
@@ -65,9 +72,9 @@ for (const [router, own] of [
       ),
     ),
   );
-  router.get('/event-reports', validate(listQuerySchema, 'query'), async (req, res) => {
+  router.get('/event-reports', validate(eventReportsQuerySchema, 'query'), async (req, res) => {
     const result = await eventFinancialReports(
-      req.query as unknown as ListQuery,
+      req.query as unknown as EventReportsQuery,
       own ? req.auth!.organizerId! : undefined,
     );
     return ok(res, result.data, result.meta);
@@ -109,8 +116,11 @@ creatorFinanceRouter.delete('/bank-accounts/:id', requireReauth, async (req, res
 creatorFinanceRouter.post('/payouts', validate(payoutSchema), async (req, res) =>
   created(res, { payout: await requestPayout(req.auth!.organizerId!, req.body, req) }),
 );
-adminFinanceRouter.patch('/payouts/:id/review', requireReauth, validate(payoutReviewSchema), async (req, res) =>
-  ok(res, { payout: await reviewPayout(req.params.id!, req.body, req) }),
+adminFinanceRouter.patch(
+  '/payouts/:id/review',
+  requireReauth,
+  validate(payoutReviewSchema),
+  async (req, res) => ok(res, { payout: await reviewPayout(req.params.id!, req.body, req) }),
 );
 adminFinanceRouter.post('/refunds', validate(refundSchema), async (req, res) =>
   created(res, { refund: await requestRefund(req.body, req) }),

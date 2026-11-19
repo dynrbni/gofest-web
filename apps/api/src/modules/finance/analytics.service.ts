@@ -1,7 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { prisma } from '../../lib/prisma';
 import { NotFoundError } from '../../lib/errors';
-import type { PeriodQuery, ListQuery } from './finance.schemas';
+import type { EventReportsQuery, PeriodQuery, ListQuery } from './finance.schemas';
 import { moneyNumber } from './money';
 
 export async function listLedger(
@@ -130,13 +130,22 @@ export async function financialOverview(query: PeriodQuery, organizerId?: string
 }
 
 export async function eventFinancialReports(
-  query: ListQuery & { eventId?: string },
+  query: EventReportsQuery & { eventId?: string },
   organizerId?: string,
 ) {
   const where: Prisma.EventWhereInput = {
     ...(organizerId ? { organizerId } : {}),
     ...(query.eventId ? { id: query.eventId } : {}),
     ...(query.q ? { title: { contains: query.q, mode: 'insensitive' } } : {}),
+    ...(query.withSales
+      ? {
+          orders: {
+            some: {
+              ledgerEntries: { some: { transactionType: 'TICKET_SALE', amount: { gt: 0 } } },
+            },
+          },
+        }
+      : {}),
   };
   const [total, events] = await Promise.all([
     prisma.event.count({ where }),

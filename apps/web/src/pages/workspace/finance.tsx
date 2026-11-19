@@ -130,6 +130,7 @@ export function FinanceOverviewPage() {
                 </Button>
               </section>
             </div>
+            {creator && <EventRevenuePreview />}
             <FinancialLedgerTable from={data.range.from} to={data.range.to} />
           </>
         )}
@@ -605,8 +606,60 @@ export function PayoutsPage() {
   );
 }
 
-export function EventReportsPage() {
+function EventRevenuePreview() {
   const { apiBase, base } = useWorkspace();
+  const query = useQuery({
+    queryKey: ['event-reports-preview', apiBase],
+    queryFn: () =>
+      apiPage<EventReport>(`${apiBase}/event-reports`, { query: { limit: 4, withSales: 'true' } }),
+  });
+  const reports = query.data?.data ?? [];
+
+  return (
+    <Panel
+      title="Pendapatan per event"
+      description="Hasil penjualan tiket setelah refund tiket, sepanjang waktu."
+      action={
+        <Link
+          className="text-sm font-medium text-primary hover:underline"
+          to={`${base}/event-reports`}
+        >
+          Lihat semua laporan
+        </Link>
+      }
+    >
+      <QueryState query={query}>
+        {reports.length ? (
+          <ul className="divide-y divide-slate-200">
+            {reports.map((report) => (
+              <li
+                key={report.id}
+                className="flex flex-wrap justify-between gap-x-5 gap-y-1 py-3 first:pt-0 last:pb-0"
+              >
+                <Link
+                  to={`${base}/event-reports/${report.id}`}
+                  className="min-w-0 break-words text-sm font-medium text-primary hover:underline"
+                >
+                  {report.title}
+                </Link>
+                <span className="text-sm font-semibold tabular-nums">
+                  {formatIDR(report.organizerProceeds)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-slate-600">
+            Pendapatan tiket akan muncul setelah ada penjualan berbayar.
+          </p>
+        )}
+      </QueryState>
+    </Panel>
+  );
+}
+
+export function EventReportsPage() {
+  const { apiBase, base, creator } = useWorkspace();
   const { id } = useParams();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
@@ -626,7 +679,7 @@ export function EventReportsPage() {
       <div className="space-y-6">
         <WorkspaceHeading
           title={report?.title ?? 'Laporan keuangan event'}
-          description="Kontribusi penjualan, alokasi service fee, dan kewajiban kepada organizer. Bukan laba bersih EO."
+          description="Rekap penjualan, refund, dan pencairan event sepanjang waktu."
           action={
             <Button asChild variant="outline">
               <Link to={`${base}/event-reports`}>Semua laporan</Link>
@@ -635,29 +688,43 @@ export function EventReportsPage() {
         />
         <QueryState query={detail}>
           {report ? (
-            <>
-              <p className="text-sm text-slate-600">
-                Organizer: {report.organizer.organizationName}
-              </p>
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {[
-                  ['Tiket terjual', report.totalTicketsSold.toLocaleString('id-ID')],
-                  ['Gross Ticket Sales', formatIDR(report.grossTicketSales)],
-                  ['Diskon', formatIDR(report.discountAmount)],
-                  ['Service Fee Revenue', formatIDR(report.serviceFeeRevenue)],
-                  ['Refund Amount', formatIDR(report.refundAmount)],
-                  ['Organizer Proceeds', formatIDR(report.organizerProceeds)],
-                  ['Paid Out Amount', formatIDR(report.paidOutAmount)],
-                  ['Outstanding Balance', formatIDR(report.outstandingBalance)],
-                ].map(([label, value]) => (
-                  <Metric key={label} label={String(label)} value={value} />
-                ))}
-              </div>
-              <p className="text-sm leading-6 text-slate-600">
-                Paid Out hanya mencatat transfer yang selesai. Permintaan payout yang disetujui
-                masih merupakan reservasi dan belum mengurangi outstanding balance.
-              </p>
-            </>
+            <div className="grid items-start gap-4 xl:grid-cols-2">
+              <Panel
+                title="Penjualan tiket"
+                description={
+                  creator
+                    ? 'Pendapatan sebelum biaya penyelenggaraan event.'
+                    : report.organizer.organizationName
+                }
+              >
+                <p className="text-sm text-slate-600">Pendapatan setelah refund tiket</p>
+                <p className="mb-3 mt-1 break-all text-3xl font-semibold tabular-nums">
+                  {formatIDR(report.organizerProceeds)}
+                </p>
+                <FinanceBreakdown
+                  lines={[
+                    { label: 'Penjualan setelah diskon', amount: report.grossTicketSales },
+                    { label: 'Diskon tiket', amount: report.discountAmount },
+                    { label: 'Biaya layanan GOFEST', amount: report.serviceFeeRevenue },
+                    { label: 'Refund tiket dan biaya layanan', amount: report.refundAmount },
+                  ]}
+                />
+              </Panel>
+              <Panel title="Tiket & pencairan">
+                <p className="mb-3 text-sm text-slate-600">
+                  <strong className="font-semibold text-slate-950">
+                    {report.totalTicketsSold.toLocaleString('id-ID')}
+                  </strong>{' '}
+                  tiket terjual
+                </p>
+                <FinanceBreakdown
+                  lines={[
+                    { label: 'Dana sudah dicairkan', amount: report.paidOutAmount },
+                    { label: 'Dana belum dicairkan', amount: report.outstandingBalance },
+                  ]}
+                />
+              </Panel>
+            </div>
           ) : null}
         </QueryState>
       </div>
@@ -665,8 +732,8 @@ export function EventReportsPage() {
   return (
     <div className="space-y-6">
       <WorkspaceHeading
-        title="Laporan keuangan event"
-        description="Penjualan tiket, kontribusi fee GOFEST, dan dana organizer per event. Angka akumulasi sepanjang waktu."
+        title={creator ? 'Laporan pendapatan per event' : 'Laporan keuangan event'}
+        description="Rekap penjualan dan pendapatan setelah refund tiket sepanjang waktu."
       />
       <label className="grid max-w-sm gap-2 text-sm font-medium">
         Cari event
@@ -683,15 +750,13 @@ export function EventReportsPage() {
           caption="Laporan keuangan per event"
           headers={[
             'Event',
-            'Organizer',
+            ...(!creator ? ['Organizer'] : []),
             'Tiket',
-            'Gross Ticket Sales',
-            'Diskon',
-            'Service Fee',
-            'Refund',
-            'Organizer Proceeds',
-            'Paid Out',
-            'Outstanding',
+            'Penjualan tiket',
+            ...(!creator ? ['Diskon', 'Biaya layanan'] : []),
+            'Total refund',
+            'Pendapatan organizer',
+            ...(!creator ? ['Sudah dicairkan', 'Belum dicairkan'] : []),
           ]}
         >
           {query.data?.data.map((report) => (
@@ -704,15 +769,23 @@ export function EventReportsPage() {
                   {report.title}
                 </Link>
               </td>
-              <td>{report.organizer.organizationName}</td>
+              {!creator && <td>{report.organizer.organizationName}</td>}
               <td>{report.totalTicketsSold}</td>
               <td>{formatIDR(report.grossTicketSales)}</td>
-              <td>{formatIDR(report.discountAmount)}</td>
-              <td>{formatIDR(report.serviceFeeRevenue)}</td>
+              {!creator && (
+                <>
+                  <td>{formatIDR(report.discountAmount)}</td>
+                  <td>{formatIDR(report.serviceFeeRevenue)}</td>
+                </>
+              )}
               <td>{formatIDR(report.refundAmount)}</td>
-              <td>{formatIDR(report.organizerProceeds)}</td>
-              <td>{formatIDR(report.paidOutAmount)}</td>
-              <td>{formatIDR(report.outstandingBalance)}</td>
+              <td className="font-semibold tabular-nums">{formatIDR(report.organizerProceeds)}</td>
+              {!creator && (
+                <>
+                  <td>{formatIDR(report.paidOutAmount)}</td>
+                  <td>{formatIDR(report.outstandingBalance)}</td>
+                </>
+              )}
             </tr>
           ))}
         </DataTable>
