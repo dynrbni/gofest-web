@@ -462,6 +462,7 @@ export const eventListQuerySchema = paginationSchema.extend({
 
 export const eventManageQuerySchema = paginationSchema.extend({
   status: z.enum(EVENT_STATUSES).optional(),
+  active: z.literal('true').optional(),
   q: z.string().trim().max(120).optional(),
 });
 

@@ -1,6 +1,6 @@
 import { Prisma } from '@prisma/client';
 import type { Request } from 'express';
-import type { EventListQuery } from '@gofest/shared';
+import type { EventListQuery, EventManageQuery } from '@gofest/shared';
 import { EVENT_CITIES, findEventCity } from '@gofest/shared';
 import { prisma } from '../../lib/prisma';
 import { writeAudit } from '../../lib/audit';
@@ -714,13 +714,11 @@ export async function cancelEventAsAdmin(eventId: string, reason: string, req: R
   return cancelEventInternal({ id: event.id, title: event.title }, reason, req);
 }
 
-export async function listOrganizerEvents(
-  organizerId: string,
-  query: { page: number; limit: number; q?: string; status?: string },
-) {
+export async function listOrganizerEvents(organizerId: string, query: EventManageQuery) {
   const where: Prisma.EventWhereInput = {
     organizerId,
-    ...(query.status ? { status: query.status as Prisma.EventWhereInput['status'] } : {}),
+    status: query.active ? 'PUBLISHED' : query.status,
+    endsAt: query.active ? { gt: new Date() } : undefined,
     ...(query.q
       ? {
           OR: [

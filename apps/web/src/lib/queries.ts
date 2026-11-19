@@ -85,6 +85,7 @@ export function useOrganizerEvents(params: {
   page?: number;
   limit?: number;
   status?: EventStatus;
+  active?: 'true';
   q?: string;
 }) {
   return useQuery({
