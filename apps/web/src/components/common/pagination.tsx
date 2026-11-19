@@ -29,16 +29,16 @@ export function Pagination({
       <p className="text-xs font-medium text-slate-500 tabular-nums">
         Halaman {meta.page} dari {meta.totalPages} · Total {meta.total} {itemLabel}
       </p>
-      <div className="flex items-center gap-1.5">
+      <div className="flex min-w-0 max-w-full flex-wrap items-center gap-1.5">
         <button
           type="button"
           onClick={() => onPageChange(meta.page - 1)}
           disabled={meta.page <= 1}
-          className="inline-flex h-9 items-center gap-1 rounded-xl border border-slate-200 px-3 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-40"
+          className="inline-flex h-9 items-center gap-1 rounded-xl border border-slate-200 px-2 sm:px-3 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-40"
           aria-label="Halaman sebelumnya"
         >
           <ChevronLeft className="h-4 w-4" aria-hidden />
-          Sebelumnya
+          <span className="hidden sm:inline">Sebelumnya</span>
         </button>
         {pages.map((page, index) => {
           const previous = pages[index - 1];
@@ -51,7 +51,7 @@ export function Pagination({
                 onClick={() => onPageChange(page)}
                 aria-current={page === meta.page ? 'page' : undefined}
                 className={cn(
-                  'h-9 min-w-9 rounded-xl border px-3 text-xs font-medium tabular-nums transition-colors',
+                  'h-9 min-w-9 rounded-xl border px-2 sm:px-3 text-xs font-medium tabular-nums transition-colors',
                   page === meta.page
                     ? 'border-blue-600 bg-blue-600 text-white shadow-xs'
                     : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100',
@@ -66,10 +66,10 @@ export function Pagination({
           type="button"
           onClick={() => onPageChange(meta.page + 1)}
           disabled={meta.page >= meta.totalPages}
-          className="inline-flex h-9 items-center gap-1 rounded-xl border border-slate-200 px-3 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-40"
+          className="inline-flex h-9 items-center gap-1 rounded-xl border border-slate-200 px-2 sm:px-3 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-40"
           aria-label="Halaman berikutnya"
         >
-          Berikutnya
+          <span className="hidden sm:inline">Berikutnya</span>
           <ChevronRight className="h-4 w-4" aria-hidden />
         </button>
       </div>
