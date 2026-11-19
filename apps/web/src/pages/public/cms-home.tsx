@@ -2,11 +2,62 @@ import { ArrowRight, MapPin, Megaphone } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { EventCard } from '@/components/common/event-presentation';
 import { EmptyState, PageLoading, ErrorState } from '@/components/common/states';
-import { BannerCarousel, EventCarousel } from '@/components/discovery/event-carousel';
+import { EventCarousel } from '@/components/discovery/event-carousel';
 import { EventCategories } from '@/components/discovery/event-categories';
 import { CityDestinations } from '@/components/discovery/city-destinations';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useCmsSite, type CmsSite } from '@/lib/cms';
+import { useLanguage } from '@/lib/language';
+import { usePublicEvents } from '@/lib/queries';
 import { PlatformContent } from './platform-content';
+
+const homeEventLimit = 8;
+
+function UpcomingEvents() {
+  const { t } = useLanguage();
+  const query = usePublicEvents({ limit: homeEventLimit });
+  const events = query.data?.data ?? [];
+
+  return (
+    <section className="pb-8 sm:pb-12" aria-labelledby="upcoming-events-heading">
+      <h2 id="upcoming-events-heading" className="section-title">
+        {t('Event Mendatang', 'Upcoming events')}
+      </h2>
+      {query.isPending ? (
+        <div className="home-upcoming-grid mt-5" role="status">
+          <span className="sr-only">{t('Memuat event', 'Loading events')}</span>
+          {Array.from({ length: homeEventLimit }, (_, index) => (
+            <Skeleton key={index} className="aspect-[4/3]" />
+          ))}
+        </div>
+      ) : query.isError ? (
+        <ErrorState error={query.error} onRetry={() => void query.refetch()} />
+      ) : events.length ? (
+        <>
+          <div className="event-grid home-upcoming-grid mt-5">
+            {events.map((event) => (
+              <EventCard key={event.id} event={event} />
+            ))}
+          </div>
+          <div className="mt-6 text-center">
+            <Button variant="outline" asChild>
+              <Link to="/events">
+                {t('Lihat semua event', 'View all events')}
+                <ArrowRight className="ml-2 size-4" aria-hidden />
+              </Link>
+            </Button>
+          </div>
+        </>
+      ) : (
+        <EmptyState
+          title={t('Belum ada event mendatang', 'No upcoming events yet')}
+          description={t('Cek kembali untuk jadwal terbaru.', 'Check back for new dates.')}
+        />
+      )}
+    </section>
+  );
+}
 
 export function CmsHomepage({ site }: { site: CmsSite }) {
   const sections = site.sections
@@ -24,11 +75,7 @@ export function CmsHomepage({ site }: { site: CmsSite }) {
         if (section.kind === 'hero')
           return (
             <section key={section.id} aria-label={section.title}>
-              {banners.length ? (
-                <BannerCarousel banners={banners} />
-              ) : (
-                <EventCarousel events={section.events} />
-              )}
+              <EventCarousel banners={banners} events={section.events} />
             </section>
           );
         if (section.kind === 'promotion')
@@ -48,6 +95,7 @@ export function CmsHomepage({ site }: { site: CmsSite }) {
                 description={section.description}
                 limit={section.limit}
               />
+              <UpcomingEvents />
             </div>
           );
         if (section.kind === 'cities')
