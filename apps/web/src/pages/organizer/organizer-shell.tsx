@@ -13,16 +13,16 @@ import { WorkspaceLayout, type WorkspaceNavItem } from '@/components/layout/work
 
 const creatorNav: WorkspaceNavItem[] = [
   {
-    group: 'Overview',
+    group: 'Utama',
     to: '/creator/dashboard',
     label: 'Dashboard',
     icon: LayoutDashboard,
     end: true,
   },
   {
-    group: 'Event Management',
+    group: 'Utama',
     to: '/creator/events',
-    label: 'Event',
+    label: 'Event Saya',
     icon: Calendar,
   },
   {
