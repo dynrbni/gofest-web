@@ -10,8 +10,9 @@ import { Pagination } from '@/components/common/pagination';
 import { EmptyState, ErrorState, LoadingState } from '@/components/common/states';
 import { cn } from '@/lib/utils';
 
-const statusTabs: Array<{ label: string; value: EventStatus | 'ALL' }> = [
+const statusTabs: Array<{ label: string; value: EventStatus | 'ALL' | 'ACTIVE' }> = [
   { label: 'Semua', value: 'ALL' },
+  { label: 'Aktif', value: 'ACTIVE' },
   { label: 'Terbit', value: 'PUBLISHED' },
   { label: 'Draft', value: 'DRAFT' },
   { label: 'Review', value: 'PENDING_REVIEW' },
@@ -22,7 +23,9 @@ export function OrganizerEventListPage() {
   useDocumentTitle('Daftar Acara');
   const [searchParams, setSearchParams] = useSearchParams();
   const page = Math.max(1, Number(searchParams.get('page') ?? '1'));
-  const currentStatus = (searchParams.get('status') as EventStatus) || undefined;
+  const currentStatus = (searchParams.get('status') as EventStatus | null) ?? undefined;
+  const active = searchParams.get('active') === 'true';
+  const selectedTab = active ? 'ACTIVE' : (currentStatus ?? 'ALL');
   const initialQ = searchParams.get('q') ?? '';
 
   const [search, setSearch] = useState(initialQ);
@@ -32,6 +35,7 @@ export function OrganizerEventListPage() {
     page,
     limit: 10,
     status: currentStatus,
+    active: active ? 'true' : undefined,
     q: debouncedSearch.trim() || undefined,
   });
 
@@ -44,12 +48,14 @@ export function OrganizerEventListPage() {
     setSearchParams(next);
   }
 
-  function setStatus(status: EventStatus | 'ALL') {
+  function setStatus(status: EventStatus | 'ALL' | 'ACTIVE') {
     const next = new URLSearchParams(searchParams);
     next.delete('page');
-    if (status === 'ALL') {
-      next.delete('status');
-    } else {
+    next.delete('status');
+    next.delete('active');
+    if (status === 'ACTIVE') {
+      next.set('active', 'true');
+    } else if (status !== 'ALL') {
       next.set('status', status);
     }
     setSearchParams(next);
@@ -68,7 +74,7 @@ export function OrganizerEventListPage() {
         </div>
 
         <Link
-          to="/organizer/events/new"
+          to="/creator/events/new"
           className="inline-flex items-center gap-2 rounded-md bg-brick px-4 py-2 text-sm font-medium text-paper shadow-sm transition-colors hover:bg-brick/90"
         >
           <Plus className="h-4 w-4" aria-hidden />
@@ -79,12 +85,13 @@ export function OrganizerEventListPage() {
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div className="flex flex-wrap gap-1.5">
           {statusTabs.map((tab) => {
-            const isActive = tab.value === 'ALL' ? !currentStatus : currentStatus === tab.value;
+            const isActive = tab.value === selectedTab;
             return (
               <button
                 key={tab.value}
                 type="button"
                 onClick={() => setStatus(tab.value)}
+                aria-pressed={isActive}
                 className={cn(
                   'rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
                   isActive
@@ -132,13 +139,13 @@ export function OrganizerEventListPage() {
         <EmptyState
           title="Tidak ada acara ditemukan"
           description={
-            debouncedSearch || currentStatus
+            debouncedSearch || selectedTab !== 'ALL'
               ? 'Tidak ada acara yang cocok dengan filter pencarian.'
               : 'Kamu belum membuat acara. Mulai buat acaramu sekarang!'
           }
           action={
             <Link
-              to="/organizer/events/new"
+              to="/creator/events/new"
               className="inline-flex h-9 items-center justify-center rounded-md bg-brick px-4 text-xs font-medium text-paper hover:bg-brick/90"
             >
               Buat Acara Baru
@@ -162,7 +169,7 @@ export function OrganizerEventListPage() {
                   </div>
                   <h2 className="text-lg font-semibold text-ink">
                     <Link
-                      to={`/organizer/events/${event.id}/edit`}
+                      to={`/creator/events/${event.id}/edit`}
                       className="hover:underline hover:underline-offset-4"
                     >
                       {event.title}
@@ -194,7 +201,7 @@ export function OrganizerEventListPage() {
                   ) : null}
 
                   <Link
-                    to={`/organizer/events/${event.id}/edit`}
+                    to={`/creator/events/${event.id}/edit`}
                     className="inline-flex items-center gap-1.5 rounded-md bg-ink px-3 py-1.5 text-xs font-medium text-paper transition-colors hover:bg-ink/90"
                   >
                     <Settings2 className="h-3.5 w-3.5" aria-hidden />
