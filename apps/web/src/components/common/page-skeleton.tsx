@@ -214,7 +214,10 @@ export function PageSkeleton({ pathname }: { pathname: string }) {
   if (pathname === '/')
     return (
       <div className="home-skeleton">
-        <Skeleton className="hero-frame w-full rounded-none" />
+        <div className="event-carousel">
+          <Skeleton className="hero-frame !bg-muted" />
+          <div className="min-h-11" />
+        </div>
         <div className="container space-y-8 py-10">
           <HeadingSkeleton />
           <EventGridSkeleton />
