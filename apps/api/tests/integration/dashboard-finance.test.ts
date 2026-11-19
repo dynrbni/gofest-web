@@ -126,6 +126,19 @@ describe('dashboard RBAC and ownership', () => {
       (await stranger.agent.get('/api/v1/creator/financial-overview')).body.data.grossTicketSales,
     ).toBe(0);
     expect((await stranger.agent.get('/api/v1/creator/orders')).body.data).toEqual([]);
+    const attendees = await own.organizer.agent.get('/api/v1/creator/attendees').query({
+      eventId: own.event.id,
+    });
+    expect(attendees.status).toBe(200);
+    expect(attendees.body.data).toHaveLength(1);
+    const foreignAttendees = await stranger.agent.get('/api/v1/creator/attendees').query({
+      eventId: own.event.id,
+    });
+    expect(foreignAttendees.body.data).toEqual([]);
+    const unrelatedOrder = await own.organizer.agent
+      .get(`/api/v1/creator/orders/${own.order.id}`)
+      .query({ eventId: 'different-event' });
+    expect(unrelatedOrder.status).toBe(404);
   });
   it('applies Creator permission changes on the server while keeping operational admin permissions fixed', async () => {
     const root = await admin('SUPERADMIN');
@@ -197,6 +210,14 @@ describe('internal ledger and withdrawal', () => {
     const analytics = await setup.organizer.agent.get('/api/v1/creator/analytics?period=all');
     expect(analytics.status).toBe(200);
     expect(analytics.body.data.trend[0].ticketSales).toBe(3_000_000_000);
+    const dashboard = await setup.organizer.agent.get('/api/v1/creator/dashboard');
+    expect(dashboard.status).toBe(200);
+    expect(dashboard.body.data.summary).toMatchObject({
+      activeEvents: 1,
+      totalOrders: 4,
+      ticketsSold: 4,
+      grossRevenue: 3_000_000_000,
+    });
   });
   it('snapshots checkout fees, posts payment exactly once and separates platform fees from ticket proceeds', async () => {
     const setup = await paidOrder();

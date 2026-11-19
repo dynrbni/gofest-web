@@ -129,6 +129,16 @@ describe('ticket scan', () => {
     expect(first.body.data.result).toBe('VALID');
     expect(first.body.data.accepted).toBe(true);
     expect(first.body.data.ticket.ticketCode).toBe(ticket.ticketCode);
+    const history = await organizer.agent
+      .get('/api/v1/creator/check-in-monitoring')
+      .query({ eventId: event.id });
+    expect(history.status).toBe(200);
+    expect(history.body.data.data).toHaveLength(1);
+    expect(history.body.data.data[0].ticket.ticketCode).toBe(ticket.ticketCode);
+    const unrelatedHistory = await organizer.agent
+      .get('/api/v1/creator/check-in-monitoring')
+      .query({ eventId: 'different-event' });
+    expect(unrelatedHistory.body.data.data).toEqual([]);
 
     const second = await scan(staff.agent, {
       eventId: event.id,
