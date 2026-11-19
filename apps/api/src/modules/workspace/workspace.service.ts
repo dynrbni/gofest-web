@@ -157,8 +157,11 @@ export async function replySupport(
   });
 }
 
-export async function checkInMonitoring(query: ListQuery, organizerId?: string) {
+type EventOperationsQuery = ListQuery & { eventId?: string };
+
+export async function checkInMonitoring(query: EventOperationsQuery, organizerId?: string) {
   const event: Prisma.EventWhereInput = {
+    id: query.eventId,
     ...(organizerId ? { organizerId } : {}),
     ...(query.q ? { title: { contains: query.q, mode: 'insensitive' } } : {}),
   };
@@ -208,8 +211,9 @@ export async function checkInMonitoring(query: ListQuery, organizerId?: string) 
   };
 }
 
-export async function listAttendees(query: ListQuery, organizerId?: string) {
+export async function listAttendees(query: EventOperationsQuery, organizerId?: string) {
   const where: Prisma.TicketWhereInput = {
+    eventId: query.eventId,
     ...(organizerId ? { event: { organizerId } } : {}),
     ...(query.q
       ? {

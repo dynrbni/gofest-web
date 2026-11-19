@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { z } from 'zod';
 import {
   addStaffSchema,
   orderListQuerySchema,
@@ -51,6 +52,10 @@ export const adminWorkspaceRouter = Router();
 adminWorkspaceRouter.use(requireAuth, requireAdmin);
 export const creatorWorkspaceRouter = Router();
 creatorWorkspaceRouter.use(requireAuth, requireActiveOrganizer);
+const eventOperationsQuerySchema = listQuerySchema.extend({
+  eventId: z.string().trim().min(1).max(100).optional(),
+});
+type EventOperationsQuery = z.infer<typeof eventOperationsQuerySchema>;
 
 adminWorkspaceRouter.get(
   '/admins',
@@ -127,32 +132,40 @@ creatorWorkspaceRouter.get('/orders', validate(orderListQuerySchema, 'query'), a
   });
   return ok(res, result.data, result.meta);
 });
-creatorWorkspaceRouter.get('/orders/:id', async (req, res) => {
-  if (
-    !(await prisma.order.findFirst({
-      where: { id: req.params.id!, event: { organizerId: req.auth!.organizerId! } },
-      select: { id: true },
-    }))
-  )
-    throw new NotFoundError('Order tidak ditemukan');
-  return ok(res, { order: await getAdminOrder(req.params.id!) });
-});
+creatorWorkspaceRouter.get(
+  '/orders/:id',
+  validate(orderListQuerySchema.pick({ eventId: true }), 'query'),
+  async (req, res) => {
+    const { eventId } = req.query as Pick<OrderListQuery, 'eventId'>;
+    if (
+      !(await prisma.order.findFirst({
+        where: { id: req.params.id!, eventId, event: { organizerId: req.auth!.organizerId! } },
+        select: { id: true },
+      }))
+    )
+      throw new NotFoundError('Order tidak ditemukan');
+    return ok(res, { order: await getAdminOrder(req.params.id!) });
+  },
+);
 for (const [router, own] of [
   [adminWorkspaceRouter, false],
   [creatorWorkspaceRouter, true],
 ] as const) {
-  router.get('/check-in-monitoring', validate(listQuerySchema, 'query'), async (req, res) =>
-    ok(
-      res,
-      await checkInMonitoring(
-        req.query as unknown as ListQuery,
-        own ? req.auth!.organizerId! : undefined,
+  router.get(
+    '/check-in-monitoring',
+    validate(eventOperationsQuerySchema, 'query'),
+    async (req, res) =>
+      ok(
+        res,
+        await checkInMonitoring(
+          req.query as unknown as EventOperationsQuery,
+          own ? req.auth!.organizerId! : undefined,
+        ),
       ),
-    ),
   );
-  router.get('/attendees', validate(listQuerySchema, 'query'), async (req, res) => {
+  router.get('/attendees', validate(eventOperationsQuerySchema, 'query'), async (req, res) => {
     const result = await listAttendees(
-      req.query as unknown as ListQuery,
+      req.query as unknown as EventOperationsQuery,
       own ? req.auth!.organizerId! : undefined,
     );
     return ok(res, result.data, result.meta);
