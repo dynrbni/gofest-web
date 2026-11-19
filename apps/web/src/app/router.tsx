@@ -74,6 +74,9 @@ const AccountProfilePage = lazyPage(() =>
 const OrganizerApplyPage = lazyPage(() =>
   import('@/pages/organizer/apply').then((m) => m.OrganizerApplyPage),
 );
+const OrganizerDashboardPage = lazyPage(() =>
+  import('@/pages/organizer/dashboard').then((m) => m.OrganizerDashboardPage),
+);
 const OrganizerEventListPage = lazyPage(() =>
   import('@/pages/organizer/events/event-list').then((m) => m.OrganizerEventListPage),
 );
@@ -168,16 +171,21 @@ const eventWorkspaceChildren = [
   { path: 'edit', element: <OrganizerEventFormPage /> },
   { path: 'tickets', element: <EventTicketManagementPage /> },
   { path: 'coupons', element: <EventCouponManagementPage /> },
-  { path: 'orders', element: <EventOrderManagementPage /> },
+  { path: 'attendees', element: <AttendeesPage /> },
   { path: 'staff', element: <EventStaffManagementPage /> },
   { path: 'check-in', element: <EventCheckInSummaryPage /> },
+  { path: 'check-in/history', element: <CheckInOperationsPage /> },
 ];
 const creatorChildren = [
   { index: true, element: <Navigate to="/creator/dashboard" replace /> },
-  { path: 'dashboard', element: <WorkspaceDashboardPage /> },
+  { path: 'dashboard', element: <OrganizerDashboardPage /> },
   { path: 'events', element: <OrganizerEventListPage /> },
   { path: 'events/new', element: <OrganizerEventFormPage isNew /> },
-  { path: 'events/:id', element: <EventWorkspaceLayout />, children: eventWorkspaceChildren },
+  {
+    path: 'events/:id',
+    element: <EventWorkspaceLayout />,
+    children: [...eventWorkspaceChildren, { path: 'orders', element: <WorkspaceOrdersPage /> }],
+  },
   { path: 'settings', element: <OrganizerSettingsPage /> },
   { path: 'finance', element: <FinanceOverviewPage /> },
   { path: 'bank-accounts', element: <BankAccountsPage /> },
@@ -185,15 +193,20 @@ const creatorChildren = [
   { path: 'payouts/history', element: <PayoutsPage /> },
   { path: 'event-reports', element: <EventReportsPage /> },
   { path: 'event-reports/:id', element: <EventReportsPage /> },
-  { path: 'orders', element: <WorkspaceOrdersPage /> },
-  { path: 'attendees', element: <AttendeesPage /> },
-  { path: 'check-in', element: <CheckInOperationsPage /> },
-  { path: 'check-in/history', element: <CheckInOperationsPage /> },
-  { path: 'staff', element: <CheckInOperationsPage /> },
-  { path: 'tickets', element: <EventToolsPage /> },
-  { path: 'promotions', element: <EventToolsPage /> },
-  { path: 'marketing', element: <EventToolsPage /> },
-  { path: 'links', element: <EventToolsPage /> },
+  ...[
+    'orders',
+    'attendees',
+    'check-in',
+    'check-in/history',
+    'staff',
+    'tickets',
+    'promotions',
+    'marketing',
+    'links',
+  ].map((path) => ({
+    path,
+    element: <Navigate to="/creator/events" replace />,
+  })),
   { path: 'support', element: <SupportPage /> },
   { path: 'notifications', element: <NotificationsPage /> },
 ];
@@ -362,7 +375,10 @@ export const router = createBrowserRouter([
           {
             path: 'events/:id',
             element: <EventWorkspaceLayout />,
-            children: eventWorkspaceChildren,
+            children: [
+              ...eventWorkspaceChildren,
+              { path: 'orders', element: <EventOrderManagementPage /> },
+            ],
           },
           { path: 'orders', element: <WorkspaceOrdersPage /> },
           { path: 'payments', element: <WorkspaceOrdersPage /> },
