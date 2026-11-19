@@ -15,8 +15,14 @@ const envSchema = z.object({
   DATABASE_URL_TEST: z.string().optional(),
   JWT_ACCESS_SECRET: z.string().min(32, 'JWT_ACCESS_SECRET minimal 32 karakter').optional(),
   JWT_REFRESH_SECRET: z.string().min(32, 'JWT_REFRESH_SECRET minimal 32 karakter').optional(),
-  AUTH_ACCESS_TOKEN_SECRET: z.string().min(32, 'AUTH_ACCESS_TOKEN_SECRET minimal 32 karakter').optional(),
-  AUTH_REFRESH_TOKEN_SECRET: z.string().min(32, 'AUTH_REFRESH_TOKEN_SECRET minimal 32 karakter').optional(),
+  AUTH_ACCESS_TOKEN_SECRET: z
+    .string()
+    .min(32, 'AUTH_ACCESS_TOKEN_SECRET minimal 32 karakter')
+    .optional(),
+  AUTH_REFRESH_TOKEN_SECRET: z
+    .string()
+    .min(32, 'AUTH_REFRESH_TOKEN_SECRET minimal 32 karakter')
+    .optional(),
   JWT_ACCESS_EXPIRES_IN: z.string().default('15m'),
   JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
   JWT_ADMIN_ACCESS_EXPIRES_IN: z.string().default('10m'),
@@ -26,7 +32,10 @@ const envSchema = z.object({
   AUTH_ACCESS_TOKEN_TTL: z.string().optional(),
   AUTH_REFRESH_TOKEN_TTL: z.string().optional(),
   COOKIE_DOMAIN: z.string().optional(),
-  PAYMENT_PROVIDER: z.enum(['mock']).default('mock'),
+  PAYMENT_PROVIDER: z.enum(['mock', 'xendit']).default('mock'),
+  XENDIT_SECRET_API_KEY: z.string().trim().optional(),
+  XENDIT_WEBHOOK_TOKEN: z.string().trim().optional(),
+  XENDIT_PAYOUTS_ENABLED: booleanString.default('false'),
   PAYMENT_WEBHOOK_SECRET: z.string().min(16, 'PAYMENT_WEBHOOK_SECRET minimal 16 karakter'),
   EMAIL_PROVIDER: z.enum(['console', 'smtp']).default('console'),
   REGISTRATION_TEST_OTP: booleanString.default('false'),
@@ -54,6 +63,12 @@ if (!parsed.success) {
 }
 
 const raw = parsed.data;
+if (
+  (raw.PAYMENT_PROVIDER === 'xendit' || raw.XENDIT_PAYOUTS_ENABLED) &&
+  (!raw.XENDIT_SECRET_API_KEY || !raw.XENDIT_WEBHOOK_TOKEN)
+) {
+  throw new Error('XENDIT_SECRET_API_KEY dan XENDIT_WEBHOOK_TOKEN wajib diisi untuk Xendit');
+}
 const databaseUrl =
   raw.NODE_ENV === 'test' ? (raw.DATABASE_URL_TEST ?? raw.DATABASE_URL) : raw.DATABASE_URL;
 
@@ -78,7 +93,9 @@ const WEAK_SECRETS = new Set([
 ]);
 if (WEAK_SECRETS.has(jwtAccessSecret) || WEAK_SECRETS.has(jwtRefreshSecret)) {
   if (raw.NODE_ENV === 'production') {
-    throw new Error('JWT secrets tidak boleh menggunakan nilai default atau mudah ditebak di production');
+    throw new Error(
+      'JWT secrets tidak boleh menggunakan nilai default atau mudah ditebak di production',
+    );
   }
 }
 

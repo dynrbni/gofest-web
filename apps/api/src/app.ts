@@ -37,7 +37,7 @@ export function createApp() {
   app.use(originCheck);
 
   app.use(
-    '/api/v1/webhooks/payments',
+    '/api/v1/webhooks',
     express.raw({ type: 'application/json', limit: `${env.MAX_UPLOAD_SIZE_MB}mb` }),
   );
   app.use(express.json({ limit: '1mb' }));

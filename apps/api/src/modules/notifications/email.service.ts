@@ -4,6 +4,7 @@ import nodemailer, { type Transporter } from 'nodemailer';
 import { env } from '../../config/env';
 import { logger } from '../../lib/logger';
 import { prisma } from '../../lib/prisma';
+import { createOrderTicketPdf } from '../tickets/ticket-pdf';
 import { renderEmail } from './email.templates';
 
 type DbClient = Prisma.TransactionClient | typeof prisma;
@@ -48,13 +49,14 @@ async function deliver(input: {
   subject: string;
   html: string;
   text: string;
+  attachment?: { filename: string; content: Buffer };
 }): Promise<void> {
   if (env.EMAIL_PROVIDER === 'console') {
     logger.info(
       {
         to: input.to,
         subject: input.subject,
-        preview: input.text.slice(0, 500),
+        preview: input.attachment ? 'E-ticket PDF dilampirkan' : input.text.slice(0, 500),
       },
       'Email dikirim melalui console provider',
     );
@@ -66,6 +68,7 @@ async function deliver(input: {
     subject: input.subject,
     html: input.html,
     text: input.text,
+    attachments: input.attachment ? [input.attachment] : undefined,
   });
 }
 
@@ -82,15 +85,21 @@ export async function processEmailQueue(limit = 20): Promise<number> {
   let processed = 0;
   for (const email of pending) {
     try {
-      const rendered = renderEmail(
-        email.template,
-        (email.payload ?? {}) as Record<string, unknown>,
-      );
+      const payload = (email.payload ?? {}) as Record<string, unknown>;
+      const rendered = renderEmail(email.template, payload);
+      const orderCode = payload.orderCode;
+      const ticketPdf =
+        email.template === 'PAYMENT_SUCCESS' && typeof orderCode === 'string'
+          ? await createOrderTicketPdf(orderCode, email.to)
+          : null;
       await deliver({
         to: email.to,
         subject: email.subject,
         html: rendered.html,
         text: rendered.text,
+        attachment: ticketPdf
+          ? { filename: `Gofest-${orderCode}.pdf`, content: ticketPdf }
+          : undefined,
       });
       await prisma.emailNotification.update({
         where: { id: email.id },

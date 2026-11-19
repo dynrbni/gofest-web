@@ -1,11 +1,16 @@
 import { env } from '../../config/env';
 import { ServiceUnavailableError } from '../../lib/errors';
+import { XenditPaymentProvider } from './xendit.provider';
 import { MockPaymentProvider } from './mock.provider';
 import type { PaymentProvider } from './payment.provider';
 
 let provider: PaymentProvider | null = null;
 
 export function getPaymentProvider(): PaymentProvider {
+  if (env.PAYMENT_PROVIDER === 'xendit') {
+    provider ??= new XenditPaymentProvider();
+    return provider;
+  }
   if (env.PAYMENT_PROVIDER === 'mock') {
     if (env.isProduction) {
       throw new ServiceUnavailableError(

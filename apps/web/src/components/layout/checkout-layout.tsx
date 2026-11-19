@@ -20,7 +20,7 @@ export function CheckoutLayout() {
   return (
     <div className="checkout-shell min-h-screen bg-white">
       <PublishedSiteMetadata />
-      <header className="border-b border-slate-100 bg-white">
+      <header className="no-print border-b border-slate-100 bg-white">
         <div className="container flex min-h-16 items-center justify-between gap-4 py-2 sm:min-h-24 sm:py-4">
           <SiteLogo />
           <LanguageMenu variant="auth" />

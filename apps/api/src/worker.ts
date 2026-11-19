@@ -2,6 +2,7 @@ import http from 'node:http';
 import { env } from './config/env';
 import { logger } from './lib/logger';
 import { prisma } from './lib/prisma';
+import { processXenditPayouts } from './modules/finance/payout-transfer.service';
 import { releaseExpiredOrders } from './modules/orders/order.service';
 import { processEmailQueue } from './modules/notifications/email.service';
 
@@ -39,7 +40,11 @@ async function tick() {
   if (running) return;
   running = true;
   try {
-    const [emails, expired] = await Promise.all([processEmailQueue(20), releaseExpiredOrders(50)]);
+    const [emails, expired] = await Promise.all([
+      processEmailQueue(20),
+      releaseExpiredOrders(50),
+      processXenditPayouts(),
+    ]);
     if (emails > 0 || expired > 0) {
       logger.info({ emails, expiredOrders: expired }, 'Worker menyelesaikan antrean');
     }

@@ -16,6 +16,7 @@ import {
   ConflictError,
   ForbiddenError,
   NotFoundError,
+  ServiceUnavailableError,
   UnauthorizedError,
   UnprocessableEntityError,
 } from '../../lib/errors';
@@ -27,6 +28,7 @@ import { enqueueEmail } from '../notifications/email.service';
 import { notifyAdmins, notifyUser } from '../notifications/inbox.service';
 import { getPlatformSettings } from '../settings/settings.service';
 import { getPaymentProvider } from '../payments/provider';
+import { XenditPaymentProvider } from '../payments/xendit.provider';
 import type { VerifiedPaymentEvent } from '../payments/payment.provider';
 
 export type CreateOrderInput = z.infer<typeof createOrderSchema>;
@@ -792,6 +794,98 @@ export async function regenerateTicketQr(orderCode: string, ticketId: string, re
   };
 }
 
+async function openXenditCheckout(
+  orderId: string,
+  orderCode: string,
+  provider: XenditPaymentProvider,
+) {
+  const session = await prisma.$transaction(
+    async (tx) => {
+      await tx.$queryRaw`SELECT id FROM orders WHERE id = ${orderId} FOR UPDATE`;
+      const order = await tx.order.findUniqueOrThrow({
+        where: { id: orderId },
+        include: { event: { select: { title: true } } },
+      });
+      if (order.status === 'PAID') return null;
+      if (order.status !== 'PENDING_PAYMENT' || order.expiresAt <= new Date()) {
+        throw new ConflictError('Order ini tidak dapat dibayar lagi', 'ORDER_NOT_PAYABLE');
+      }
+      const existing = await tx.payment.findFirst({
+        where: { orderId, provider: provider.name },
+        orderBy: { createdAt: 'desc' },
+      });
+      if (existing) {
+        return { payment: existing, componentsSdkKey: null };
+      }
+
+      // Xendit requires at least ten minutes of validity when creating a session.
+      const expiresAt = new Date(Math.max(order.expiresAt.getTime(), Date.now() + 11 * 60_000));
+      const result = await provider.createPayment({
+        orderCode,
+        amount: order.total,
+        currency: order.currency,
+        expiresAt,
+        description: `Tiket ${order.event.title}`,
+        customer: { name: order.buyerName, email: order.buyerEmail },
+        returnUrl: env.WEB_URL,
+      });
+      if (result.expiresAt.getTime() !== order.expiresAt.getTime()) {
+        await tx.order.update({ where: { id: orderId }, data: { expiresAt: result.expiresAt } });
+      }
+      const payment = await tx.payment.create({
+        data: {
+          orderId,
+          provider: provider.name,
+          providerReference: result.providerReference,
+          method: result.method,
+          amount: order.total,
+          currency: order.currency,
+          status: 'PENDING',
+          expiresAt: result.expiresAt,
+        },
+      });
+      return { payment, componentsSdkKey: result.componentsSdkKey };
+    },
+    { timeout: 12_000 },
+  );
+
+  let componentsSdkKey = session?.componentsSdkKey;
+  if (session && !componentsSdkKey) {
+    try {
+      componentsSdkKey = await provider.resumeSession(session.payment.providerReference);
+    } catch {
+      throw new ServiceUnavailableError('Sesi pembayaran belum bisa dibuka. Coba lagi.');
+    }
+  }
+  const order = serializeOrder(await loadOrderByCode(orderCode));
+  return {
+    alreadyPaid: order.status === 'PAID',
+    order,
+    payment: order.payment,
+    redirectUrl: null,
+    componentsSdkKey,
+  };
+}
+
+async function syncXenditPayment(reference: string) {
+  const event = await new XenditPaymentProvider().fetchSessionEvent(reference);
+  if (event) await processVerifiedPayment(event, 'xendit');
+  return event;
+}
+
+export async function refreshOrderPayment(orderCode: string, req: Request) {
+  const order = await getOrderForAccess(orderCode, req);
+  const payment = order.payments.find((entry) => entry.provider === 'xendit');
+  if (payment && order.status === 'PENDING_PAYMENT') {
+    try {
+      await syncXenditPayment(payment.providerReference);
+    } catch {
+      throw new ServiceUnavailableError('Status pembayaran Xendit belum tersedia. Coba lagi.');
+    }
+  }
+  return { order: serializeOrder(await loadOrderByCode(orderCode)) };
+}
+
 export async function createOrderPaymentSession(orderCode: string, req: Request) {
   let order = await getOrderForAccess(orderCode, req);
   if (order.status === 'PAID') {
@@ -801,7 +895,8 @@ export async function createOrderPaymentSession(orderCode: string, req: Request)
     throw new ConflictError('Order ini tidak dapat dibayar lagi', 'ORDER_NOT_PAYABLE');
   }
   if (order.expiresAt <= new Date()) {
-    await expireOrder(order.id);
+    if (!order.payments.some((payment) => payment.provider === 'xendit'))
+      await expireOrder(order.id);
     throw new ConflictError(
       'Batas waktu pembayaran sudah lewat. Silakan buat order baru.',
       'ORDER_EXPIRED',
@@ -828,6 +923,9 @@ export async function createOrderPaymentSession(orderCode: string, req: Request)
   }
 
   const provider = getPaymentProvider();
+  if (provider instanceof XenditPaymentProvider) {
+    return openXenditCheckout(order.id, orderCode, provider);
+  }
   const token = accessTokenFromRequest(req) ?? orderAccessToken(order.id);
   const returnUrl = `${env.WEB_URL}/order/${order.orderCode}?token=${encodeURIComponent(token)}`;
   const result = await provider.createPayment({
@@ -1090,7 +1188,10 @@ export async function fulfillOrder(orderId: string, options: FulfillOptions) {
             orderCode: order.orderCode,
             eventTitle: order.event.title,
             ticketCount: prepared.length,
-            ticketUrl: `${env.WEB_URL}/tickets/${order.orderCode}?token=${token}`,
+            ticketUrl:
+              prepared.length === 1
+                ? `${env.WEB_URL}/ticket/${prepared[0]!.ticketCode}?token=${token}`
+                : `${env.WEB_URL}/order/${order.orderCode}?token=${token}`,
           },
         },
         tx,
@@ -1133,7 +1234,7 @@ export async function expireOrder(orderId: string): Promise<boolean> {
       return false;
     }
     const changed = await tx.order.updateMany({
-      where: { id: orderId, status: 'PENDING_PAYMENT' },
+      where: { id: orderId, status: 'PENDING_PAYMENT', expiresAt: { lte: new Date() } },
       data: { status: 'EXPIRED' },
     });
     if (changed.count !== 1) return false;
@@ -1171,13 +1272,21 @@ export async function expireOrder(orderId: string): Promise<boolean> {
 export async function releaseExpiredOrders(limit = 50): Promise<number> {
   const expired = await prisma.order.findMany({
     where: { status: 'PENDING_PAYMENT', expiresAt: { lte: new Date() } },
-    select: { id: true },
+    select: {
+      id: true,
+      payments: { where: { provider: 'xendit' }, select: { providerReference: true }, take: 1 },
+    },
     orderBy: { expiresAt: 'asc' },
     take: limit,
   });
   let released = 0;
   for (const order of expired) {
     try {
+      const payment = order.payments[0];
+      if (payment) {
+        const event = await syncXenditPayment(payment.providerReference);
+        if (event?.status !== 'EXPIRED') continue;
+      }
       if (await expireOrder(order.id)) released += 1;
     } catch (error) {
       logger.error({ error, orderId: order.id }, 'Gagal melepas reservasi order');
@@ -1280,7 +1389,7 @@ export async function processVerifiedPayment(event: VerifiedPaymentEvent, provid
 
   if (
     ['EXPIRED', 'CANCELLED', 'PAYMENT_REVIEW'].includes(order.status) ||
-    order.expiresAt <= new Date()
+    order.expiresAt < (event.paidAt ?? new Date())
   ) {
     if (order.status === 'PENDING_PAYMENT') await expireOrder(order.id);
     const status = await recordReviewPayment(order.id, payment.id, event);
@@ -1315,45 +1424,45 @@ export async function handlePaymentWebhook(
   headers: Record<string, string | string[] | undefined>,
   rawBody: Buffer,
 ) {
-  const provider = getPaymentProvider();
+  const provider =
+    providerName === 'xendit' && env.XENDIT_WEBHOOK_TOKEN
+      ? new XenditPaymentProvider()
+      : getPaymentProvider();
   if (providerName !== provider.name) {
     throw new NotFoundError('Payment provider tidak dikenal', 'PROVIDER_NOT_FOUND');
   }
-  const event = await provider.verifyWebhook({ headers, rawBody });
+  const webhookInput = { headers, rawBody };
+  const event =
+    provider instanceof XenditPaymentProvider
+      ? await provider.verifyWebhook(webhookInput, async (reference) => {
+          const matching = await prisma.payment.findUnique({
+            where: {
+              provider_providerReference: {
+                provider: provider.name,
+                providerReference: reference,
+              },
+            },
+            select: { id: true },
+          });
+          return Boolean(matching);
+        })
+      : await provider.verifyWebhook(webhookInput);
+  if (!event) return { ignored: true };
 
-  const existing = await prisma.webhookEvent.findUnique({
-    where: {
-      provider_providerEventId: {
-        provider: provider.name,
-        providerEventId: event.providerEventId,
-      },
-    },
+  const identity = { provider: provider.name, providerEventId: event.providerEventId };
+  const webhook = await prisma.webhookEvent.upsert({
+    where: { provider_providerEventId: identity },
+    create: { ...identity, payloadHash: sha256(rawBody.toString('utf8')), status: 'RECEIVED' },
+    update: {},
   });
-  if (existing) {
+  if (webhook.status === 'PROCESSED') {
     return {
       duplicate: true,
-      status: existing.status,
-      result: existing.status === 'PROCESSED' ? { processed: true, duplicate: true } : null,
+      status: webhook.status,
+      result: { processed: true, duplicate: true },
     };
   }
-
-  let webhookId: string;
-  try {
-    const webhook = await prisma.webhookEvent.create({
-      data: {
-        provider: provider.name,
-        providerEventId: event.providerEventId,
-        payloadHash: sha256(rawBody.toString('utf8')),
-        status: 'RECEIVED',
-      },
-    });
-    webhookId = webhook.id;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      return { duplicate: true, status: 'RECEIVED', result: null };
-    }
-    throw error;
-  }
+  const webhookId = webhook.id;
 
   try {
     const result = await processVerifiedPayment(event, provider.name);
@@ -1364,8 +1473,8 @@ export async function handlePaymentWebhook(
     return { duplicate: false, status: 'PROCESSED', result };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Webhook gagal diproses';
-    await prisma.webhookEvent.update({
-      where: { id: webhookId },
+    await prisma.webhookEvent.updateMany({
+      where: { id: webhookId, status: { not: 'PROCESSED' } },
       data: { status: 'FAILED', error: message.slice(0, 1000) },
     });
     throw error;

@@ -1,5 +1,5 @@
 import { ArrowLeft, CheckCircle2, Clock, Copy, CreditCard, RefreshCw } from 'lucide-react';
-import { useState } from 'react';
+import { lazy, Suspense, useCallback, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { PurchaseSteps } from '@/components/layout/checkout-layout';
@@ -14,6 +14,10 @@ import { useCountdown, useDocumentTitle } from '@/lib/hooks';
 import type { Order } from '@/lib/models';
 import { cn } from '@/lib/utils';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+
+const XenditCheckout = lazy(() =>
+  import('./xendit-checkout').then((module) => ({ default: module.XenditCheckout })),
+);
 
 function Countdown({ target }: { target: string }) {
   const remaining = useCountdown(target);
@@ -34,7 +38,14 @@ export function OrderPage() {
     searchParams.get('token') ?? sessionStorage.getItem(`gofest-order-token:${orderCode}`);
   const [token, setToken] = useState(initialToken ?? '');
   const [tokenInput, setTokenInput] = useState('');
+  const [paymentStarted, setPaymentStarted] = useState(false);
+  const [checkingStatus, setCheckingStatus] = useState(false);
   const [actionError, setActionError] = useState<unknown>(null);
+  const [xenditSession, setXenditSession] = useState<{
+    orderCode: string;
+    key: string;
+    attempt: number;
+  }>();
   const [busy, setBusy] = useState<'payment' | 'mock' | null>(null);
   useDocumentTitle(orderCode ? `Pesanan ${orderCode}` : 'Detail pesanan');
 
@@ -56,6 +67,34 @@ export function OrderPage() {
   const order = orderQuery.data?.order;
   const accessDenied = orderQuery.error instanceof ApiError && orderQuery.error.status === 401;
 
+  const refreshPayment = useCallback(
+    async (sync = true) => {
+      if (sync && orderCode) {
+        setCheckingStatus(true);
+        setActionError(null);
+        try {
+          const result = await api<{ order: Order }>(
+            `/orders/${encodeURIComponent(orderCode)}/payment/sync`,
+            {
+              method: 'POST',
+              orderToken: token || undefined,
+            },
+          );
+          queryClient.setQueryData(['order-status', orderCode, token], {
+            order: result.order,
+            serverTime: new Date().toISOString(),
+          });
+        } catch (error) {
+          setActionError(error);
+        } finally {
+          setCheckingStatus(false);
+        }
+      }
+      await queryClient.invalidateQueries({ queryKey: ['order-status', orderCode] });
+    },
+    [orderCode, queryClient, token],
+  );
+
   async function createPayment() {
     if (!order) return;
     setActionError(null);
@@ -64,7 +103,7 @@ export function OrderPage() {
       const result = await api<{
         alreadyPaid: boolean;
         payment: { providerReference: string } | null;
-        redirectUrl: string | null;
+        componentsSdkKey?: string;
       }>(`/orders/${encodeURIComponent(order.orderCode)}/payment`, {
         method: 'POST',
         orderToken: token || undefined,
@@ -73,11 +112,16 @@ export function OrderPage() {
         toast.success('Pembayaran sudah tercatat');
         await queryClient.invalidateQueries({ queryKey: ['order-status', orderCode] });
       } else {
-        toast.success('Instruksi pembayaran disiapkan');
-        await queryClient.invalidateQueries({ queryKey: ['order-status', orderCode] });
-        if (result.redirectUrl && !result.redirectUrl.includes('mock=1')) {
-          window.location.href = result.redirectUrl;
+        const sdkKey = result.componentsSdkKey;
+        if (sdkKey) {
+          setPaymentStarted(false);
+          setXenditSession((current) => ({
+            orderCode: order.orderCode,
+            key: sdkKey,
+            attempt: (current?.attempt ?? 0) + 1,
+          }));
         }
+        await refreshPayment(false);
       }
     } catch (error) {
       setActionError(error);
@@ -174,11 +218,20 @@ export function OrderPage() {
   }
 
   const ticketTokenQuery = token ? `?token=${encodeURIComponent(token)}` : '';
+  const paymentSession = xenditSession?.orderCode === order.orderCode ? xenditSession : null;
   const paid = ['PAID', 'PARTIALLY_REFUNDED', 'REFUND_PENDING'].includes(order.status);
 
   return (
     <>
-      <PurchaseSteps active={order.payment || paid ? 4 : 3} />
+      <PurchaseSteps
+        active={
+          (order.payment && order.payment.provider !== 'xendit') ||
+          paid ||
+          (paymentSession && paymentStarted)
+            ? 4
+            : 3
+        }
+      />
       <main className="container max-w-5xl py-8 sm:py-12">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Link
@@ -190,15 +243,18 @@ export function OrderPage() {
           </Link>
           <button
             type="button"
-            onClick={() => void orderQuery.refetch()}
+            onClick={() => void refreshPayment(order.payment?.provider === 'xendit')}
             className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-blue-600"
-            disabled={orderQuery.isFetching}
+            disabled={checkingStatus || orderQuery.isFetching}
           >
             <RefreshCw
-              className={cn('h-3.5 w-3.5', orderQuery.isFetching && 'animate-spin')}
+              className={cn(
+                'h-3.5 w-3.5',
+                (checkingStatus || orderQuery.isFetching) && 'animate-spin',
+              )}
               aria-hidden
             />
-            {orderQuery.isFetching ? 'Memeriksa...' : 'Cek status terbaru'}
+            {checkingStatus || orderQuery.isFetching ? 'Memeriksa...' : 'Cek status terbaru'}
           </button>
         </div>
 
@@ -240,54 +296,44 @@ export function OrderPage() {
               </p>
             </div>
 
-            {order.payment ? (
-              <dl className="mt-5 grid gap-3 border-t border-slate-100 pt-4 text-sm sm:grid-cols-2">
-                <div>
-                  <dt className="text-xs font-medium text-slate-400">Kode / Referensi Bayar</dt>
-                  <dd className="font-mono text-base font-medium text-slate-900 tabular-nums">
-                    {order.payment.providerReference}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-medium text-slate-400">Metode Pembayaran</dt>
-                  <dd className="font-medium text-slate-800">
-                    {order.payment.method ?? order.payment.provider}
-                  </dd>
-                </div>
-              </dl>
-            ) : (
-              <p className="mt-4 border-l-2 border-blue-500 pl-3 text-sm text-slate-500">
-                Instruksi pembayaran belum dibuat. Klik tombol di bawah untuk membuat sesi
-                pembayaran.
-              </p>
-            )}
-
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Button
-                type="button"
-                onClick={() => void createPayment()}
-                disabled={busy !== null}
-                className="h-11 rounded-xl bg-blue-600 px-6 font-medium text-white shadow-md transition-all hover:bg-blue-700 active:scale-95"
+            {paymentSession ? (
+              <Suspense
+                fallback={
+                  <p className="mt-5 text-sm text-slate-600" role="status">
+                    Memuat metode pembayaran…
+                  </p>
+                }
               >
-                <CreditCard className="h-4 w-4" aria-hidden />
-                {busy === 'payment'
-                  ? 'Menyiapkan...'
-                  : order.payment
-                    ? 'Buat Ulang Instruksi'
-                    : 'Lanjut ke Pembayaran'}
-              </Button>
-              {order.payment?.provider === 'mock' ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => void mockPay()}
-                  disabled={busy !== null}
-                  className="h-11 rounded-xl border-slate-200 text-xs font-medium text-slate-700 hover:bg-slate-100"
-                >
-                  {busy === 'mock' ? 'Memproses...' : 'Simulasikan Pembayaran Berhasil'}
+                <XenditCheckout
+                  key={paymentSession.attempt}
+                  sdkKey={paymentSession.key}
+                  onStatusChange={refreshPayment}
+                  onPaymentStarted={setPaymentStarted}
+                  onRetry={() => void createPayment()}
+                />
+              </Suspense>
+            ) : (
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Button type="button" onClick={() => void createPayment()} disabled={busy !== null}>
+                  <CreditCard className="h-4 w-4" aria-hidden />
+                  {busy === 'payment'
+                    ? 'Menyiapkan…'
+                    : order.payment
+                      ? 'Buka pembayaran'
+                      : 'Lanjut ke Pembayaran'}
                 </Button>
-              ) : null}
-            </div>
+                {order.payment?.provider === 'mock' ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => void mockPay()}
+                    disabled={busy !== null}
+                  >
+                    {busy === 'mock' ? 'Memproses…' : 'Simulasikan Pembayaran Berhasil'}
+                  </Button>
+                ) : null}
+              </div>
+            )}
             {actionError ? (
               <p className="mt-3 text-sm font-medium text-rose-600" role="alert">
                 {errorMessage(actionError)}

@@ -961,6 +961,24 @@
 }
 
 @media print {
+  @page {
+    margin: 0;
+  }
+
+  .checkout-shell:has(.ticket-print-page) {
+    min-height: 0;
+  }
+
+  .ticket-print-page {
+    width: 100%;
+    max-width: none;
+    padding: 12mm;
+  }
+
+  .ticket-print-page .print-ticket {
+    margin-top: 0;
+  }
+
   .no-print {
     display: none !important;
   }

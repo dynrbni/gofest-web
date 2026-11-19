@@ -115,7 +115,13 @@ export interface Payout {
   reviewedBy: { name: string } | null;
   providerMessage: string;
   wallet?: { available: number; reserved: number } | null;
-  transactions?: { id: string; status: string; createdAt: string; note: string | null }[];
+  transactions?: {
+    id: string;
+    status: string;
+    providerReference: string | null;
+    createdAt: string;
+    note: string | null;
+  }[];
 }
 export interface EventReport {
   id: string;

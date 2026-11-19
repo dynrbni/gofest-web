@@ -8,7 +8,8 @@ import { getPlatformSettings } from '../settings/settings.service';
 import { reserveFunds } from './ledger.service';
 import type { bankSchema, payoutSchema, payoutReviewSchema, ListQuery } from './finance.schemas';
 import { notifyAdmins, notifyUser } from '../notifications/inbox.service';
-import { payoutProvider } from './payout.provider';
+import { dispatchApprovedPayout } from './payout-transfer.service';
+import { payoutBankCode, readPayoutBank, xenditPayoutEnabled } from './xendit-payout';
 import { moneyNumber } from './money';
 
 export const maskAccountNumber = (value: string) => `•••• ${value.slice(-4)}`;
@@ -37,6 +38,7 @@ export async function addBank(
   input: z.infer<typeof bankSchema>,
   req: Request,
 ) {
+  if (xenditPayoutEnabled) payoutBankCode(input.bankName);
   return prisma.$transaction(async (tx) => {
     const bank = await tx.bankAccount.upsert({
       where: {
@@ -89,7 +91,13 @@ const payoutInclude = {
   reviewedBy: { select: { id: true, name: true } },
   transactions: { orderBy: { createdAt: 'asc' as const } },
 };
-function presentPayout<T extends { bankSnapshot: Prisma.JsonValue }>(payout: T) {
+function presentPayout<
+  T extends {
+    bankSnapshot: Prisma.JsonValue;
+    status: string;
+    transactions: { provider: string }[];
+  },
+>(payout: T) {
   const snapshot = payout.bankSnapshot as {
     bankName: string;
     accountHolder: string;
@@ -98,8 +106,16 @@ function presentPayout<T extends { bankSnapshot: Prisma.JsonValue }>(payout: T) 
   return {
     ...payout,
     bankSnapshot: maskBank(snapshot),
-    providerMessage:
-      'Workflow internal. Belum ada transfer dana; persetujuan menunggu integrasi payout provider.',
+    providerMessage: {
+      PENDING: 'Menunggu persetujuan admin.',
+      APPROVED: payout.transactions.some((entry) => entry.provider === 'XENDIT')
+        ? 'Disetujui. Menunggu pengiriman ke Xendit.'
+        : 'Disetujui secara internal. Belum ada transfer ke Xendit.',
+      PROCESSING: 'Xendit sedang memproses transfer.',
+      REJECTED: 'Permintaan ditolak. Saldo tersedia sudah dikembalikan.',
+      COMPLETED: 'Xendit mengonfirmasi transfer berhasil.',
+      FAILED: 'Transfer gagal atau dikembalikan. Dana kembali ke saldo tersedia.',
+    }[payout.status],
   };
 }
 export async function listPayouts(query: ListQuery, organizerId?: string) {
@@ -200,6 +216,7 @@ export async function requestPayout(
         where: { id: input.bankAccountId, organizerId, isActive: true },
       });
       if (!bank) throw new NotFoundError('Rekening aktif milik organizer tidak ditemukan');
+      if (xenditPayoutEnabled) payoutBankCode(bank.bankName);
       // The unique insert waits for concurrent retries before any wallet mutation.
       const inserted = await tx.payoutRequest.createMany({
         data: [
@@ -245,7 +262,7 @@ export async function requestPayout(
       await tx.payoutTransaction.create({
         data: {
           payoutId: payout.id,
-          provider: payoutProvider.name,
+          provider: 'INTERNAL',
           status: 'PENDING',
           idempotencyKey: `request:${payout.id}`,
         },
@@ -289,10 +306,16 @@ export async function reviewPayout(
     >`SELECT id FROM payout_requests WHERE id = ${id} FOR UPDATE`;
     if (!rows.length) throw new NotFoundError('Permintaan payout tidak ditemukan');
     const payout = await tx.payoutRequest.findUniqueOrThrow({ where: { id } });
-    if (payout.status === input.status) return;
+    if (
+      payout.status === input.status ||
+      (input.status === 'APPROVED' && ['PROCESSING', 'COMPLETED', 'FAILED'].includes(payout.status))
+    )
+      return;
     if (payout.status !== 'PENDING')
       throw new ConflictError('Payout sudah ditinjau', 'PAYOUT_ALREADY_REVIEWED');
     const rejected = input.status === 'REJECTED';
+    const viaXendit = !rejected && xenditPayoutEnabled;
+    if (viaXendit) payoutBankCode(readPayoutBank(payout.bankSnapshot).bankName);
     if (rejected) {
       const released = await tx.organizerWallet.updateMany({
         where: { organizerId: payout.organizerId, reserved: { gte: payout.amount } },
@@ -307,7 +330,7 @@ export async function reviewPayout(
     await tx.payoutTransaction.create({
       data: {
         payoutId: id,
-        provider: payoutProvider.name,
+        provider: viaXendit ? 'XENDIT' : 'INTERNAL',
         status: input.status,
         idempotencyKey: `review:${id}`,
         note: input.note,
@@ -324,7 +347,7 @@ export async function reviewPayout(
         referenceId: `review:${id}`,
         description: rejected
           ? 'Reservasi dilepas setelah penolakan'
-          : 'Persetujuan internal; saldo tetap direservasi, menunggu payout provider',
+          : 'Persetujuan admin; saldo direservasi sampai hasil transfer',
       },
     });
     await writeAudit(
@@ -347,7 +370,9 @@ export async function reviewPayout(
       title: `Withdrawal ${input.status === 'APPROVED' ? 'disetujui' : 'ditolak'}`,
       message: rejected
         ? input.note
-        : 'Disetujui secara internal. Menunggu integrasi payout provider; belum ada transfer.',
+        : viaXendit
+          ? 'Disetujui. Transfer akan diproses melalui Xendit.'
+          : 'Disetujui secara internal. Transfer belum dijadwalkan.',
       href: '/creator/payouts',
     });
     await tx.notification.updateMany({
@@ -355,5 +380,6 @@ export async function reviewPayout(
       data: { readAt: new Date() },
     });
   });
+  if (input.status === 'APPROVED') await dispatchApprovedPayout(id);
   return getPayout(id);
 }

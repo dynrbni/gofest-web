@@ -10,7 +10,8 @@ export interface CreatePaymentInput {
 
 export interface CreatePaymentResult {
   providerReference: string;
-  redirectUrl: string;
+  redirectUrl: string | null;
+  componentsSdkKey?: string;
   expiresAt: Date;
   method: string;
   raw: Record<string, unknown>;
@@ -53,7 +54,7 @@ export interface RefundResult {
 export interface PaymentProvider {
   readonly name: string;
   createPayment(input: CreatePaymentInput): Promise<CreatePaymentResult>;
-  verifyWebhook(input: VerifyWebhookInput): Promise<VerifiedPaymentEvent>;
+  verifyWebhook(input: VerifyWebhookInput): Promise<VerifiedPaymentEvent | null>;
   getPaymentStatus(reference: string): Promise<PaymentStatusResult>;
   refund?(input: RefundInput): Promise<RefundResult>;
 }

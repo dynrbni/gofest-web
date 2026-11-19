@@ -292,6 +292,7 @@ export const router = createBrowserRouter([
         children: [
           { path: '/checkout/:eventSlug', element: <CheckoutPage /> },
           { path: '/order/:orderCode', element: <OrderPage /> },
+          { path: '/ticket/:ticketCode', element: <TicketPage /> },
         ],
       },
       {
@@ -326,7 +327,6 @@ export const router = createBrowserRouter([
           { path: '/events/city/:citySlug', element: <CityEventsPage /> },
           { path: '/events/:slug', element: <EventDetailPage /> },
           { path: '/organizers/:slug', element: <OrganizerPublicPage /> },
-          { path: '/ticket/:ticketCode', element: <TicketPage /> },
           { path: '/terms', element: <CmsPublicPage slug="terms" fallback={<TermsPage />} /> },
           {
             path: '/privacy',

@@ -332,7 +332,7 @@ export function PayoutsPage() {
     <div className="space-y-6">
       <WorkspaceHeading
         title={history ? 'Riwayat payout' : creator ? 'Payouts & saldo' : 'Payout Management'}
-        description="Workflow withdrawal internal. Persetujuan admin menunggu integrasi payout provider; dana belum ditransfer."
+        description="Ajukan withdrawal ke rekening tersimpan. Admin meninjau permintaan sebelum transfer diproses."
       />
       {creator ? (
         <>
@@ -551,9 +551,14 @@ export function PayoutsPage() {
                 </p>
               ) : null}
               {current.transactions?.map((transaction) => (
-                <p key={transaction.id} className="text-xs text-slate-600">
-                  {formatDateTime(transaction.createdAt)} · {transaction.status}
-                </p>
+                <div key={transaction.id} className="text-xs text-slate-600">
+                  <p>
+                    {formatDateTime(transaction.createdAt)} · {transaction.status}
+                  </p>
+                  {transaction.providerReference ? (
+                    <p className="break-all">Referensi Xendit {transaction.providerReference}</p>
+                  ) : null}
+                </div>
               ))}
               {!creator && current.status === 'PENDING' ? (
                 <>
@@ -584,7 +589,7 @@ export function PayoutsPage() {
                         {decision.isPending
                           ? 'Menyimpan…'
                           : review === 'APPROVED'
-                            ? 'Konfirmasi persetujuan internal'
+                            ? 'Setujui withdrawal'
                             : 'Konfirmasi penolakan'}
                       </Button>
                     </form>

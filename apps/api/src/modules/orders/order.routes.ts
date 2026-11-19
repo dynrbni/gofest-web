@@ -15,6 +15,7 @@ import {
   listAccountOrders,
   mockPayOrder,
   quoteOrder,
+  refreshOrderPayment,
   regenerateTicketQr,
 } from './order.service';
 
@@ -47,11 +48,7 @@ orderRouter.get('/:orderCode/tickets', optionalAuth, async (req, res) => {
 });
 
 orderRouter.get('/:orderCode/tickets/:ticketId/qr', optionalAuth, async (req, res) => {
-  const { qrImageKey } = await getOrderTicketQr(
-    req.params.orderCode!,
-    req.params.ticketId!,
-    req,
-  );
+  const { qrImageKey } = await getOrderTicketQr(req.params.orderCode!, req.params.ticketId!, req);
   const buffer = await readPrivateFile(qrImageKey);
   res.setHeader('Content-Type', 'image/png');
   res.setHeader('Cache-Control', 'private, no-store');
@@ -59,22 +56,19 @@ orderRouter.get('/:orderCode/tickets/:ticketId/qr', optionalAuth, async (req, re
 });
 
 orderRouter.post('/:orderCode/payment', optionalAuth, checkoutLimiter, async (req, res) => {
+  res.setHeader('Cache-Control', 'private, no-store');
   const result = await createOrderPaymentSession(req.params.orderCode!, req);
   return ok(res, result);
 });
 
-orderRouter.post(
-  '/:orderCode/tickets/:ticketId/qr/regenerate',
-  optionalAuth,
-  async (req, res) => {
-    const result = await regenerateTicketQr(
-      req.params.orderCode!,
-      req.params.ticketId!,
-      req,
-    );
-    return ok(res, result);
-  },
-);
+orderRouter.post('/:orderCode/payment/sync', optionalAuth, checkoutLimiter, async (req, res) => {
+  return ok(res, await refreshOrderPayment(req.params.orderCode!, req));
+});
+
+orderRouter.post('/:orderCode/tickets/:ticketId/qr/regenerate', optionalAuth, async (req, res) => {
+  const result = await regenerateTicketQr(req.params.orderCode!, req.params.ticketId!, req);
+  return ok(res, result);
+});
 
 orderRouter.post('/:orderCode/mock-pay', optionalAuth, async (req, res) => {
   const result = await mockPayOrder(req.params.orderCode!, req);
