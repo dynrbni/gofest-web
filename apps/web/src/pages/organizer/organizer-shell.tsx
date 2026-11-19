@@ -5,6 +5,7 @@ import {
   Wallet,
   Banknote,
   ScrollText,
+  FileText,
   Settings,
   LifeBuoy,
 } from 'lucide-react';
@@ -33,6 +34,18 @@ const creatorNav: WorkspaceNavItem[] = [
   },
   {
     group: 'Financial Management',
+    to: '/creator/event-reports',
+    label: 'Laporan per event',
+    icon: FileText,
+  },
+  {
+    group: 'Financial Management',
+    to: '/creator/ledger',
+    label: 'Financial Ledger',
+    icon: ScrollText,
+  },
+  {
+    group: 'Financial Management',
     to: '/creator/payouts',
     label: 'Payouts & saldo',
     icon: Banknote,
@@ -48,12 +61,6 @@ const creatorNav: WorkspaceNavItem[] = [
     group: 'Financial Management',
     to: '/creator/payouts/history',
     label: 'Riwayat payout',
-    icon: ScrollText,
-  },
-  {
-    group: 'Financial Management',
-    to: '/creator/event-reports',
-    label: 'Laporan per event',
     icon: ScrollText,
   },
   { group: 'Account', to: '/creator/settings', label: 'Profil organizer', icon: Building2 },

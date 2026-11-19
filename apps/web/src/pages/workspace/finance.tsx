@@ -4,7 +4,8 @@ import { Link, useParams, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { api, apiPage, errorMessage } from '@/lib/api';
-import { formatIDR, formatDateTime } from '@/lib/format';
+import { formatIDR, formatDateTime, fromDateTimeInput } from '@/lib/format';
+import { useDocumentTitle } from '@/lib/hooks';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -131,7 +132,6 @@ export function FinanceOverviewPage() {
               </section>
             </div>
             {creator && <EventRevenuePreview />}
-            <FinancialLedgerTable from={data.range.from} to={data.range.to} />
           </>
         )}
       </QueryState>
@@ -795,50 +795,98 @@ export function EventReportsPage() {
   );
 }
 
-function FinancialLedgerTable({ from, to }: { from?: string; to?: string }) {
+export function FinancialLedgerPage() {
   const { apiBase } = useWorkspace();
+  useDocumentTitle('Financial Ledger');
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const validRange = !from || !to || from <= to;
   const query = useQuery({
     queryKey: ['ledger', apiBase, page, search, from, to],
     queryFn: () =>
-      apiPage<LedgerEntry>(`${apiBase}/ledger`, { query: { page, q: search, from, to } }),
+      apiPage<LedgerEntry>(`${apiBase}/ledger`, {
+        query: {
+          page,
+          q: search.trim(),
+          from: from ? fromDateTimeInput(`${from}T00:00:00`) : undefined,
+          to: to ? fromDateTimeInput(`${to}T23:59:59.999`) : undefined,
+        },
+      }),
+    enabled: validRange,
   });
+
   return (
-    <Panel
-      title="Financial ledger"
-      description="Setiap baris mencatat satu pergerakan dana dengan akun debit dan kredit yang seimbang."
-    >
-      <label className="mb-4 grid max-w-sm gap-2 text-sm font-medium">
-        Cari referensi / deskripsi
-        <Input
-          value={search}
-          onChange={(event) => {
-            setSearch(event.target.value);
-            setPage(1);
-          }}
-        />
-      </label>
-      <QueryState query={query} empty={query.data?.data.length === 0}>
-        <DataTable
-          caption="Financial ledger"
-          headers={['Waktu', 'Jenis transaksi', 'Debit', 'Kredit', 'Nominal', 'Referensi']}
-        >
-          {query.data?.data.map((entry) => (
-            <tr key={entry.id}>
-              <td>{formatDateTime(entry.createdAt)}</td>
-              <td title={entry.description}>{entry.transactionType.replaceAll('_', ' ')}</td>
-              <td>{entry.debit}</td>
-              <td>{entry.credit}</td>
-              <td className="tabular-nums">{formatIDR(entry.amount)}</td>
-              <td className="max-w-56 truncate" title={entry.referenceId}>
-                {entry.referenceId}
-              </td>
-            </tr>
-          ))}
-        </DataTable>
-        <Pagination meta={query.data?.meta} onPageChange={setPage} className="mt-4" />
-      </QueryState>
-    </Panel>
+    <div className="space-y-6">
+      <WorkspaceHeading
+        title="Financial Ledger"
+        description="Riwayat pergerakan dana, akun debit dan kredit, serta referensi transaksi."
+      />
+      <div className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 sm:grid-cols-[2fr_1fr_1fr]">
+        <Field label="Cari referensi atau deskripsi" htmlFor="ledger-search">
+          <Input
+            id="ledger-search"
+            type="search"
+            value={search}
+            maxLength={120}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              setPage(1);
+            }}
+          />
+        </Field>
+        <Field label="Dari tanggal" htmlFor="ledger-from">
+          <Input
+            id="ledger-from"
+            type="date"
+            value={from}
+            max={to || undefined}
+            onChange={(event) => {
+              setFrom(event.target.value);
+              setPage(1);
+            }}
+          />
+        </Field>
+        <Field label="Sampai tanggal" htmlFor="ledger-to">
+          <Input
+            id="ledger-to"
+            type="date"
+            value={to}
+            min={from || undefined}
+            onChange={(event) => {
+              setTo(event.target.value);
+              setPage(1);
+            }}
+          />
+        </Field>
+      </div>
+      {validRange ? (
+        <QueryState query={query} empty={query.data?.data.length === 0}>
+          <DataTable
+            caption="Financial Ledger"
+            headers={['Waktu', 'Jenis transaksi', 'Debit', 'Kredit', 'Nominal', 'Referensi']}
+          >
+            {query.data?.data.map((entry) => (
+              <tr key={entry.id}>
+                <td>{formatDateTime(entry.createdAt)}</td>
+                <td title={entry.description}>{entry.transactionType.replaceAll('_', ' ')}</td>
+                <td>{entry.debit}</td>
+                <td>{entry.credit}</td>
+                <td className="font-medium tabular-nums">{formatIDR(entry.amount)}</td>
+                <td className="max-w-56 truncate" title={entry.referenceId}>
+                  {entry.referenceId}
+                </td>
+              </tr>
+            ))}
+          </DataTable>
+          <Pagination meta={query.data?.meta} onPageChange={setPage} className="mt-4" />
+        </QueryState>
+      ) : (
+        <p role="status" className="text-sm text-rose-700">
+          Tanggal akhir harus sama dengan atau setelah tanggal awal.
+        </p>
+      )}
+    </div>
   );
 }

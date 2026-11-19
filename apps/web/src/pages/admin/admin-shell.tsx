@@ -83,6 +83,12 @@ const adminNav: WorkspaceNavItem[] = [
   },
   {
     group: 'Financial Management',
+    to: '/admin/ledger',
+    label: 'Financial Ledger',
+    icon: ScrollText,
+  },
+  {
+    group: 'Financial Management',
     to: '/admin/payouts',
     label: 'Payout Management',
     icon: Banknote,

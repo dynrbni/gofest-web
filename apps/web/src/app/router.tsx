@@ -136,6 +136,9 @@ const BankAccountsPage = lazyPage(() =>
   import('@/pages/workspace/finance').then((m) => m.BankAccountsPage),
 );
 const PayoutsPage = lazyPage(() => import('@/pages/workspace/finance').then((m) => m.PayoutsPage));
+const FinancialLedgerPage = lazyPage(() =>
+  import('@/pages/workspace/finance').then((m) => m.FinancialLedgerPage),
+);
 const EventReportsPage = lazyPage(() =>
   import('@/pages/workspace/finance').then((m) => m.EventReportsPage),
 );
@@ -193,6 +196,7 @@ const creatorChildren = [
   },
   { path: 'settings', element: <OrganizerSettingsPage /> },
   { path: 'finance', element: <FinanceOverviewPage /> },
+  { path: 'ledger', element: <FinancialLedgerPage /> },
   { path: 'bank-accounts', element: <BankAccountsPage /> },
   { path: 'payouts', element: <PayoutsPage /> },
   { path: 'payouts/history', element: <PayoutsPage /> },
@@ -390,6 +394,7 @@ export const router = createBrowserRouter([
           { path: 'payments', element: <WorkspaceOrdersPage /> },
           { path: 'refunds', element: <RefundsPage /> },
           { path: 'finance', element: <FinanceOverviewPage /> },
+          { path: 'ledger', element: <FinancialLedgerPage /> },
           { path: 'payouts', element: <PayoutsPage /> },
           { path: 'payouts/history', element: <PayoutsPage /> },
           { path: 'event-reports', element: <EventReportsPage /> },
