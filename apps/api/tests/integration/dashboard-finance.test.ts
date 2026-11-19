@@ -135,11 +135,33 @@ describe('dashboard RBAC and ownership', () => {
       eventId: own.event.id,
     });
     expect(foreignAttendees.body.data).toEqual([]);
+    const reports = await own.organizer.agent.get('/api/v1/creator/event-reports?withSales=true');
+    expect(reports.status).toBe(200);
+    expect(reports.body.data).toMatchObject([{ id: own.event.id, organizerProceeds: 100_000 }]);
     const unrelatedOrder = await own.organizer.agent
       .get(`/api/v1/creator/orders/${own.order.id}`)
       .query({ eventId: 'different-event' });
     expect(unrelatedOrder.status).toBe(404);
   });
+  it('filters past organizer events by end time and combines the filter with search', async () => {
+    const { event, organizer } = await setupPublishedEvent(app);
+    const active = await organizer.agent.get('/api/v1/creator/events?active=true');
+    expect(active.body.data.map((row: { id: string }) => row.id)).toEqual([event.id]);
+    const now = Date.now();
+    await prisma.event.update({
+      where: { id: event.id },
+      data: { startsAt: new Date(now - 7_200_000), endsAt: new Date(now - 3_600_000) },
+    });
+    const path = '/api/v1/creator/events?period=past';
+    const past = await organizer.agent.get(path).query({ q: event.title });
+    expect(past.status).toBe(200);
+    expect(past.body.data.map((row: { id: string }) => row.id)).toEqual([event.id]);
+    const noMatch = await organizer.agent.get(path).query({ q: 'no-matching-title' });
+    expect(noMatch.body.data).toEqual([]);
+    const current = await organizer.agent.get('/api/v1/creator/events?active=true');
+    expect(current.body.data).toEqual([]);
+  });
+
   it('applies Creator permission changes on the server while keeping operational admin permissions fixed', async () => {
     const root = await admin('SUPERADMIN');
     const creator = await setupOrganizer(app);

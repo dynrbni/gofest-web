@@ -61,6 +61,8 @@ function verify(path, width) {
 }
 const operational = [
   '/admin/dashboard',
+  '/admin/account/profile',
+  '/admin/account/settings',
   '/admin/events',
   '/admin/events?status=PENDING_REVIEW',
   '/admin/categories',
@@ -70,6 +72,7 @@ const operational = [
   '/admin/payments',
   '/admin/refunds',
   '/admin/finance',
+  '/admin/ledger',
   '/admin/event-reports',
   '/admin/payouts',
   '/admin/payouts/history',
@@ -85,12 +88,16 @@ const operational = [
 const system = ['/admin/admins', '/admin/permissions', '/admin/settings', '/admin/audit-logs'];
 const creator = [
   '/creator/dashboard',
+  '/creator/account/profile',
+  '/creator/account/settings',
   '/creator/events',
   '/creator/events?status=DRAFT',
   '/creator/events?active=true',
+  '/creator/events?period=past',
   '/creator/events?status=PENDING_REVIEW',
   '/creator/events/new',
   '/creator/finance',
+  '/creator/ledger',
   '/creator/payouts',
   '/creator/bank-accounts',
   '/creator/event-reports',
@@ -141,6 +148,8 @@ try {
             'Total Tiket Terjual',
             'Total Penjualan',
             'Total Pengunjung',
+            'Agenda event',
+            'Pesanan terbaru',
           ],
         );
         assert.equal(
@@ -163,6 +172,50 @@ try {
         );
         browser('eval', 'document.querySelector("[role=dialog] button").click()');
       }
+    }
+    if (profile === 'organizer') {
+      browser('set', 'viewport', '1440', '1000');
+      open('/creator/settings');
+      browser('wait', '#profile-preview');
+      assert.equal(
+        evaluate('document.querySelectorAll("main input[type=file]").length'),
+        2,
+        'One organizer photo field and one banner field',
+      );
+      browser('fill', '#orgName', 'Pratinjau Organizer Uji');
+      assert.equal(
+        evaluate('document.querySelector("#profile-preview h3").textContent'),
+        'Pratinjau Organizer Uji',
+      );
+      browser('screenshot', `${screenshots}/organizer-profile.png`);
+      open('/creator/finance');
+      browser('wait', '--text', 'Pendapatan per event');
+      assert.equal(
+        evaluate(`Boolean(document.querySelector('main [aria-label="Financial Ledger"]'))`),
+        false,
+      );
+      assert.deepEqual(
+        evaluate(
+          `(() => {const finance=document.querySelector('aside a[href="/creator/finance"]');return [finance.nextElementSibling.pathname,finance.nextElementSibling.nextElementSibling.pathname]})()`,
+        ),
+        ['/creator/event-reports', '/creator/ledger'],
+      );
+      browser('screenshot', `${screenshots}/organizer-finance.png`);
+      open('/creator/event-reports');
+      browser('wait', 'main table tbody tr');
+      assert.equal(
+        evaluate('getComputedStyle(document.querySelector("main tbody")).backgroundColor'),
+        'rgb(255, 255, 255)',
+      );
+      open('/creator/events');
+      evaluate(
+        '[...document.querySelectorAll(\'main [aria-label="Filter event"] button\')].find(button => button.textContent.trim() === "Event Lalu").click()',
+      );
+      browser('wait', '--fn', 'new URLSearchParams(location.search).get("period")==="past"');
+      assert.equal(
+        evaluate(`document.querySelector('main button[aria-pressed="true"]').textContent`),
+        'Event Lalu',
+      );
     }
     if (profile === 'admin') {
       open('/admin/admins');

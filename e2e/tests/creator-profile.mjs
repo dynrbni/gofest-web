@@ -57,7 +57,11 @@ try {
     assert.ok(Math.abs(profile.coverWidth - profile.headerWidth) < 1, 'Banner spans profile width');
     assert.equal(profile.squareLogo && profile.roundedLogo, true, 'Creator logo is circular');
     assert.equal(profile.overflow, false, `Profile fits ${width}px`);
-    assert.equal(profile.description, false, 'Profile keeps only the requested identity fields');
+    assert.equal(
+      profile.description,
+      Boolean(creator.description),
+      'Configured profile description remains visible',
+    );
     assert.equal(
       browser('a11y').counts.violations,
       0,

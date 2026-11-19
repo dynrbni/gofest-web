@@ -62,8 +62,8 @@ try {
     assert.equal(state.overlay, false, `${email}: no full-dashboard loading overlay`);
     assert.ok(state.logo?.includes(`gofest-${workspace}-logo`), `${email}: role-specific logo`);
     evaluate('document.querySelector("aside button[aria-label]").click()');
-    evaluate(`document.querySelector('aside a[href="/${workspace}/orders"]').click()`);
-    browser('wait', '--url', `**/${workspace}/orders`);
+    evaluate(`document.querySelector('aside a[href="/${workspace}/account/settings"]').click()`);
+    browser('wait', '--url', `**/${workspace}/account/settings`);
     ready();
     assert.equal(
       evaluate(
@@ -71,6 +71,15 @@ try {
       ),
       'false',
       `${email}: narrow sidebar retained`,
+    );
+    assert.ok(
+      evaluate('window.__workspaceAside === document.querySelector("aside")'),
+      `${email}: account settings remain inside the workspace`,
+    );
+    assert.equal(
+      evaluate(`Boolean(document.querySelector('main a[href="/account/orders"]'))`),
+      false,
+      `${email}: workspace settings keep workspace navigation`,
     );
     const inbox = evaluate(
       `fetch('/api/v1/${workspace}/notifications?limit=1').then(r=>r.json()).then(b=>b.data)`,
