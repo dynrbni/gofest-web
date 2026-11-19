@@ -1,7 +1,8 @@
 import { useWorkspace } from '@/pages/workspace/workspace-hooks';
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Download } from 'lucide-react';
 import { toast } from 'sonner';
 import type { PaginationMeta } from '@gofest/shared';
 import { api, apiPage, errorMessage } from '@/lib/api';
@@ -49,6 +50,7 @@ interface Monitoring {
 export function CheckInOperationsPage() {
   const { apiBase, base } = useWorkspace();
   const pathname = useLocation().pathname;
+  const { id } = useParams<{ id: string }>();
   const staffOnly = pathname.endsWith('/staff');
   const client = useQueryClient();
   const [page, setPage] = useState(1);
@@ -57,10 +59,10 @@ export function CheckInOperationsPage() {
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('CHECK_IN');
   const query = useQuery({
-    queryKey: ['monitoring', apiBase, page, search],
+    queryKey: ['monitoring', apiBase, id, page, search],
     queryFn: async () => {
       const result = await api<Monitoring>(`${apiBase}/check-in-monitoring`, {
-        query: { page, q: search },
+        query: { page, q: search, eventId: id },
       });
       return result;
     },
@@ -91,26 +93,32 @@ export function CheckInOperationsPage() {
   const data = query.data;
   return (
     <div className="space-y-6">
-      <WorkspaceHeading
-        title={
-          staffOnly
-            ? 'Check-in staff'
-            : pathname.includes('history')
-              ? 'Riwayat check-in'
-              : 'Check-in Monitoring'
-        }
-        description="Pantau validasi tiket dan penugasan petugas pada event yang dapat Anda akses."
-      />
-      <label className="grid max-w-sm gap-2 text-sm font-medium">
-        Cari event
-        <Input
-          value={search}
-          onChange={(event) => {
-            setSearch(event.target.value);
-            setPage(1);
-          }}
-        />
-      </label>
+      {id ? (
+        <h2 className="text-xl font-semibold text-ink">Riwayat check-in</h2>
+      ) : (
+        <>
+          <WorkspaceHeading
+            title={
+              staffOnly
+                ? 'Check-in staff'
+                : pathname.includes('history')
+                  ? 'Riwayat check-in'
+                  : 'Check-in Monitoring'
+            }
+            description="Pantau validasi tiket dan penugasan petugas pada event yang dapat Anda akses."
+          />
+          <label className="grid max-w-sm gap-2 text-sm font-medium">
+            Cari event
+            <Input
+              value={search}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                setPage(1);
+              }}
+            />
+          </label>
+        </>
+      )}
       <QueryState query={query}>
         {data ? (
           <>
@@ -274,23 +282,29 @@ interface Attendee {
   holderEmail: string;
   status: string;
   checkedInAt: string | null;
-  event: { title: string };
   ticketType: { name: string };
 }
 export function AttendeesPage() {
   const { apiBase } = useWorkspace();
+  const { id } = useParams<{ id: string }>();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const query = useQuery({
-    queryKey: ['workspace-attendees', apiBase, page, search],
-    queryFn: () => apiPage<Attendee>(`${apiBase}/attendees`, { query: { page, q: search } }),
+    queryKey: ['workspace-attendees', apiBase, id, page, search],
+    queryFn: () =>
+      apiPage<Attendee>(`${apiBase}/attendees`, { query: { page, q: search, eventId: id } }),
   });
   return (
     <div className="space-y-6">
-      <WorkspaceHeading
-        title="Daftar peserta"
-        description="Tiket dan status kehadiran peserta dari event yang Anda kelola."
-      />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-xl font-semibold text-ink">Daftar peserta</h2>
+        <Button variant="outline" asChild>
+          <a href={`/api/v1${apiBase}/events/${id}/attendees/export`}>
+            <Download className="mr-2 size-4" aria-hidden />
+            Ekspor CSV
+          </a>
+        </Button>
+      </div>
       <label className="grid max-w-sm gap-2 text-sm font-medium">
         Cari nama, email, atau kode tiket
         <Input
@@ -304,22 +318,13 @@ export function AttendeesPage() {
       <QueryState query={query} empty={query.data?.data.length === 0}>
         <DataTable
           caption="Daftar peserta"
-          headers={[
-            'Kode tiket',
-            'Nama',
-            'Email',
-            'Event',
-            'Jenis tiket',
-            'Status',
-            'Waktu check-in',
-          ]}
+          headers={['Kode tiket', 'Nama', 'Email', 'Jenis tiket', 'Status', 'Waktu check-in']}
         >
           {query.data?.data.map((attendee) => (
             <tr key={attendee.id}>
               <td>{attendee.ticketCode}</td>
               <td>{attendee.holderName}</td>
               <td>{attendee.holderEmail}</td>
-              <td>{attendee.event.title}</td>
               <td>{attendee.ticketType.name}</td>
               <td>
                 <Status value={attendee.status} />
@@ -335,40 +340,25 @@ export function AttendeesPage() {
 }
 
 export function EventToolsPage() {
-  const { apiBase, base, creator } = useWorkspace();
-  const pathname = useLocation().pathname;
-  const marketing = /marketing|links/.test(pathname);
-  const coupons = /promotions/.test(pathname);
+  const { apiBase, base } = useWorkspace();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const query = useQuery({
     queryKey: ['event-tools', apiBase, page, search],
     queryFn: () =>
-      apiPage<{ id: string; title: string; slug: string; status: string }>(`${apiBase}/events`, {
+      apiPage<{ id: string; title: string; status: string }>(`${apiBase}/events`, {
         query: { page, q: search },
       }),
   });
   return (
     <div className="space-y-6">
       <WorkspaceHeading
-        title={
-          marketing
-            ? 'Promosi & tautan event'
-            : coupons
-              ? 'Promosi & voucher event'
-              : 'Jenis tiket, harga & kuota'
-        }
-        description={
-          marketing
-            ? 'Bagikan halaman publik event yang sudah dipublikasikan.'
-            : 'Pilih event untuk mengelola data tiket dan kode diskon yang terhubung ke checkout.'
-        }
+        title="Promosi & voucher event"
+        description="Pilih event untuk mengelola kode diskon yang terhubung ke checkout."
         action={
-          !creator && coupons ? (
-            <Button variant="outline" asChild>
-              <Link to="/admin/content?kind=CAMPAIGN">Kelola kampanye</Link>
-            </Button>
-          ) : undefined
+          <Button variant="outline" asChild>
+            <Link to="/admin/content?kind=CAMPAIGN">Kelola kampanye</Link>
+          </Button>
         }
       />
       <label className="grid max-w-sm gap-2 text-sm font-medium">
@@ -382,10 +372,7 @@ export function EventToolsPage() {
         />
       </label>
       <QueryState query={query} empty={query.data?.data.length === 0}>
-        <DataTable
-          caption="Pilih event"
-          headers={['Event', 'Status', marketing ? 'Tautan publik' : 'Kelola']}
-        >
+        <DataTable caption="Pilih event" headers={['Event', 'Status', 'Kelola']}>
           {query.data?.data.map((event) => (
             <tr key={event.id}>
               <td>{event.title}</td>
@@ -393,39 +380,9 @@ export function EventToolsPage() {
                 <Status value={event.status} />
               </td>
               <td>
-                {marketing ? (
-                  event.status === 'PUBLISHED' ? (
-                    <div className="flex flex-wrap gap-3">
-                      <Link to={`/events/${event.slug}`} className="text-blue-700">
-                        Buka halaman
-                      </Link>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          void navigator.clipboard
-                            .writeText(
-                              `${window.location.origin}/events/${event.slug}?ref=${encodeURIComponent(event.id)}`,
-                            )
-                            .then(() => toast.success('Tautan promosi disalin'))
-                            .catch(() => toast.error('Tautan tidak dapat disalin'));
-                        }}
-                      >
-                        Salin tautan promosi
-                      </Button>
-                    </div>
-                  ) : (
-                    <span className="text-xs text-slate-600">
-                      Tersedia setelah event dipublikasikan
-                    </span>
-                  )
-                ) : (
-                  <Button variant="outline" size="sm" asChild>
-                    <Link to={`${base}/events/${event.id}/${coupons ? 'coupons' : 'tickets'}`}>
-                      {coupons ? 'Kelola kode promo' : 'Kelola tiket'}
-                    </Link>
-                  </Button>
-                )}
+                <Button variant="outline" size="sm" asChild>
+                  <Link to={`${base}/events/${event.id}/coupons`}>Kelola kode promo</Link>
+                </Button>
               </td>
             </tr>
           ))}

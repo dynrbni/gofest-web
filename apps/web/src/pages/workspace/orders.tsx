@@ -1,6 +1,6 @@
 import { useWorkspace } from '@/pages/workspace/workspace-hooks';
 import { useState } from 'react';
-import { useSearchParams, useLocation } from 'react-router-dom';
+import { useSearchParams, useLocation, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ORDER_STATUSES, PAYMENT_STATUSES } from '@gofest/shared';
 import { toast } from 'sonner';
@@ -41,10 +41,11 @@ interface OrderDetail extends WorkspaceOrder {
 }
 export function WorkspaceOrdersPage() {
   const { creator, apiBase } = useWorkspace();
+  const { id: eventId } = useParams<{ id: string }>();
   const payments = useLocation().pathname.endsWith('/payments');
   const [params, setParams] = useSearchParams();
   const client = useQueryClient();
-  const [selected, setSelected] = useState<string | null>(params.get('orderId'));
+  const selected = params.get('orderId');
   const [reviewAction, setReview] = useState('ISSUE_TICKETS');
   const [note, setNote] = useState('');
   const page = Math.max(1, Number(params.get('page') ?? 1));
@@ -63,12 +64,19 @@ export function WorkspaceOrdersPage() {
     else next.delete(field);
     setParams(next, { replace: true });
   }
+  function selectOrder(orderId?: string) {
+    const next = new URLSearchParams(params);
+    if (orderId) next.set('orderId', orderId);
+    else next.delete('orderId');
+    setParams(next, { replace: true });
+  }
   const query = useQuery({
-    queryKey: ['workspace-orders', apiBase, params.toString()],
+    queryKey: ['workspace-orders', apiBase, eventId, filters, page, from, to],
     queryFn: () =>
       apiPage<WorkspaceOrder>(`${apiBase}/orders`, {
         query: {
           ...filters,
+          eventId: eventId ?? filters.eventId,
           page,
           from: from ? new Date(`${from}T00:00:00+07:00`).toISOString() : undefined,
           to: to ? new Date(`${to}T23:59:59.999+07:00`).toISOString() : undefined,
@@ -79,6 +87,7 @@ export function WorkspaceOrdersPage() {
     queryKey: ['workspace-event-options', apiBase],
     queryFn: () =>
       apiPage<{ id: string; title: string }>(`${apiBase}/events`, { query: { limit: 100 } }),
+    enabled: !eventId,
   });
   const organizers = useQuery({
     queryKey: ['workspace-organizer-options'],
@@ -89,8 +98,9 @@ export function WorkspaceOrdersPage() {
     enabled: !creator,
   });
   const detail = useQuery({
-    queryKey: ['workspace-order', apiBase, selected],
-    queryFn: () => api<{ order: OrderDetail }>(`${apiBase}/orders/${selected}`),
+    queryKey: ['workspace-order', apiBase, eventId, selected],
+    queryFn: () =>
+      api<{ order: OrderDetail }>(`${apiBase}/orders/${selected}`, { query: { eventId } }),
     enabled: Boolean(selected),
   });
   const resolve = useMutation({
@@ -109,14 +119,14 @@ export function WorkspaceOrdersPage() {
   const order = detail.data?.order;
   return (
     <div className="space-y-6">
-      <WorkspaceHeading
-        title={payments ? 'Pembayaran' : 'Semua pesanan'}
-        description={
-          creator
-            ? 'Transaksi dari event milik organizer Anda.'
-            : 'Telusuri pesanan, rincian pembayaran, dan riwayat status di marketplace.'
-        }
-      />
+      {eventId ? (
+        <h2 className="text-xl font-semibold text-ink">Pesanan</h2>
+      ) : (
+        <WorkspaceHeading
+          title={payments ? 'Pembayaran' : 'Semua pesanan'}
+          description="Telusuri pesanan, rincian pembayaran, dan riwayat status di marketplace."
+        />
+      )}
       <Panel title="Filter transaksi">
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           <Field label="Cari order ID / customer" htmlFor="order-search">
@@ -139,21 +149,23 @@ export function WorkspaceOrdersPage() {
               ))}
             </select>
           </Field>
-          <Field label="Event" htmlFor="order-event">
-            <select
-              id="order-event"
-              value={filters.eventId}
-              onChange={(event) => filter('eventId', event.target.value)}
-              className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm"
-            >
-              <option value="">Semua event</option>
-              {events.data?.data.map((event) => (
-                <option value={event.id} key={event.id}>
-                  {event.title}
-                </option>
-              ))}
-            </select>
-          </Field>
+          {!eventId && (
+            <Field label="Event" htmlFor="order-event">
+              <select
+                id="order-event"
+                value={filters.eventId}
+                onChange={(event) => filter('eventId', event.target.value)}
+                className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm"
+              >
+                <option value="">Semua event</option>
+                {events.data?.data.map((event) => (
+                  <option value={event.id} key={event.id}>
+                    {event.title}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
           {!creator ? (
             <Field label="Organizer" htmlFor="order-organizer">
               <select
@@ -240,7 +252,7 @@ export function WorkspaceOrdersPage() {
                   size="sm"
                   variant="outline"
                   onClick={() => {
-                    setSelected(order.id);
+                    selectOrder(order.id);
                     resolve.reset();
                   }}
                 >
@@ -262,7 +274,7 @@ export function WorkspaceOrdersPage() {
       <Dialog
         open={Boolean(selected)}
         onOpenChange={(open) => {
-          if (!open) setSelected(null);
+          if (!open) selectOrder();
         }}
       >
         <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl">

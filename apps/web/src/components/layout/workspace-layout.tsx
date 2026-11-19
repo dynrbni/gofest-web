@@ -217,7 +217,10 @@ export function WorkspaceLayout({
               </button>
             )}
           </div>
-          <div data-workspace-sidebar-scroll className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-3 pb-5">
+          <div
+            data-workspace-sidebar-scroll
+            className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-3 pb-5"
+          >
             {navigation(collapsed)}
           </div>
           <div className="shrink-0 border-t border-slate-200 p-3.5 transition-all duration-300">
@@ -230,10 +233,16 @@ export function WorkspaceLayout({
               )}
               title={user?.email}
             >
-              <UserAvatar name={user?.name ?? ''} avatarKey={user?.avatarKey} className="size-8 shrink-0" />
+              <UserAvatar
+                name={user?.name ?? ''}
+                avatarKey={user?.avatarKey}
+                className="size-8 shrink-0"
+              />
               {!collapsed ? (
                 <div className="min-w-0 overflow-hidden">
-                  <p className="truncate font-medium text-slate-900 whitespace-nowrap">{user?.name}</p>
+                  <p className="truncate font-medium text-slate-900 whitespace-nowrap">
+                    {user?.name}
+                  </p>
                   <p className="truncate text-xs text-slate-600 whitespace-nowrap">{workspace}</p>
                 </div>
               ) : (
@@ -285,22 +294,24 @@ export function WorkspaceLayout({
                   className="size-8"
                 />
               </Link>
-              <form onSubmit={submitSearch} className="relative hidden xl:block">
-                <label htmlFor="workspace-search" className="sr-only">
-                  Cari order ID
-                </label>
-                <Search className="absolute left-3 top-3 size-4 text-slate-400" aria-hidden />
-                <input
-                  id="workspace-search"
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  className="h-10 w-52 rounded-lg border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm"
-                  placeholder="Cari order ID…"
-                />
-                <button type="submit" className="sr-only">
-                  Cari transaksi
-                </button>
-              </form>
+              {!creator ? (
+                <form onSubmit={submitSearch} className="relative hidden xl:block">
+                  <label htmlFor="workspace-search" className="sr-only">
+                    Cari order ID
+                  </label>
+                  <Search className="absolute left-3 top-3 size-4 text-slate-400" aria-hidden />
+                  <input
+                    id="workspace-search"
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    className="h-10 w-52 rounded-lg border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm"
+                    placeholder="Cari order ID…"
+                  />
+                  <button type="submit" className="sr-only">
+                    Cari transaksi
+                  </button>
+                </form>
+              ) : null}
               <Link
                 to={`${base}/notifications`}
                 className="relative flex size-11 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-50"
