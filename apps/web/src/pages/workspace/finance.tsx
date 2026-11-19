@@ -34,6 +34,26 @@ import type {
   LedgerEntry,
 } from './workspace-models';
 
+type FinanceLine = { label: string; amount: number | null };
+
+function FinanceBreakdown({ lines }: { lines: FinanceLine[] }) {
+  return (
+    <dl className="divide-y divide-slate-200">
+      {lines.map(({ label, amount }) => (
+        <div
+          key={label}
+          className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-3"
+        >
+          <dt className="text-sm text-slate-700">{label}</dt>
+          <dd className="break-all text-sm font-semibold tabular-nums text-slate-900">
+            {amount === null ? 'Belum tersedia' : formatIDR(amount)}
+          </dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
 export function FinanceOverviewPage() {
   const { apiBase, creator, base } = useWorkspace();
   const period = usePeriod();
@@ -43,96 +63,76 @@ export function FinanceOverviewPage() {
     enabled: period.enabled,
   });
   const data = query.data;
+
   return (
     <div className="space-y-6">
       <WorkspaceHeading
-        title={creator ? 'Pendapatan & saldo' : 'Financial Overview'}
+        title={creator ? 'Ringkasan pendapatan' : 'Financial Overview'}
         description={
           creator
-            ? 'Hasil penjualan tiket dan alokasi dana dari event Anda. Angka ini tidak menghitung biaya penyelenggaraan event.'
-            : 'Penjualan tiket merupakan dana organizer. Pendapatan GOFEST berasal dari service fee.'
-        }
-        action={
-          <Button variant="outline" asChild>
-            <Link to={`${base}/event-reports`}>Laporan per event</Link>
-          </Button>
+            ? 'Lihat hasil penjualan tiket dan saldo yang dapat dicairkan.'
+            : 'Penjualan tiket merupakan dana organizer. Pendapatan GOFEST berasal dari biaya layanan.'
         }
       />
       {period.controls}
       <QueryState query={query}>
-        {data ? (
+        {data && (
           <>
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              <Metric
-                label="Gross Ticket Sales"
-                value={formatIDR(data.grossTicketSales)}
-                hint="Harga tiket setelah diskon, sebelum refund"
-              />
-              <Metric
-                label="Service Fee Revenue"
-                value={formatIDR(data.serviceFeeRevenue)}
-                hint={
-                  creator ? 'Biaya layanan transaksi GOFEST' : 'Hak GOFEST sebelum pengembalian fee'
-                }
-              />
-              <Metric
-                label="Total Refunds"
-                value={formatIDR(data.totalRefunds)}
-                hint="Refund yang telah dicatat; simulasi internal pada development"
-              />
-              {creator ? (
-                <Metric
-                  label="Organizer proceeds"
-                  value={formatIDR(data.organizerProceeds)}
-                  hint="Penjualan tiket dikurangi refund harga tiket; bukan laba bersih EO"
+            <div className="grid overflow-hidden rounded-xl border border-slate-200 bg-white lg:grid-cols-2">
+              <section className="min-w-0 border-b border-slate-200 p-5 sm:p-6 lg:border-b-0 lg:border-r">
+                <h2 className="font-semibold text-slate-900">
+                  {creator ? 'Pendapatan tiket setelah refund' : 'Pendapatan bersih biaya layanan'}
+                </h2>
+                <p className="mt-2 break-all text-3xl font-semibold tabular-nums tracking-tight text-slate-950">
+                  {formatIDR(creator ? data.organizerProceeds : data.netFeeIncome)}
+                </p>
+                <p className="mb-3 mt-2 text-sm text-slate-600">
+                  {creator
+                    ? 'Untuk periode terpilih, sebelum biaya penyelenggaraan.'
+                    : data.netFeeIncomeProvisional
+                      ? 'Perkiraan untuk periode terpilih. Biaya payment gateway belum tersedia.'
+                      : 'Untuk periode terpilih, sebelum pajak dan biaya operasional.'}
+                </p>
+                <FinanceBreakdown
+                  lines={[
+                    { label: 'Penjualan tiket setelah diskon', amount: data.grossTicketSales },
+                    { label: 'Biaya layanan GOFEST', amount: data.serviceFeeRevenue },
+                    { label: 'Refund tiket dan biaya layanan', amount: data.totalRefunds },
+                    ...(!creator
+                      ? [{ label: 'Biaya payment gateway', amount: data.paymentGatewayCosts }]
+                      : []),
+                  ]}
                 />
-              ) : (
-                <>
-                  <Metric
-                    label="Payment Gateway Costs"
-                    value={
-                      data.paymentGatewayCosts === null
-                        ? 'Belum dikonfigurasi'
-                        : formatIDR(data.paymentGatewayCosts)
-                    }
-                    hint="Biaya provider yang ditanggung GOFEST"
+              </section>
+              <section className="min-w-0 bg-slate-50 p-5 sm:p-6">
+                <h2 className="font-semibold text-slate-900">
+                  {creator ? 'Saldo tersedia' : 'Dana organizer'}
+                </h2>
+                <p className="mt-2 break-all text-3xl font-semibold tabular-nums tracking-tight text-slate-950">
+                  {formatIDR(creator ? data.availableBalance : data.outstandingOrganizerFunds)}
+                </p>
+                <p className="mb-3 mt-2 text-sm text-slate-600">
+                  Saldo saat ini, di luar filter periode.
+                </p>
+                {creator && (
+                  <FinanceBreakdown
+                    lines={[
+                      { label: 'Saldo dicadangkan', amount: data.reservedBalance },
+                      { label: 'Saldo tertunda', amount: data.pendingBalance },
+                      { label: 'Total sudah dicairkan', amount: data.totalWithdrawn },
+                    ]}
                   />
-                  <Metric
-                    label="Net Fee Income"
-                    value={formatIDR(data.netFeeIncome)}
-                    hint={
-                      data.netFeeIncomeProvisional
-                        ? 'Sementara; biaya gateway belum tersedia. Sebelum pajak dan biaya operasional.'
-                        : 'Fee dikurangi refund fee dan biaya gateway; sebelum biaya operasional dan pajak'
-                    }
-                  />
-                  <Metric
-                    label="Outstanding Organizer Funds"
-                    value={formatIDR(data.outstandingOrganizerFunds)}
-                    hint="Kewajiban saldo saat ini, di luar filter periode"
-                  />
-                </>
-              )}
+                )}
+                <Button variant="outline" className="mt-3" asChild>
+                  <Link to={`${base}/payouts`}>
+                    {creator ? 'Lihat pencairan' : 'Kelola payout'}
+                  </Link>
+                </Button>
+              </section>
             </div>
-            {creator ? (
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <Metric label="Available balance" value={formatIDR(data.availableBalance)} />
-                <Metric
-                  label="Reserved balance"
-                  value={formatIDR(data.reservedBalance)}
-                  hint="Reservasi withdrawal dan refund yang disetujui"
-                />
-                <Metric label="Pending balance" value={formatIDR(data.pendingBalance)} />
-                <Metric
-                  label="Total withdrawn"
-                  value={formatIDR(data.totalWithdrawn)}
-                  hint="Transfer yang benar-benar selesai"
-                />
-              </div>
-            ) : null}
             <FinancialLedgerTable from={data.range.from} to={data.range.to} />
           </>
-        ) : null}
+        )}
       </QueryState>
     </div>
   );
