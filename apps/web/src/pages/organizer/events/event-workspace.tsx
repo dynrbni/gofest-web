@@ -5,7 +5,19 @@ import { NavLink, Outlet, useParams, Link } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { ArrowLeft, Ticket, Tag, Users, QrCode, Send, Ban, ExternalLink, Info } from 'lucide-react';
+import {
+  ArrowLeft,
+  Ticket,
+  Tag,
+  CreditCard,
+  Users,
+  UserCog,
+  QrCode,
+  Send,
+  Ban,
+  ExternalLink,
+  Info,
+} from 'lucide-react';
 import { useOrganizerEvent } from '@/lib/queries';
 import { api, errorMessage } from '@/lib/api';
 import { useDocumentTitle } from '@/lib/hooks';
@@ -44,8 +56,9 @@ export function EventWorkspaceLayout() {
     { to: `${base}/events/${id}/edit`, label: 'Informasi Acara', icon: Info, end: true },
     { to: `${base}/events/${id}/tickets`, label: 'Jenis Tiket', icon: Ticket, end: false },
     { to: `${base}/events/${id}/coupons`, label: 'Kode Kupon', icon: Tag, end: false },
-    { to: `${base}/events/${id}/orders`, label: 'Pesanan & Peserta', icon: Users, end: false },
-    { to: `${base}/events/${id}/staff`, label: 'Petugas Staff', icon: Users, end: false },
+    { to: `${base}/events/${id}/orders`, label: 'Pesanan', icon: CreditCard, end: false },
+    { to: `${base}/events/${id}/attendees`, label: 'Peserta', icon: Users, end: false },
+    { to: `${base}/events/${id}/staff`, label: 'Petugas Check-in', icon: UserCog, end: false },
     { to: `${base}/events/${id}/check-in`, label: 'Check-In', icon: QrCode, end: false },
   ];
 
@@ -193,7 +206,7 @@ export function EventWorkspaceLayout() {
               end={tab.end}
               className={({ isActive }) =>
                 cn(
-                  'inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                  'inline-flex min-h-10 items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
                   isActive
                     ? 'bg-ink text-paper'
                     : 'bg-warm-muted/60 text-ink/75 hover:bg-warm-muted hover:text-ink',

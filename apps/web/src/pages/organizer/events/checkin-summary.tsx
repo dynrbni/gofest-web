@@ -1,6 +1,6 @@
 import { useWorkspace } from '@/pages/workspace/workspace-hooks';
 
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { formatDateTime } from '@/lib/format';
@@ -9,11 +9,11 @@ import { Progress } from '@/components/ui/progress';
 import { EmptyState, ErrorState, LoadingState } from '@/components/common/states';
 
 export function EventCheckInSummaryPage() {
-  const { apiBase } = useWorkspace();
+  const { apiBase, base } = useWorkspace();
   const { id: eventId } = useParams<{ id: string }>();
 
   const summaryQuery = useQuery({
-    queryKey: ['organizer-checkin-summary', eventId],
+    queryKey: ['organizer-checkin-summary', apiBase, eventId],
     queryFn: () => api<CheckInSummary>(`${apiBase}/events/${eventId}/check-in/summary`),
     enabled: Boolean(eventId),
     refetchInterval: 15_000, // Live poll every 15s during event
@@ -92,7 +92,15 @@ export function EventCheckInSummaryPage() {
 
       {/* Recent Scans Log */}
       <div className="space-y-3">
-        <h3 className="text-base font-semibold text-ink">Aktivitas Scan Terbaru</h3>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h3 className="text-base font-semibold text-ink">Aktivitas Scan Terbaru</h3>
+          <Link
+            to={`${base}/events/${eventId}/check-in/history`}
+            className="inline-flex min-h-11 items-center text-sm font-medium text-primary hover:underline"
+          >
+            Lihat riwayat check-in
+          </Link>
+        </div>
 
         {recentScans.length === 0 ? (
           <EmptyState

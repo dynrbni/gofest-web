@@ -25,7 +25,7 @@ export function EventOrderManagementPage() {
   const debouncedSearch = useDebouncedValue(search, 400);
 
   const ordersQuery = useQuery({
-    queryKey: ['organizer-event-orders', eventId, page, debouncedSearch],
+    queryKey: ['organizer-event-orders', apiBase, eventId, page, debouncedSearch],
     queryFn: () =>
       apiPage<EventOrderRow>(`${apiBase}/events/${eventId}/orders`, {
         query: { page, limit: 10, q: debouncedSearch.trim() || undefined },
