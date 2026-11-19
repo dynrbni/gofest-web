@@ -1,7 +1,6 @@
 import { usePeriod, useWorkspace } from '@/pages/workspace/workspace-hooks';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Plus } from 'lucide-react';
 import {
   ResponsiveContainer,
   AreaChart,
@@ -17,7 +16,6 @@ import {
 import { api } from '@/lib/api';
 import { formatIDR, formatDateTime } from '@/lib/format';
 import { useDocumentTitle } from '@/lib/hooks';
-import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/common/states';
 import {
   DataTable,
@@ -32,8 +30,8 @@ import type { AnalyticsData } from './workspace-models';
 const compact = (value: number) =>
   new Intl.NumberFormat('id-ID', { notation: 'compact', maximumFractionDigits: 1 }).format(value);
 export function WorkspaceDashboardPage() {
-  const { creator, apiBase, base } = useWorkspace();
-  useDocumentTitle(creator ? 'Dashboard Creator' : 'Dashboard Marketplace');
+  const { apiBase, base } = useWorkspace();
+  useDocumentTitle('Dashboard Marketplace');
   const period = usePeriod();
   const query = useQuery({
     queryKey: ['workspace-analytics', apiBase, period.query],
@@ -44,22 +42,8 @@ export function WorkspaceDashboardPage() {
   return (
     <div className="space-y-7">
       <WorkspaceHeading
-        title={creator ? 'Dashboard Creator' : 'Dashboard Marketplace'}
-        description={
-          creator
-            ? 'Penjualan, peserta, dan dana dari acara yang Anda kelola.'
-            : 'Pantau penjualan tiket, pendapatan layanan, dan pekerjaan operasional GOFEST.'
-        }
-        action={
-          creator ? (
-            <Button asChild>
-              <Link to={`${base}/events/new`}>
-                <Plus className="mr-2 size-4" aria-hidden />
-                Buat event baru
-              </Link>
-            </Button>
-          ) : undefined
-        }
+        title="Dashboard Marketplace"
+        description="Pantau penjualan tiket, pendapatan layanan, dan pekerjaan operasional GOFEST."
       />
       {period.controls}
       <QueryState query={query}>
@@ -67,63 +51,41 @@ export function WorkspaceDashboardPage() {
           <>
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <Metric
-                label={creator ? 'Penjualan tiket saya' : 'Gross Ticket Sales'}
+                label="Gross Ticket Sales"
                 value={formatIDR(data.financial.grossTicketSales)}
                 hint="Nilai tiket setelah diskon, sebelum refund"
               />
-              {creator ? (
-                <Metric
-                  label="Saldo tersedia"
-                  value={formatIDR(data.financial.availableBalance)}
-                  hint="Saldo saat ini, dapat diajukan withdrawal"
-                />
-              ) : (
-                <Metric
-                  label="Service Fee Revenue"
-                  value={formatIDR(data.financial.serviceFeeRevenue)}
-                  hint="Pendapatan layanan GOFEST, sebelum refund fee"
-                />
-              )}
+              <Metric
+                label="Service Fee Revenue"
+                value={formatIDR(data.financial.serviceFeeRevenue)}
+                hint="Pendapatan layanan GOFEST, sebelum refund fee"
+              />
               <Metric
                 label="Tiket terjual"
                 value={data.summary.ticketsSold.toLocaleString('id-ID')}
                 hint="Tiket diterbitkan pada periode terpilih"
               />
+              <Metric label="Total transaksi" value={data.summary.totalTransactions} />
+              <Metric label="Acara aktif" value={data.summary.activeEvents} />
               <Metric
-                label={creator ? 'Acara saya' : 'Total transaksi'}
-                value={creator ? data.summary.totalEvents : data.summary.totalTransactions}
+                label="Pengguna terdaftar"
+                value={data.summary.registeredUsers ?? 0}
+                hint="Pendaftaran pada periode terpilih"
               />
               <Metric
-                label={creator ? 'Total peserta aktif' : 'Acara aktif'}
-                value={creator ? data.summary.totalAttendees : data.summary.activeEvents}
+                label="Menunggu review event"
+                value={data.summary.pendingEventApprovals}
+                hint="Antrean saat ini"
               />
               <Metric
-                label={creator ? 'Peserta check-in' : 'Pengguna terdaftar'}
-                value={
-                  creator ? data.summary.checkedInAttendees : (data.summary.registeredUsers ?? 0)
-                }
-                hint={
-                  creator ? 'Akumulasi peserta acara saya' : 'Pendaftaran pada periode terpilih'
-                }
+                label="Permintaan payout"
+                value={data.summary.pendingPayouts}
+                hint="Menunggu tinjauan admin"
               />
-              {!creator ? (
-                <>
-                  <Metric
-                    label="Menunggu review event"
-                    value={data.summary.pendingEventApprovals}
-                    hint="Antrean saat ini"
-                  />
-                  <Metric
-                    label="Permintaan payout"
-                    value={data.summary.pendingPayouts}
-                    hint="Menunggu tinjauan admin"
-                  />
-                </>
-              ) : null}
             </div>
             <div className="grid gap-5 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
               <Panel
-                title={creator ? 'Tren penjualan tiket' : 'Revenue Analytics'}
+                title="Revenue Analytics"
                 description="Penjualan tiket dan fee ditampilkan terpisah. Tidak termasuk pengurangan refund."
               >
                 {data.trend.length ? (
@@ -326,15 +288,11 @@ export function WorkspaceDashboardPage() {
               ) : null}
             </Panel>
             <Panel
-              title={creator ? 'Acara mendatang' : 'Event menunggu review'}
-              description={
-                creator
-                  ? 'Jadwal event Anda yang sudah dipublikasikan.'
-                  : 'Antrean pengajuan yang belum ditinjau, diurutkan dari yang terlama.'
-              }
+              title="Event menunggu review"
+              description="Antrean pengajuan yang belum ditinjau, diurutkan dari yang terlama."
             >
               <ul className="divide-y divide-slate-100">
-                {(creator ? data.upcomingEvents : data.pendingEventReviews).map((event) => (
+                {data.pendingEventReviews.map((event) => (
                   <li key={event.id} className="flex flex-wrap justify-between gap-3 py-3 text-sm">
                     <div>
                       <Link to={`${base}/events/${event.id}`} className="font-medium text-blue-700">
@@ -348,17 +306,15 @@ export function WorkspaceDashboardPage() {
                   </li>
                 ))}
               </ul>
-              {!(creator ? data.upcomingEvents.length : data.pendingEventReviews.length) ? (
+              {!data.pendingEventReviews.length ? (
                 <p className="text-sm text-slate-600">
-                  {creator
-                    ? 'Belum ada acara mendatang yang dipublikasikan.'
-                    : 'Tidak ada pengajuan event yang menunggu review.'}
+                  Tidak ada pengajuan event yang menunggu review.
                 </p>
               ) : null}
             </Panel>
             <div className="grid gap-5 lg:grid-cols-2">
               <Panel
-                title={creator ? 'Acara & status pengajuan' : 'Pengajuan & review event'}
+                title="Pengajuan & review event"
                 action={
                   <Link to={`${base}/events`} className="text-sm font-medium text-blue-700">
                     Kelola event
@@ -374,7 +330,7 @@ export function WorkspaceDashboardPage() {
                       <div className="min-w-0 flex-1">
                         <Link
                           className="font-medium text-blue-700"
-                          to={creator ? `${base}/events/${event.id}` : `${base}/events/${event.id}`}
+                          to={`${base}/events/${event.id}`}
                         >
                           {event.title}
                         </Link>
@@ -418,68 +374,32 @@ export function WorkspaceDashboardPage() {
               </Panel>
             </div>
             <div className="grid gap-5 lg:grid-cols-2">
-              <Panel title={creator ? 'Aktivitas check-in terbaru' : 'Permintaan refund terbaru'}>
-                {creator ? (
-                  <ul className="space-y-3">
-                    {data.recentCheckIns.map((scan) => (
-                      <li key={scan.id} className="flex flex-wrap justify-between gap-2 text-sm">
-                        <span>
-                          {scan.ticket?.holderName ?? 'Tiket tidak dikenal'}
-                          <span className="block text-xs text-slate-600">
-                            {formatDateTime(scan.scannedAt)}
-                          </span>
-                        </span>
-                        <Status value={scan.result} />
-                      </li>
-                    ))}
-                    {!data.recentCheckIns.length ? (
-                      <li className="text-sm text-slate-600">Belum ada check-in.</li>
-                    ) : null}
-                  </ul>
-                ) : (
-                  <ul className="space-y-3">
-                    {data.recentRefunds.map((refund) => (
-                      <li key={refund.id} className="flex flex-wrap justify-between gap-2 text-sm">
-                        <span>
-                          {refund.order.orderCode} · {formatIDR(refund.amount)}
-                        </span>
-                        <Status value={refund.status} />
-                      </li>
-                    ))}
-                    {!data.recentRefunds.length ? (
-                      <li className="text-sm text-slate-600">Belum ada permintaan refund.</li>
-                    ) : null}
-                  </ul>
-                )}
+              <Panel title="Permintaan refund terbaru">
+                <ul className="space-y-3">
+                  {data.recentRefunds.map((refund) => (
+                    <li key={refund.id} className="flex flex-wrap justify-between gap-2 text-sm">
+                      <span>
+                        {refund.order.orderCode} · {formatIDR(refund.amount)}
+                      </span>
+                      <Status value={refund.status} />
+                    </li>
+                  ))}
+                  {!data.recentRefunds.length ? (
+                    <li className="text-sm text-slate-600">Belum ada permintaan refund.</li>
+                  ) : null}
+                </ul>
               </Panel>
-              <Panel
-                title={creator ? 'Pencatatan keuangan terbaru' : 'Aktivitas operasional admin'}
-              >
+              <Panel title="Aktivitas operasional admin">
                 <ul className="space-y-4">
-                  {creator
-                    ? data.financial.recentLedger.slice(0, 6).map((entry) => (
-                        <li key={entry.id} className="flex justify-between gap-3 text-sm">
-                          <span className="min-w-0">
-                            {entry.description}
-                            <span className="mt-1 block text-xs text-slate-600">
-                              {formatDateTime(entry.createdAt)}
-                            </span>
-                          </span>
-                          <span className="shrink-0 tabular-nums">{formatIDR(entry.amount)}</span>
-                        </li>
-                      ))
-                    : data.recentActivities.map((activity) => (
-                        <li key={activity.id} className="text-sm">
-                          <p>{activity.action.replaceAll('_', ' ')}</p>
-                          <p className="mt-1 text-xs text-slate-600">
-                            {activity.actor?.name ?? 'Sistem'} ·{' '}
-                            {formatDateTime(activity.createdAt)}
-                          </p>
-                        </li>
-                      ))}
-                  {!(creator
-                    ? data.financial.recentLedger.length
-                    : data.recentActivities.length) ? (
+                  {data.recentActivities.map((activity) => (
+                    <li key={activity.id} className="text-sm">
+                      <p>{activity.action.replaceAll('_', ' ')}</p>
+                      <p className="mt-1 text-xs text-slate-600">
+                        {activity.actor?.name ?? 'Sistem'} · {formatDateTime(activity.createdAt)}
+                      </p>
+                    </li>
+                  ))}
+                  {!data.recentActivities.length ? (
                     <li className="text-sm text-slate-600">Belum ada aktivitas.</li>
                   ) : null}
                 </ul>
