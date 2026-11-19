@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { OrderStatusBadge } from '@/components/common/status-badge';
 import { formatIDR, formatNumber, formatDateShort } from '@/lib/format';
 import { useDocumentTitle } from '@/lib/hooks';
 import { useOrganizerDashboard } from '@/lib/queries';
@@ -55,6 +56,39 @@ function UpcomingEvents({ events }: { events: OrganizerDashboard['events'] }) {
         <p className="text-sm text-slate-600">
           Belum ada event aktif. Agenda terisi saat event diterbitkan.
         </p>
+      )}
+    </Panel>
+  );
+}
+
+function RecentOrders({ orders }: { orders: OrganizerDashboard['recentOrders'] }) {
+  return (
+    <Panel title="Pesanan terbaru">
+      {orders.length ? (
+        <ul className="divide-y divide-slate-100">
+          {orders.slice(0, 4).map((order) => (
+            <li
+              key={order.id}
+              className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2 py-3 first:pt-0 last:pb-0"
+            >
+              <div className="min-w-0">
+                <Link
+                  to={`/creator/events/${order.event.id}/orders?orderId=${order.id}`}
+                  className="break-words text-sm font-medium text-primary hover:underline"
+                >
+                  {order.orderCode}
+                </Link>
+                <p className="mt-1 break-words text-sm text-slate-600">{order.event.title}</p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-medium tabular-nums">{formatIDR(order.total)}</span>
+                <OrderStatusBadge status={order.status} />
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-sm text-slate-600">Belum ada pesanan tiket.</p>
       )}
     </Panel>
   );
@@ -160,7 +194,12 @@ export function OrganizerDashboardPage() {
             </section>
           ))}
         </div>
-        {query.data && <UpcomingEvents events={query.data.events} />}
+        {query.data && (
+          <div className="grid items-start gap-4 xl:grid-cols-2">
+            <UpcomingEvents events={query.data.events} />
+            <RecentOrders orders={query.data.recentOrders} />
+          </div>
+        )}
       </QueryState>
     </div>
   );
