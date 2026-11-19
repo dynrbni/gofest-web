@@ -290,6 +290,7 @@ export interface StaffEvent {
 export interface OrganizerDashboard {
   summary: {
     totalEvents: number;
+    activeEvents: number;
     publishedEvents: number;
     draftEvents: number;
     pendingReviewEvents: number;
@@ -301,6 +302,7 @@ export interface OrganizerDashboard {
     ticketsValid: number;
     grossRevenue: number;
     paidOrders: number;
+    totalOrders: number;
     pendingOrders: number;
   };
   events: Array<{
