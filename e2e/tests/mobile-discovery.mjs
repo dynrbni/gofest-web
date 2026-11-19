@@ -21,7 +21,8 @@ try {
     browser('set', 'viewport', String(width), '844');
     browser('open', base);
     browser('wait', '.home-event-shelf .event-card');
-    evaluate('document.getElementById("cities-heading").scrollIntoView()');
+    browser('wait', '#heading-cities');
+    evaluate('document.getElementById("heading-cities").scrollIntoView()');
     browser('wait', '.city-destinations a');
     evaluate(
       'document.getAnimations().filter(animation => animation.effect?.getComputedTiming().iterations !== Infinity).forEach(animation => animation.finish())',
