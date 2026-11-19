@@ -87,22 +87,14 @@ const creator = [
   '/creator/dashboard',
   '/creator/events',
   '/creator/events?status=DRAFT',
+  '/creator/events?active=true',
   '/creator/events?status=PENDING_REVIEW',
   '/creator/events/new',
-  '/creator/tickets',
-  '/creator/promotions',
-  '/creator/orders',
-  '/creator/attendees',
-  '/creator/check-in',
-  '/creator/check-in/history',
-  '/creator/staff',
   '/creator/finance',
   '/creator/payouts',
   '/creator/bank-accounts',
   '/creator/event-reports',
   '/creator/payouts/history',
-  '/creator/marketing',
-  '/creator/links',
   '/creator/settings',
   '/creator/support',
   '/creator/notifications',
@@ -113,14 +105,24 @@ try {
     ['admin@gofest.com', '/admin/dashboard', operational],
     ['organizer@gofest.com', '/creator/dashboard', creator],
   ]) {
-    login(email, destination);
     const profile = email.split('@')[0];
+    if (process.env.QA_PROFILE && process.env.QA_PROFILE !== profile) continue;
+    login(email, destination);
     const apiBase = profile === 'organizer' ? '/creator' : '/admin';
     const sample = evaluate(
       `fetch('/api/v1${apiBase}/events?limit=1', {credentials:'include'}).then(response=>response.json()).then(body=>body.data[0])`,
     );
     const details = sample
-      ? ['edit', 'tickets', 'coupons', 'staff', 'orders', 'check-in']
+      ? [
+          'edit',
+          'tickets',
+          'coupons',
+          'staff',
+          'orders',
+          'attendees',
+          'check-in',
+          'check-in/history',
+        ]
           .map((tab) => `${apiBase}/events/${sample.id}/${tab}`)
           .concat(`${apiBase}/event-reports/${sample.id}`)
       : [];
@@ -128,6 +130,26 @@ try {
       browser('set', 'viewport', String(width), '1000');
       for (const path of [...paths, ...details]) verify(path, width);
       open(destination);
+      if (profile === 'organizer') {
+        browser('wait', '--text', 'Total Pengunjung');
+        assert.deepEqual(
+          evaluate('[...document.querySelectorAll("main h2")].map(heading => heading.textContent)'),
+          [
+            'Event Aktif',
+            'Event Draft',
+            'Total Transaksi',
+            'Total Tiket Terjual',
+            'Total Penjualan',
+            'Total Pengunjung',
+          ],
+        );
+        assert.equal(
+          evaluate(
+            `document.querySelector('a[aria-label="Detail Event Aktif"]').getAttribute("href")`,
+          ),
+          '/creator/events?active=true',
+        );
+      }
       browser('screenshot', `${screenshots}/${profile}-${width}.png`);
       const audit = browser('a11y', '--tags', 'wcag2a,wcag2aa');
       assert.equal(audit.counts.violations, 0, `${email}: accessibility violations at ${width}px`);
@@ -153,6 +175,18 @@ try {
       );
     }
     if (profile === 'organizer') {
+      for (const path of [
+        'tickets',
+        'orders',
+        'staff',
+        'check-in/history',
+        'attendees',
+        'marketing',
+        'links',
+      ]) {
+        browser('open', `${base}/creator/${path}`);
+        browser('wait', '--url', '**/creator/events');
+      }
       open('/admin/dashboard');
       assert.match(evaluate('document.querySelector("main h1").textContent'), /bukan untuk/);
     }
