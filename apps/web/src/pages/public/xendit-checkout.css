@@ -1,0 +1,16 @@
+.gofest-payment-action:has(.xendit-action-qr-qrcode-wrapper) {
+  max-inline-size: 22rem;
+  margin-inline: auto;
+}
+
+.gofest-payment-action .xendit-action-qr-qrcode-wrapper {
+  max-inline-size: 13rem;
+  margin-inline: auto;
+}
+
+/* Xendit lays out the branded QRIS code inside an SVG viewBox. */
+.gofest-payment-action
+  [xendit-action-container-is-qr-with-custom-art]
+  .xendit-action-qr-qrcode-wrapper {
+  max-inline-size: 80%;
+}

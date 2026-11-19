@@ -711,6 +711,7 @@ export async function getOrderStatus(orderCode: string, req: Request) {
   const order = await getOrderForAccess(orderCode, req);
   return {
     order: serializeOrder(order),
+    paymentProvider: env.PAYMENT_PROVIDER,
     serverTime: new Date().toISOString(),
   };
 }

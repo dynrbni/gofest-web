@@ -60,6 +60,12 @@ async function newOrder(price: number) {
 describe('Xendit integration', () => {
   it('reuses the payment session and issues tickets only for a matching signed completion', async () => {
     const { orderCode, total, organizer } = await newOrder(120_000);
+    const status = await organizer.agent.get(`/api/v1/orders/${orderCode}/status`);
+    expect(status.body.data).toMatchObject({
+      paymentProvider: 'xendit',
+      order: { payment: null },
+    });
+
     const session = {
       payment_session_id: 'ps-test-order',
       reference_id: orderCode,

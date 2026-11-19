@@ -19,6 +19,12 @@ const XenditCheckout = lazy(() =>
   import('./xendit-checkout').then((module) => ({ default: module.XenditCheckout })),
 );
 
+type OrderStatus = {
+  order: Order;
+  paymentProvider?: string;
+  serverTime: string;
+};
+
 function Countdown({ target }: { target: string }) {
   const remaining = useCountdown(target);
   const minutes = Math.floor(remaining / 60000);
@@ -41,21 +47,15 @@ export function OrderPage() {
   const [paymentStarted, setPaymentStarted] = useState(false);
   const [checkingStatus, setCheckingStatus] = useState(false);
   const [actionError, setActionError] = useState<unknown>(null);
-  const [xenditSession, setXenditSession] = useState<{
-    orderCode: string;
-    key: string;
-    attempt: number;
-  }>();
   const [busy, setBusy] = useState<'payment' | 'mock' | null>(null);
   useDocumentTitle(orderCode ? `Pesanan ${orderCode}` : 'Detail pesanan');
 
   const orderQuery = useQuery({
     queryKey: ['order-status', orderCode, token],
     queryFn: () =>
-      api<{ order: Order; serverTime: string }>(
-        `/orders/${encodeURIComponent(orderCode!)}/status`,
-        { orderToken: token || undefined },
-      ),
+      api<OrderStatus>(`/orders/${encodeURIComponent(orderCode!)}/status`, {
+        orderToken: token || undefined,
+      }),
     enabled: Boolean(orderCode),
     refetchInterval: (query) => {
       const status = query.state.data?.order.status;
@@ -65,6 +65,7 @@ export function OrderPage() {
   });
 
   const order = orderQuery.data?.order;
+  const usesXendit = (orderQuery.data?.paymentProvider ?? order?.payment?.provider) === 'xendit';
   const accessDenied = orderQuery.error instanceof ApiError && orderQuery.error.status === 401;
 
   const refreshPayment = useCallback(
@@ -80,10 +81,11 @@ export function OrderPage() {
               orderToken: token || undefined,
             },
           );
-          queryClient.setQueryData(['order-status', orderCode, token], {
-            order: result.order,
-            serverTime: new Date().toISOString(),
-          });
+          queryClient.setQueryData<OrderStatus>(
+            ['order-status', orderCode, token],
+            (current) =>
+              current && { ...current, order: result.order, serverTime: new Date().toISOString() },
+          );
         } catch (error) {
           setActionError(error);
         } finally {
@@ -100,29 +102,12 @@ export function OrderPage() {
     setActionError(null);
     setBusy('payment');
     try {
-      const result = await api<{
-        alreadyPaid: boolean;
-        payment: { providerReference: string } | null;
-        componentsSdkKey?: string;
-      }>(`/orders/${encodeURIComponent(order.orderCode)}/payment`, {
-        method: 'POST',
-        orderToken: token || undefined,
-      });
-      if (result.alreadyPaid) {
-        toast.success('Pembayaran sudah tercatat');
-        await queryClient.invalidateQueries({ queryKey: ['order-status', orderCode] });
-      } else {
-        const sdkKey = result.componentsSdkKey;
-        if (sdkKey) {
-          setPaymentStarted(false);
-          setXenditSession((current) => ({
-            orderCode: order.orderCode,
-            key: sdkKey,
-            attempt: (current?.attempt ?? 0) + 1,
-          }));
-        }
-        await refreshPayment(false);
-      }
+      const result = await api<{ alreadyPaid: boolean }>(
+        `/orders/${encodeURIComponent(order.orderCode)}/payment`,
+        { method: 'POST', orderToken: token || undefined },
+      );
+      if (result.alreadyPaid) toast.success('Pembayaran sudah tercatat');
+      await refreshPayment(false);
     } catch (error) {
       setActionError(error);
     } finally {
@@ -218,7 +203,6 @@ export function OrderPage() {
   }
 
   const ticketTokenQuery = token ? `?token=${encodeURIComponent(token)}` : '';
-  const paymentSession = xenditSession?.orderCode === order.orderCode ? xenditSession : null;
   const paid = ['PAID', 'PARTIALLY_REFUNDED', 'REFUND_PENDING'].includes(order.status);
 
   return (
@@ -227,7 +211,7 @@ export function OrderPage() {
         active={
           (order.payment && order.payment.provider !== 'xendit') ||
           paid ||
-          (paymentSession && paymentStarted)
+          (usesXendit && paymentStarted)
             ? 4
             : 3
         }
@@ -275,7 +259,7 @@ export function OrderPage() {
 
         {order.status === 'PENDING_PAYMENT' ? (
           <section
-            className="mt-6 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-md"
+            className="mt-6 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-md sm:p-6"
             aria-labelledby="payment-heading"
           >
             <div className="flex flex-wrap items-start justify-between gap-4">
@@ -296,7 +280,7 @@ export function OrderPage() {
               </p>
             </div>
 
-            {paymentSession ? (
+            {usesXendit ? (
               <Suspense
                 fallback={
                   <p className="mt-5 text-sm text-slate-600" role="status">
@@ -305,11 +289,11 @@ export function OrderPage() {
                 }
               >
                 <XenditCheckout
-                  key={paymentSession.attempt}
-                  sdkKey={paymentSession.key}
+                  key={order.orderCode}
+                  orderCode={order.orderCode}
+                  orderToken={token || undefined}
                   onStatusChange={refreshPayment}
                   onPaymentStarted={setPaymentStarted}
-                  onRetry={() => void createPayment()}
                 />
               </Suspense>
             ) : (
