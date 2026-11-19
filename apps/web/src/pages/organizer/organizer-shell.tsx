@@ -57,7 +57,7 @@ const creatorNav: WorkspaceNavItem[] = [
     icon: ScrollText,
   },
   { group: 'Account', to: '/creator/settings', label: 'Profil organizer', icon: Building2 },
-  { group: 'Account', to: '/account/settings', label: 'Pengaturan akun', icon: Settings },
+  { group: 'Account', to: '/creator/account/settings', label: 'Pengaturan akun', icon: Settings },
   { group: 'Account', to: '/creator/support', label: 'Bantuan & dukungan', icon: LifeBuoy },
 ];
 export function CreatorLayout() {

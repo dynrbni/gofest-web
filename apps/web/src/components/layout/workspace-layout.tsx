@@ -225,7 +225,7 @@ export function WorkspaceLayout({
           </div>
           <div className="shrink-0 border-t border-slate-200 p-3.5 transition-all duration-300">
             <Link
-              to="/account/profile"
+              to={`${base}/account/profile`}
               className={cn(
                 'flex min-h-11 items-center gap-3 text-sm rounded-lg hover:bg-slate-50 transition-all duration-150',
                 !collapsed && 'hover:translate-x-1',
@@ -284,7 +284,7 @@ export function WorkspaceLayout({
             </div>
             <div className="flex items-center gap-2 sm:gap-4">
               <Link
-                to="/account/profile"
+                to={`${base}/account/profile`}
                 aria-label="Profil akun"
                 className="flex size-11 items-center justify-center rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600"
               >

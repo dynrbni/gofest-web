@@ -145,8 +145,8 @@ export function AdminLayout() {
             icon: ScrollText,
           },
         ]),
-    { group: 'Account', to: '/account/profile', label: 'Profil akun', icon: UserCircle },
-    { group: 'Account', to: '/account/settings', label: 'Pengaturan akun', icon: Settings },
+    { group: 'Account', to: '/admin/account/profile', label: 'Profil akun', icon: UserCircle },
+    { group: 'Account', to: '/admin/account/settings', label: 'Pengaturan akun', icon: Settings },
   ];
   return (
     <WorkspaceLayout

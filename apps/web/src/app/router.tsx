@@ -62,7 +62,7 @@ const AccountOrderDetailPage = lazyPage(() =>
 const AccountFavoritesPage = lazyPage(() =>
   import('@/pages/account/favorites').then((m) => m.AccountFavoritesPage),
 );
-const AccountSettingsPage = lazyPage(() =>
+const AccountSettingsPage = lazyPage<{ scope?: 'buyer' | 'workspace' }>(() =>
   import('@/pages/account/settings').then((m) => m.AccountSettingsPage),
 );
 const AccountTicketDetailPage = lazyPage(() =>
@@ -176,7 +176,12 @@ const eventWorkspaceChildren = [
   { path: 'check-in', element: <EventCheckInSummaryPage /> },
   { path: 'check-in/history', element: <CheckInOperationsPage /> },
 ];
+const workspaceAccountChildren = [
+  { path: 'account/profile', element: <AccountProfilePage /> },
+  { path: 'account/settings', element: <AccountSettingsPage scope="workspace" /> },
+];
 const creatorChildren = [
+  ...workspaceAccountChildren,
   { index: true, element: <Navigate to="/creator/dashboard" replace /> },
   { path: 'dashboard', element: <OrganizerDashboardPage /> },
   { path: 'events', element: <OrganizerEventListPage /> },
@@ -368,6 +373,7 @@ export const router = createBrowserRouter([
         ),
         children: [
           { index: true, element: <Navigate to="/admin/dashboard" replace /> },
+          ...workspaceAccountChildren,
           { path: 'dashboard', element: <WorkspaceDashboardPage /> },
           { path: 'users', element: <AdminUsersPage /> },
           { path: 'organizers', element: <AdminOrganizersPage /> },
