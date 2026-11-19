@@ -715,17 +715,23 @@ export async function cancelEventAsAdmin(eventId: string, reason: string, req: R
 }
 
 export async function listOrganizerEvents(organizerId: string, query: EventManageQuery) {
+  const now = new Date();
+  const pastFilter: Prisma.EventWhereInput = {
+    OR: [{ status: 'COMPLETED' }, { status: 'PUBLISHED', endsAt: { lte: now } }],
+  };
   const where: Prisma.EventWhereInput = {
     organizerId,
-    status: query.active ? 'PUBLISHED' : query.status,
-    endsAt: query.active ? { gt: new Date() } : undefined,
+    status: query.active && !query.period ? 'PUBLISHED' : query.status,
+    ...(query.period === 'past' ? pastFilter : { endsAt: query.active ? { gt: now } : undefined }),
     ...(query.q
       ? {
-          OR: [
-            { title: { contains: query.q, mode: 'insensitive' } },
-            { venueName: { contains: query.q, mode: 'insensitive' } },
-            { city: { contains: query.q, mode: 'insensitive' } },
-          ],
+          AND: {
+            OR: [
+              { title: { contains: query.q, mode: 'insensitive' } },
+              { venueName: { contains: query.q, mode: 'insensitive' } },
+              { city: { contains: query.q, mode: 'insensitive' } },
+            ],
+          },
         }
       : {}),
   };

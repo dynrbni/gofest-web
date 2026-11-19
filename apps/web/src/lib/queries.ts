@@ -86,6 +86,7 @@ export function useOrganizerEvents(params: {
   limit?: number;
   status?: EventStatus;
   active?: 'true';
+  period?: 'past';
   q?: string;
 }) {
   return useQuery({
