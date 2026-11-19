@@ -632,7 +632,7 @@ export async function createOrder(input: CreateOrderInput, req: Request) {
         category: 'ORDER',
         title: 'Pesanan event baru',
         message: `${order.orderCode} · ${event.title}`,
-        href: '/creator/orders',
+        href: `/creator/events/${event.id}/orders?orderId=${order.id}`,
       });
 
       await enqueueEmail(
