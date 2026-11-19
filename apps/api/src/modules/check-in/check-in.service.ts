@@ -319,7 +319,7 @@ export async function scanTicket(input: ScanTicketInput, userId: string, req: Re
           category: 'CHECK_IN',
           title: 'Check-in perlu ditinjau',
           message,
-          href: '/creator/check-in',
+          href: `/creator/events/${access.event.id}/check-in/history`,
         });
       }
       return saved;
