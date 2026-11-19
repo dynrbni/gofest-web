@@ -10,10 +10,55 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { formatIDR, formatNumber } from '@/lib/format';
+import { formatIDR, formatNumber, formatDateShort } from '@/lib/format';
 import { useDocumentTitle } from '@/lib/hooks';
 import { useOrganizerDashboard } from '@/lib/queries';
-import { QueryState, WorkspaceHeading } from '@/pages/workspace/workspace-components';
+import type { OrganizerDashboard } from '@/lib/models';
+import { Panel, QueryState, WorkspaceHeading } from '@/pages/workspace/workspace-components';
+
+function UpcomingEvents({ events }: { events: OrganizerDashboard['events'] }) {
+  return (
+    <Panel
+      title="Agenda event"
+      action={
+        <Link
+          className="text-sm font-medium text-primary hover:underline"
+          to="/creator/events?active=true"
+        >
+          Lihat event aktif
+        </Link>
+      }
+    >
+      {events.length ? (
+        <ul className="divide-y divide-slate-100">
+          {events.slice(0, 4).map((event) => (
+            <li key={event.id} className="flex min-w-0 items-start gap-3 py-3 first:pt-0 last:pb-0">
+              <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-lg bg-blue-50 text-blue-800">
+                <CalendarDays size={17} aria-hidden />
+              </span>
+              <div className="min-w-0">
+                <Link
+                  to={`/creator/events/${event.id}/edit`}
+                  className="break-words text-sm font-medium text-slate-900 hover:text-primary hover:underline"
+                >
+                  {event.title}
+                </Link>
+                <p className="mt-1 break-words text-sm text-slate-600">
+                  {formatDateShort(event.startsAt, event.timezone)}
+                  {event.city && ` · ${event.city}`}
+                </p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-sm text-slate-600">
+          Belum ada event aktif. Agenda terisi saat event diterbitkan.
+        </p>
+      )}
+    </Panel>
+  );
+}
 
 export function OrganizerDashboardPage() {
   useDocumentTitle('Dashboard Creator');
@@ -115,6 +160,7 @@ export function OrganizerDashboardPage() {
             </section>
           ))}
         </div>
+        {query.data && <UpcomingEvents events={query.data.events} />}
       </QueryState>
     </div>
   );
