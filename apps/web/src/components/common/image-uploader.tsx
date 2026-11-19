@@ -12,6 +12,7 @@ interface ImageUploaderProps {
   onChange: (key: string | null) => void;
   hint: string;
   disabled?: boolean;
+  hidePreview?: boolean;
   onUploadingChange?: (uploading: boolean) => void;
 }
 
@@ -22,6 +23,7 @@ export function ImageUploader({
   onChange,
   hint,
   disabled,
+  hidePreview = false,
   onUploadingChange,
 }: ImageUploaderProps) {
   const id = useId();
@@ -110,25 +112,26 @@ export function ImageUploader({
           : 'JPG, PNG, WebP.'}{' '}
         Maksimal {maxMB} MB.
       </p>
-      {image ? (
-        <img
-          src={image}
-          alt={`Pratinjau ${label.toLowerCase()}`}
-          width={folder === 'avatars' ? 160 : cityIllustration ? 600 : 1500}
-          height={folder === 'avatars' ? 160 : cityIllustration ? 600 : 500}
-          className={
-            cityIllustration
-              ? 'mx-auto aspect-square w-40 object-contain'
-              : folder === 'avatars'
-                ? 'size-24 rounded-full border border-slate-200 object-cover'
-                : 'aspect-[3/1] w-full rounded-lg border border-slate-200 bg-slate-50 object-cover'
-          }
-        />
-      ) : (
-        <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-sm text-slate-600">
-          Belum ada gambar.
-        </div>
-      )}
+      {!hidePreview &&
+        (image ? (
+          <img
+            src={image}
+            alt={`Pratinjau ${label.toLowerCase()}`}
+            width={folder === 'avatars' ? 160 : cityIllustration ? 600 : 1500}
+            height={folder === 'avatars' ? 160 : cityIllustration ? 600 : 500}
+            className={
+              cityIllustration
+                ? 'mx-auto aspect-square w-40 object-contain'
+                : folder === 'avatars'
+                  ? 'size-24 rounded-full border border-slate-200 object-cover'
+                  : 'aspect-[3/1] w-full rounded-lg border border-slate-200 bg-slate-50 object-cover'
+            }
+          />
+        ) : (
+          <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-sm text-slate-600">
+            Belum ada gambar.
+          </div>
+        ))}
       <Input
         ref={input}
         id={id}
