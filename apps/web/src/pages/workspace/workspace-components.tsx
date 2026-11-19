@@ -73,14 +73,14 @@ export function DataTable({
 }) {
   return (
     <div
-      className="relative max-w-full overflow-x-auto rounded-lg border border-slate-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600"
+      className="relative min-w-0 max-w-full overflow-x-auto rounded-lg border border-slate-200 bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600"
       tabIndex={0}
       role="region"
       aria-label={caption}
     >
       <table className="w-full whitespace-nowrap text-left text-sm">
         <caption className="sr-only">{caption}</caption>
-        <thead className="bg-slate-50 text-xs text-slate-600">
+        <thead className="bg-slate-100 text-sm text-slate-700">
           <tr>
             {headers.map((header) => (
               <th key={header} scope="col" className="px-4 py-3 font-medium">
@@ -89,7 +89,9 @@ export function DataTable({
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100 [&_td]:px-4 [&_td]:py-3">{children}</tbody>
+        <tbody className="divide-y divide-slate-200 bg-white [&_td]:px-4 [&_td]:py-3 [&>tr:nth-child(even)]:bg-slate-50">
+          {children}
+        </tbody>
       </table>
     </div>
   );
